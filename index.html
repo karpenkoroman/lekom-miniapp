@@ -17,7 +17,7 @@
   .q legend{font-weight:700;margin-bottom:8px}
   .opt{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
   .opt input{margin-top:2px}
-  .progress{height:8px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin:10px 0}
+  .progress{height:8px;background:#e5e7eb;border-radius:8px;overflow:hidden;margin:10px 0}
   .bar{height:100%;width:0;background:var(--tg-theme-button-color,#0a84ff);transition:width .25s}
   .hint{font-size:12px;color:var(--muted)}
   .result{display:none;margin-top:16px;padding:16px;border-left:4px solid var(--tg-theme-button-color,#0a84ff);background:rgba(10,132,255,.08);border-radius:10px}
@@ -26,10 +26,13 @@
   .cta{display:inline-block;text-decoration:none;padding:12px 14px;border-radius:10px;font-weight:700}
   .cta.primary{background:var(--tg-theme-button-color,#0a84ff);color:var(--tg-theme-button-text-color,#fff)}
   .cta.secondary{background:#eef1f5;color:#111}
-  #leadForm{display:none;margin-top:20px}
+  /* Форма лидов */
+  #leadForm{display:block;margin-top:24px}
   input,textarea{font-family:inherit}
   #leadForm input,#leadForm textarea{padding:10px;border-radius:8px;border:1px solid #ccc;width:100%}
-  #leadForm button{background:#0a84ff;color:#fff;font-weight:700;padding:12px;border:none;border-radius:10px;cursor:pointer;width:100%}
+  .agree{display:flex;gap:10px;align-items:flex-start;margin:6px 0 2px 0;font-size:13px;color:#333}
+  .agree a{color:#0a84ff;text-decoration:underline}
+  #sendLead{background:#0a84ff;color:#fff;font-weight:700;padding:12px;border:none;border-radius:10px;cursor:pointer;width:100%;margin-top:8px}
   #leadMsg{margin-top:10px;color:#0a84ff;display:none}
 </style>
 </head>
@@ -44,7 +47,7 @@
     <div id="pc" class="hint">0/11</div>
 
     <form id="f">
-      <!-- вопросы -->
+      <!-- 11 вопросов -->
       <fieldset class="q"><legend>1. Прозрачность учёта расходов?</legend>
         <label class="opt"><input type="radio" name="q1" value="1">Полный и точный учёт всех расходов</label>
         <label class="opt"><input type="radio" name="q1" value="0">Только расходные материалы</label>
@@ -113,16 +116,17 @@
       </fieldset>
     </form>
 
+    <!-- Блок результата -->
     <div id="res" class="result">
       <h3 id="resTitle">Ваш результат</h3>
       <div id="resText" class="hint"></div>
       <div class="ctas">
         <a id="ctaDiscuss" class="cta primary" target="_blank" href="https://t.me/romankarpenko">💬 Обсудить с экспертом</a>
-        <a id="ctaContact" class="cta secondary" href="#">📩 Оставить контакты</a>
+        <a id="ctaContact" class="cta secondary" href="#leadForm">📩 Оставить контакты</a>
       </div>
     </div>
 
-    <!-- форма контактов -->
+    <!-- Форма контактов — сразу видима -->
     <div id="leadForm">
       <h3>Оставьте свои контакты</h3>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
@@ -130,18 +134,25 @@
         <input id="company" placeholder="Компания">
         <input id="phone" placeholder="Телефон или email">
         <textarea id="comment" placeholder="Комментарий" rows="3"></textarea>
+
+        <label class="agree">
+          <input type="checkbox" id="agree">
+          <span>Отправляя форму, подтверждаю согласие с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank" rel="noopener">политикой обработки персональных данных</a>.</span>
+        </label>
+
         <button id="sendLead">📩 Отправить контакты</button>
       </div>
       <div id="leadMsg">✅ Спасибо! Контакты отправлены.</div>
     </div>
 
+    <div class="hint" style="margin-top:10px">Завершите ответы и нажмите «Отправить результат» внизу (в Telegram), чтобы увидеть рекомендации.</div>
   </div>
 </div>
 
 <script>
 const tg = window.Telegram?.WebApp; if (tg) tg.ready();
 const params = new URLSearchParams(location.search);
-const GAS_HOOK = params.get('hook');
+const GAS_HOOK = params.get('hook'); // закодированный URL Apps Script
 const total = 11;
 const names = Array.from({length: total}, (_,i)=>'q'+(i+1));
 const f = document.getElementById('f');
@@ -162,51 +173,74 @@ if (tg) tg.onEvent('mainButtonClicked', submit);
 f.addEventListener('change', updateUI);
 updateUI();
 
+// Отправка результата (в лист Results)
 async function submit(){
   let score=0, answers={};
   names.forEach(n=>{
     const el=f.querySelector(`input[name="${n}"]:checked`);
     const val = Number(el?.value||0);
-    answers[n]=val;
-    if(val===1) score+=1;
+    answers[n]=val; if(val===1) score+=1;
   });
   let verdict, advice, icon;
   if(score>=8){ icon='⭐️'; verdict='Зрелая инфраструктура'; advice='Точечный аудит TCO и оптимизация «длинного хвоста».'; }
   else if(score>=5){ icon='⚠️'; verdict='Контроль частичный'; advice='Пересмотр бюджета, унификация политики и KPI (TCO, SLA).'; }
   else { icon='❗️'; verdict='Высокая уязвимость'; advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
 
-  const payload = {type:'result', score, verdict, advice, answers, t:new Date().toISOString(), initData: tg?.initDataUnsafe || null};
+  // сохраним для лид-формы
+  window.__lastResult = { score, verdict, advice, answers };
+
+  const payload = { type:'result', ...window.__lastResult, t:new Date().toISOString(), initData: tg?.initDataUnsafe || null };
   const body = JSON.stringify(payload);
-  if(GAS_HOOK){
-    try{await fetch(GAS_HOOK,{method:'POST',headers:{'content-type':'application/json'},body});}catch(e){}
+
+  if (GAS_HOOK) {
+    try {
+      const res = await fetch(GAS_HOOK, { method:'POST', headers:{'content-type':'application/json'}, body });
+      if (!res.ok) { const text = await res.text(); alert('Ошибка отправки результата: ' + text); return; }
+    } catch(e){ alert('Сетевая ошибка отправки результата: ' + (e?.message||e)); return; }
   }
+
   try{ tg && tg.sendData(body); }catch(e){}
+
+  // показать результат и CTA
   document.getElementById('resTitle').textContent = `Ваш результат: ${icon} ${score}/11 — ${verdict}`;
   document.getElementById('resText').textContent  = advice;
   document.getElementById('res').style.display='block';
-  if(tg){tg.MainButton.setText('Закрыть').show();tg.offEvent('mainButtonClicked',submit);tg.onEvent('mainButtonClicked',()=>tg.close());}
+  if(tg){ tg.MainButton.setText('Закрыть').show(); tg.offEvent('mainButtonClicked',submit); tg.onEvent('mainButtonClicked',()=>tg.close()); }
   document.getElementById('res').scrollIntoView({behavior:'smooth'});
 }
 
-// форма контактов
-document.getElementById('ctaContact').addEventListener('click',(e)=>{
-  e.preventDefault();
-  document.getElementById('leadForm').style.display='block';
-  document.getElementById('leadForm').scrollIntoView({behavior:'smooth'});
-});
+// Отправка лид-формы (в лист Leads)
+document.getElementById('sendLead').addEventListener('click', async ()=>{
+  const name = document.getElementById('name').value.trim();
+  const company = document.getElementById('company').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const comment = document.getElementById('comment').value.trim();
+  const agree = document.getElementById('agree').checked;
 
-document.getElementById('sendLead').addEventListener('click',async ()=>{
-  const name=document.getElementById('name').value.trim();
-  const company=document.getElementById('company').value.trim();
-  const phone=document.getElementById('phone').value.trim();
-  const comment=document.getElementById('comment').value.trim();
-  if(!name && !phone){alert('Укажите хотя бы имя или телефон/email');return;}
-  const lead={type:'lead',name,company,phone,comment,t:new Date().toISOString()};
+  if (!agree) { alert('Пожалуйста, подтвердите согласие с политикой обработки персональных данных.'); return; }
+  if (!name && !phone) { alert('Укажите хотя бы имя или телефон/email'); return; }
+
+  const result = window.__lastResult || null;
+  const lead = {
+    type:'lead',
+    name, company, phone, comment,
+    consent:true,
+    policyUrl:'https://lekom.ru/politika-konfidencialnosti/',
+    result,
+    t:new Date().toISOString(),
+    initData: tg?.initDataUnsafe || null
+  };
+
   try{
-    if(GAS_HOOK){await fetch(GAS_HOOK,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(lead)});}
+    if (GAS_HOOK) {
+      const res = await fetch(GAS_HOOK, { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(lead) });
+      if (!res.ok) { const text = await res.text(); alert('Ошибка отправки контактов: ' + text); return; }
+    }
     document.getElementById('leadMsg').style.display='block';
-    document.getElementById('sendLead').disabled=true;
-  }catch(e){alert('Ошибка отправки.');}
+    document.getElementById('sendLead').disabled = true;
+  } catch(e){
+    alert('Сетевая ошибка отправки контактов: ' + (e?.message||e));
+  }
 });
 </script>
 </body>
