@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ЛЕКОМ · Аудит печати</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root { --gap:14px; --radius:12px; --muted:#6b7280; }
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;margin:0;background:var(--tg-theme-secondary-bg-color,#f6f7fb);color:var(--tg-theme-text-color,#111)}
+  .wrap{max-width:900px;margin:0 auto;padding:20px}
+  .card{background:var(--tg-theme-bg-color,#fff);border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.06);padding:20px}
+  h1{margin:0 0 6px;font-size:22px}
+  .sub{color:var(--muted);margin-bottom:8px}
+  .meta{font-size:13px;color:var(--muted);margin-bottom:12px}
+  .q{border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);padding:14px;margin:12px 0;background:var(--tg-theme-secondary-bg-color,#f8f8f9)}
+  .q legend{font-weight:700;margin-bottom:8px}
+  .opt{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
+  .opt input{margin-top:2px}
+  .progress{height:8px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin:10px 0}
+  .bar{height:100%;width:0;background:var(--tg-theme-button-color,#0a84ff);transition:width .25s}
+  .hint{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Аудит печатной инфраструктуры</h1>
+    <div class="sub">Неудобные вопросы, которые IT-директор должен задать сам себе</div>
+    <div class="meta">⏱ ~5 минут · Ответы конфиденциальны</div>
+    <div class="progress"><div id="bar" class="bar"></div></div>
+    <div id="pc" class="hint">0/11</div>
+
+    <form id="f">
+      <!-- ВОПРОСЫ 1–11 (1 = “здоровый”, 0 = риск) -->
+      <fieldset class="q"><legend>1. Прозрачность учёта расходов?</legend>
+        <label class="opt"><input type="radio" name="q1" value="1">Полный и точный учёт всех расходов</label>
+        <label class="opt"><input type="radio" name="q1" value="0">Только расходные материалы</label>
+        <label class="opt"><input type="radio" name="q1" value="0">Частично/по-разному</label>
+        <label class="opt"><input type="radio" name="q1" value="0">«На глаз»</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>2. Капзатраты (амортизация/обновление) учитываете?</legend>
+        <label class="opt"><input type="radio" name="q2" value="1">Да, считаем TCO</label>
+        <label class="opt"><input type="radio" name="q2" value="0">Частично</label>
+        <label class="opt"><input type="radio" name="q2" value="0">Нет, только текущие</label>
+        <label class="opt"><input type="radio" name="q2" value="0">Не знаю/другой отдел</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>3. На чём основан бюджет?</legend>
+        <label class="opt"><input type="radio" name="q3" value="1">Актуальные рыночные данные</label>
+        <label class="opt"><input type="radio" name="q3" value="0">Прошлые годы</label>
+        <label class="opt"><input type="radio" name="q3" value="0">Субъективные ожидания</label>
+        <label class="opt"><input type="radio" name="q3" value="0">Нет отдельного бюджета</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>4. Проверяли цены за 12 мес.?</legend>
+        <label class="opt"><input type="radio" name="q4" value="1">Да, регулярно</label>
+        <label class="opt"><input type="radio" name="q4" value="0">Давненько</label>
+        <label class="opt"><input type="radio" name="q4" value="0">Нет</label>
+        <label class="opt"><input type="radio" name="q4" value="0">Не знаю</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>5. Реестры (ПП №185, №878) учтены?</legend>
+        <label class="opt"><input type="radio" name="q5" value="1">Да, полностью</label>
+        <label class="opt"><input type="radio" name="q5" value="0">Частично</label>
+        <label class="opt"><input type="radio" name="q5" value="0">Нет</label>
+        <label class="opt"><input type="radio" name="q5" value="1">Не применимо</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>6. Готовность к росту цен 3–5× из-за регуляторики?</legend>
+        <label class="opt"><input type="radio" name="q6" value="1">Да, заложен резерв</label>
+        <label class="opt"><input type="radio" name="q6" value="0">Нет, будет проблемой</label>
+        <label class="opt"><input type="radio" name="q6" value="0">Не анализировали</label>
+        <label class="opt"><input type="radio" name="q6" value="0">Не знаю</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>7. Кто принимает решения по печати?</legend>
+        <label class="opt"><input type="radio" name="q7" value="1">IT-директор/руководитель</label>
+        <label class="opt"><input type="radio" name="q7" value="0">Сисадмин/инженер</label>
+        <label class="opt"><input type="radio" name="q7" value="0">Закупки</label>
+        <label class="opt"><input type="radio" name="q7" value="0">Несколько лиц без ответственности</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>8. На чём основана эксплуатация?</legend>
+        <label class="opt"><input type="radio" name="q8" value="1">Данные и метрики (TCO, SLA)</label>
+        <label class="opt"><input type="radio" name="q8" value="0">«Всегда так делали»</label>
+        <label class="opt"><input type="radio" name="q8" value="0">Советы поставщиков</label>
+        <label class="opt"><input type="radio" name="q8" value="0">Экономия «здесь и сейчас»</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>9. Совместимые картриджи/заправка?</legend>
+        <label class="opt"><input type="radio" name="q9" value="1">Нет, только оригиналы</label>
+        <label class="opt"><input type="radio" name="q9" value="0">Да, массово</label>
+        <label class="opt"><input type="radio" name="q9" value="0">Да, частично</label>
+        <label class="opt"><input type="radio" name="q9" value="0">Не знаю</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>10. Уровень зрелости?</legend>
+        <label class="opt"><input type="radio" name="q10" value="1">Стратегический — политика, метрики, бюджет</label>
+        <label class="opt"><input type="radio" name="q10" value="0">Тактический</label>
+        <label class="opt"><input type="radio" name="q10" value="0">Реактивный</label>
+        <label class="opt"><input type="radio" name="q10" value="0">Стихийно/нет системы</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>11. Бюджет без «слепых зон»?</legend>
+        <label class="opt"><input type="radio" name="q11" value="1">Полностью уверен</label>
+        <label class="opt"><input type="radio" name="q11" value="0">Скорее уверен</label>
+        <label class="opt"><input type="radio" name="q11" value="0">Есть сомнения</label>
+        <label class="opt"><input type="radio" name="q11" value="0">Требует пересмотра</label>
+      </fieldset>
+    </form>
+
+    <div class="hint">Нажмите «Отправить результат» внизу, когда закончите.</div>
+  </div>
+</div>
+
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.MainButton.setText('Отправить результат').hide();
+  tg.onEvent('mainButtonClicked', submit);
+
+  const total = 11;
+  const names = Array.from({length: total}, (_,i)=>'q'+(i+1));
+  const f = document.getElementById('f');
+  const bar = document.getElementById('bar');
+  const pc = document.getElementById('pc');
+
+  // Optional: read Google Apps Script webhook URL from ?hook=
+  const params = new URLSearchParams(location.search);
+  const GAS_HOOK = params.get('hook'); // e.g., https://script.google.com/macros/s/AKfycb.../exec
+
+  function answeredCount(){
+    return names.reduce((a,n)=> a + (f.querySelector(`input[name="${n}"]:checked`)?1:0), 0);
+  }
+  function updateUI(){
+    const done = answeredCount();
+    bar.style.width = Math.round(done/total*100) + '%';
+    pc.textContent = `${done}/${total}`;
+    if(done===total) tg.MainButton.show(); else tg.MainButton.hide();
+  }
+  async function submit(){
+    let score=0, answers={};
+    names.forEach(n=>{
+      const el=f.querySelector(`input[name="${n}"]:checked`);
+      const val = Number(el?.value||0);
+      answers[n]=val;
+      if(val===1) score+=1;
+    });
+    let verdict, advice;
+    if(score>=8){ verdict='Зрелая инфраструктура'; advice='Точечный аудит TCO и оптимизация «длинного хвоста».'; }
+    else if(score>=5){ verdict='Контроль частичный'; advice='Пересмотр бюджета, унификация политики и KPI (TCO, SLA).'; }
+    else { verdict='Высокая уязвимость'; advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
+
+    const payload = {
+      score, verdict, advice, answers,
+      t: new Date().toISOString(),
+      initData: tg.initDataUnsafe || null
+    };
+
+    // (A) отправим данные напрямую в Google Apps Script, если задан hook
+    if (GAS_HOOK) {
+      try {
+        await fetch(GAS_HOOK, {
+          method: 'POST',
+          headers: {'content-type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+      } catch (e) { /* игнорируем, чтобы не блокировать UX */ }
+    }
+
+    // (B) и параллельно отправим боту (чтобы он ответил пользователю)
+    tg.sendData(JSON.stringify(payload));
+    tg.close();
+  }
+  f.addEventListener('change', updateUI);
+  updateUI();
+</script>
+</body>
+</html>
