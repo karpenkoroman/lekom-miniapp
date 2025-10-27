@@ -13,13 +13,20 @@
   h1{margin:0 0 6px;font-size:22px}
   .sub{color:var(--muted);margin-bottom:8px}
   .meta{font-size:13px;color:var(--muted);margin-bottom:12px}
-  .q{border:1px solid rgba(0,0,0,.08);border-radius:var(--radius);padding:14px;margin:12px 0;background:var(--tg-theme-secondary-bg-color,#f8f8f9)}
+  .q{border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:14px;margin:12px 0;background:var(--tg-theme-secondary-bg-color,#f8f8f9)}
   .q legend{font-weight:700;margin-bottom:8px}
   .opt{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
   .opt input{margin-top:2px}
   .progress{height:8px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin:10px 0}
   .bar{height:100%;width:0;background:var(--tg-theme-button-color,#0a84ff);transition:width .25s}
   .hint{font-size:12px;color:var(--muted)}
+  /* Результат */
+  .result{display:none;margin-top:16px;padding:16px;border-left:4px solid var(--tg-theme-button-color,#0a84ff);background:rgba(10,132,255,.08);border-radius:10px}
+  .result h3{margin:0 0 6px;font-size:18px}
+  .ctas{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .cta{display:inline-block;text-decoration:none;padding:12px 14px;border-radius:10px;font-weight:700}
+  .cta.primary{background:var(--tg-theme-button-color,#0a84ff);color:var(--tg-theme-button-text-color,#fff)}
+  .cta.secondary{background:#eef1f5;color:#111}
 </style>
 </head>
 <body>
@@ -28,11 +35,12 @@
     <h1>Аудит печатной инфраструктуры</h1>
     <div class="sub">Неудобные вопросы, которые IT-директор должен задать сам себе</div>
     <div class="meta">⏱ ~5 минут · Ответы конфиденциальны</div>
+
     <div class="progress"><div id="bar" class="bar"></div></div>
     <div id="pc" class="hint">0/11</div>
 
     <form id="f">
-      <!-- ВОПРОСЫ 1–11 (1 = “здоровый”, 0 = риск) -->
+      <!-- 1–11 -->
       <fieldset class="q"><legend>1. Прозрачность учёта расходов?</legend>
         <label class="opt"><input type="radio" name="q1" value="1">Полный и точный учёт всех расходов</label>
         <label class="opt"><input type="radio" name="q1" value="0">Только расходные материалы</label>
@@ -111,25 +119,40 @@
       </fieldset>
     </form>
 
-    <div class="hint">Нажмите «Отправить результат» внизу, когда закончите.</div>
+    <!-- Результат и CTA -->
+    <div id="res" class="result">
+      <h3 id="resTitle">Ваш результат</h3>
+      <div id="resText" class="hint"></div>
+      <div class="ctas">
+        <a id="ctaDiscuss" class="cta primary" target="_blank" rel="noopener">💬 Обсудить с экспертом</a>
+        <a id="ctaContact" class="cta secondary" target="_blank" rel="noopener">📩 Оставить контакты</a>
+      </div>
+    </div>
+
+    <div class="hint" style="margin-top:10px">Нажмите «Отправить результат» внизу, когда закончите.</div>
   </div>
 </div>
 
 <script>
-  const tg = window.Telegram.WebApp;
-  tg.ready();
-  tg.MainButton.setText('Отправить результат').hide();
-  tg.onEvent('mainButtonClicked', submit);
+  const tg = window.Telegram?.WebApp;
+  if (tg) tg.ready();
 
+  // Параметры URL
+  const params = new URLSearchParams(location.search);
+  const GAS_HOOK   = params.get('hook');     // URL Apps Script (можно закодированный)
+  const CONTACT_URL= params.get('contact') || 'https://lekom.ru/contacts'; // меняй на свою форму
+  const DISCUSS_URL= 'https://t.me/romankarpenko';
+
+  // Ссылки CTA
+  document.getElementById('ctaDiscuss').href = DISCUSS_URL;
+  document.getElementById('ctaContact').href = CONTACT_URL;
+
+  // Прогресс
   const total = 11;
   const names = Array.from({length: total}, (_,i)=>'q'+(i+1));
   const f = document.getElementById('f');
   const bar = document.getElementById('bar');
   const pc = document.getElementById('pc');
-
-  // Optional: read Google Apps Script webhook URL from ?hook=
-  const params = new URLSearchParams(location.search);
-  const GAS_HOOK = params.get('hook'); // e.g., https://script.google.com/macros/s/AKfycb.../exec
 
   function answeredCount(){
     return names.reduce((a,n)=> a + (f.querySelector(`input[name="${n}"]:checked`)?1:0), 0);
@@ -138,8 +161,16 @@
     const done = answeredCount();
     bar.style.width = Math.round(done/total*100) + '%';
     pc.textContent = `${done}/${total}`;
-    if(done===total) tg.MainButton.show(); else tg.MainButton.hide();
+    if (tg) {
+      if(done===total) { tg.MainButton.setText('Отправить результат').show(); }
+      else { tg.MainButton.hide(); }
+    }
   }
+
+  if (tg) tg.onEvent('mainButtonClicked', submit);
+  f.addEventListener('change', updateUI);
+  updateUI();
+
   async function submit(){
     let score=0, answers={};
     names.forEach(n=>{
@@ -148,34 +179,46 @@
       answers[n]=val;
       if(val===1) score+=1;
     });
-    let verdict, advice;
-    if(score>=8){ verdict='Зрелая инфраструктура'; advice='Точечный аудит TCO и оптимизация «длинного хвоста».'; }
-    else if(score>=5){ verdict='Контроль частичный'; advice='Пересмотр бюджета, унификация политики и KPI (TCO, SLA).'; }
-    else { verdict='Высокая уязвимость'; advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
+
+    let verdict, advice, icon;
+    if(score>=8){ icon='⭐️'; verdict='Зрелая инфраструктура'; advice='Точечный аудит TCO и оптимизация «длинного хвоста».'; }
+    else if(score>=5){ icon='⚠️'; verdict='Контроль частичный'; advice='Пересмотр бюджета, унификация политики и KPI (TCO, SLA).'; }
+    else { icon='❗️'; verdict='Высокая уязвимость'; advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
 
     const payload = {
       score, verdict, advice, answers,
       t: new Date().toISOString(),
-      initData: tg.initDataUnsafe || null
+      initData: tg?.initDataUnsafe || null
     };
+    const body = JSON.stringify(payload);
 
-    // (A) отправим данные напрямую в Google Apps Script, если задан hook
+    // 1) в Google (если hook задан)
     if (GAS_HOOK) {
       try {
-        await fetch(GAS_HOOK, {
-          method: 'POST',
-          headers: {'content-type':'application/json'},
-          body: JSON.stringify(payload)
-        });
-      } catch (e) { /* игнорируем, чтобы не блокировать UX */ }
+        // sendBeacon сначала (не блокирует закрытие веб-вью), потом fetch на всякий
+        let ok = false;
+        if (navigator.sendBeacon) ok = navigator.sendBeacon(GAS_HOOK, new Blob([body], {type:'application/json'}));
+        if (!ok) await fetch(GAS_HOOK, {method:'POST', headers:{'content-type':'application/json'}, body});
+      } catch(e){}
     }
 
-    // (B) и параллельно отправим боту (чтобы он ответил пользователю)
-    tg.sendData(JSON.stringify(payload));
-    tg.close();
+    // 2) боту
+    try { tg && tg.sendData(body); } catch(e){}
+
+    // 3) показать результат и CTA в мини-аппе
+    document.getElementById('resTitle').textContent = `Ваш результат: ${icon} ${score}/11 — ${verdict}`;
+    document.getElementById('resText').textContent  = advice;
+    document.getElementById('res').style.display = 'block';
+
+    // Кнопка внизу → «Закрыть»
+    if (tg) {
+      tg.MainButton.setText('Закрыть').show();
+      tg.offEvent('mainButtonClicked', submit);
+      tg.onEvent('mainButtonClicked', () => tg.close());
+    }
+    // Скроллим к результату
+    document.getElementById('res').scrollIntoView({behavior:'smooth', block:'start'});
   }
-  f.addEventListener('change', updateUI);
-  updateUI();
 </script>
 </body>
 </html>
