@@ -110,15 +110,69 @@ if (submitBtn){
   });
 }
 
-// === CTA «Обсудить с экспертом»
+// === CTA «Обсудить с экспертом» — максимально универсально
 const ctaExpert = document.getElementById('ctaExpert');
-if (ctaExpert){
-  ctaExpert.addEventListener('click', ()=>{
-    if (lastResult){
-      const msg = `Здравствуйте! Хочу обсудить аудит печати.\nСчёт: ${lastResult.score}/${total}\nВердикт: ${lastResult.verdict}`;
-      const url = `https://t.me/chelebaev?text=${encodeURIComponent(msg)}`;
-      ctaExpert.setAttribute('href', url);
+
+function composeExpertMsg() {
+  const s = lastResult?.score ?? '—';
+  const v = lastResult?.verdict || '—';
+  const a = lastResult?.advice || '';
+  return `Здравствуйте! Хочу обсудить аудит печати.
+Счёт: ${s}/${total}
+Вердикт: ${v}
+Комментарий: ${a}`;
+}
+
+function openTelegram(url){
+  try {
+    if (window.Telegram && window.Telegram.WebApp && typeof Telegram.WebApp.openTelegramLink === 'function') {
+      Telegram.WebApp.openTelegramLink(url);
+      return true;
     }
+  } catch(_) {}
+  window.location.href = url; // веб-фоллбек
+  return true;
+}
+
+function isMobile(){
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+}
+
+async function copyToClipboard(text){
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch { return false; }
+}
+
+if (ctaExpert){
+  ctaExpert.addEventListener('click', async (e)=>{
+    e.preventDefault();
+    const msg = composeExpertMsg();
+
+    // 1) Открываем нативный «Поделиться в Telegram» с уже подставленным текстом
+    // (попросит выбрать чат, на мобиле удобно; в Mini App откроется внутри клиента)
+    openTelegram('https://t.me/share/url?url=&text=' + encodeURIComponent(msg));
+
+    // 2) Параллельно — копируем текст в буфер и показываем подсказку
+    const copied = await copyToClipboard(msg);
+    const hint = document.getElementById('sendMsg');
+    if (hint){
+      hint.style.display='block';
+      hint.textContent = copied
+        ? '✅ Текст скопирован. Выберите чат и вставьте сообщение при необходимости.'
+        : 'ℹ️ Открылось окно «Поделиться». Если текст не подставился — вставьте вручную.';
+      setTimeout(()=>{ hint.style.display='none'; }, 4000);
+    }
+
+    // 3) Через секунду — мягкий переход прямо в чат эксперта
+    // В приложении Telegram сначала пробуем tg://, в браузере — https://
+    setTimeout(()=>{
+      if (isMobile()){
+        // deep link для приложений Telegram на мобилках
+        openTelegram('tg://resolve?domain=chelebaev');
+      } else {
+        openTelegram('https://t.me/chelebaev');
+      }
+    }, 1000);
   });
 }
 
