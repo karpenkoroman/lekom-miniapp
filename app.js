@@ -15,10 +15,24 @@ const withTelegramData = o => (o.initData = tgInit, o);
 const start   = document.getElementById('start');
 const audit   = document.getElementById('audit');
 const webinar = document.getElementById('webinar');
+const titleEl = document.querySelector('h1');
 
-// nav
-document.getElementById('goAudit').onclick   = () => { start.style.display='none'; audit.style.display='block'; window.scrollTo({top:0,behavior:'smooth'}); };
-document.getElementById('goWebinar').onclick = () => { start.style.display='none'; webinar.style.display='block'; window.scrollTo({top:0,behavior:'smooth'}); };
+// === Навигация ===
+document.getElementById('goAudit').onclick = () => {
+  start.style.display = 'none';
+  audit.style.display = 'block';
+  webinar.style.display = 'none';
+  if (titleEl) titleEl.textContent = 'Аудит печатной инфраструктуры';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+document.getElementById('goWebinar').onclick = () => {
+  start.style.display = 'none';
+  webinar.style.display = 'block';
+  audit.style.display = 'none';
+  if (titleEl) titleEl.textContent = 'Выбор темы вебинара';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
 
 // === Audit logic ===
 const f = document.getElementById('f');
@@ -41,7 +55,6 @@ if (f){
 // === Non-blocking send (beacon -> GET fallback)
 function send(obj){
   const json = JSON.stringify(obj);
-
   // 1) POST with body via sendBeacon
   try{
     if(navigator.sendBeacon){
@@ -50,7 +63,6 @@ function send(obj){
       if (ok) return;
     }
   }catch(_){}
-
   // 2) GET fallback
   try{
     const b64 = btoa(unescape(encodeURIComponent(json)))
@@ -79,9 +91,7 @@ if (submitBtn){
                                 : 'Экспресс-аудит, инвентаризация, быстрые меры экономии.';
     const payload = withTelegramData({ type:'result', score:s, verdict, advice, answers:ans, t:new Date().toISOString() });
     send(payload); // fire-and-forget
-
     if (sendMsg){ sendMsg.style.display='block'; sendMsg.textContent='✅ Результаты отправлены!'; setTimeout(()=>sendMsg.style.display='none',3000); }
-
     document.getElementById('resTitle').textContent = `Ваш результат: ${s}/${total} — ${verdict}`;
     document.getElementById('resText').textContent  = advice;
     const res = document.getElementById('res'); res.style.display='block';
@@ -140,17 +150,14 @@ if (sendWebinar){
   });
 }
 
-// === Back to Start (универсально) ===
+// === Reset functions ===
 function resetAudit(){
-  // сброс радио
   flds.forEach(fs=>{
     const checked = fs.querySelector('input:checked');
     if (checked) checked.checked = false;
   });
-  // скрыть результат и форму
   const res = document.getElementById('res'); if (res) res.style.display='none';
   const lf  = document.getElementById('leadForm'); if (lf) lf.style.display='none';
-  // очистить поля лида
   ['name','company','phone','comment'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   const leadMsg = document.getElementById('leadMsg'); if (leadMsg) leadMsg.style.display='none';
   if (sendLeadBtn) sendLeadBtn.disabled=false;
@@ -172,10 +179,11 @@ function goHome(){
   audit.style.display='none';
   webinar.style.display='none';
   start.style.display='block';
+  if (titleEl) titleEl.textContent = 'ЛЕКОМ · Интерактив';
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-// кнопки «↩️ На старт»
+// === Back to Start buttons ===
 ['backHomeFromAudit','backHomeFromAuditTop','backHomeFromWebinar','backHomeFromWebinarTop']
   .forEach(id=>{
     const el = document.getElementById(id);
