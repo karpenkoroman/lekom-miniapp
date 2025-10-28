@@ -157,22 +157,18 @@
   </div>
 </div>
 
+
 <script>
-/* ====== Telegram WebApp bootstrap ====== */
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 
-/* ====== Hook ====== */
 const params   = new URLSearchParams(location.search);
-const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbw7nixHlSkSGCVwp8EN9c0YomPKI5tIaUeioI9-ea0k_bu8IH1R6niV-Nrak01IcxTU/exec';
+const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbz7ipdvyEKBhHun5YDnS_bXwhatQRb_HfgoiVlDBO5vY9LxpUo6eLxbzNgzwQLYZKnn/exec'; // <— подставь новый /exec
 
-/* В некоторых клиентах initDataUnsafe может быть пустым — считаем, что мы в TG, если есть WebApp */
 const IN_TG = !!tg;
 const DEBUG = params.get('debug') === '1';
-
 let MB_LOCK = false;
 
-/* ====== UI refs ====== */
 const qGroups   = [...document.querySelectorAll('form fieldset.q')];
 const total     = qGroups.length;
 const bar       = document.getElementById('bar');
@@ -182,13 +178,11 @@ const leadForm  = document.getElementById('leadForm');
 const ctaContact= document.getElementById('ctaContact');
 const submitBtn = document.getElementById('submitBtn');
 
-/* ====== Helpers ====== */
 function answered(){ return qGroups.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0); }
 function hideMB(){ if(!tg) return; try{ tg.offEvent && tg.offEvent('mainButtonClicked', submit);}catch{} try{ tg.MainButton.hide(); }catch{} }
 
-/* ПЕРЕДАЧА ДАННЫХ: всегда через GET ?q=... (обходит редирект с потерей тела) */
+// Отправка ЧЕРЕЗ GET ?q=... (надежно для Telegram webview)
 async function sendJSON(url, obj) {
-  // ужимаем initData: берём только user.id/username/first_name
   if (obj && obj.initData && obj.initData.user) {
     const u = obj.initData.user;
     obj.initData = { user: { id: u.id, username: u.username, first_name: u.first_name } };
@@ -197,17 +191,10 @@ async function sendJSON(url, obj) {
   }
   const q = encodeURIComponent(JSON.stringify(obj));
   const full = url + (url.includes('?') ? '&' : '?') + 'q=' + q;
-
-  // 1) Пытаемся fetch GET (в webview Telegram это работает надёжно)
-  try {
-    await fetch(full, { method: 'GET', mode: 'no-cors', keepalive: true, cache: 'no-store' });
-    return;
-  } catch {}
-  // 2) Фолбэк: пиксель-картинка
+  try { await fetch(full, { method:'GET', mode:'no-cors', keepalive:true, cache:'no-store' }); return; } catch {}
   try { new Image().src = full; } catch {}
 }
 
-/* ====== Progress / Buttons ====== */
 function updateUI(){
   const d = answered();
   bar.style.width = Math.round(d/Math.max(1,total)*100)+'%';
@@ -222,37 +209,28 @@ function updateUI(){
   if (!IN_TG || DEBUG) {
     submitBtn.style.display = (d===total) ? 'block' : 'none';
   } else {
-    // запасная кнопка и в TG, если MainButton вдруг недоступен
     const visible = (d===total && (!tg || !tg.MainButton));
     submitBtn.style.display = visible ? 'block' : 'none';
   }
 }
 document.addEventListener('change', e => { if (e.target.matches('input[type="radio"]')) updateUI(); });
-document.addEventListener('DOMContentLoaded', updateUI);
+document.addEventListener('DOMContentLoaded', async () => {
+  updateUI();
+  await sendJSON(GAS_HOOK, { type:'trace', stage:'loaded', t:new Date().toISOString() });
+});
 
-/* ====== Submit Result ====== */
 async function submit() {
   const answers = {}; let s = 0;
-  qGroups.forEach((f,i) => {
-    const c = f.querySelector('input:checked'); const v = Number(c ? c.value : 0);
-    answers['q'+(i+1)] = v; if (v===1) s++;
-  });
-
+  qGroups.forEach((f,i) => { const c=f.querySelector('input:checked'); const v=Number(c?c.value:0); answers['q'+(i+1)]=v; if(v===1)s++; });
   let verdict, advice, icon;
   if (s >= 8) { icon='⭐️'; verdict='Зрелая инфраструктура'; advice='Точечный аудит TCO и оптимизация «длинного хвоста».'; }
   else if (s >= 5) { icon='⚠️'; verdict='Контроль частичный'; advice='Пересмотр бюджета, унификация KPI (TCO, SLA).'; }
   else { icon='❗️'; verdict='Высокая уязвимость'; advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
 
-  // трасса клика — увидишь в Logs
   await sendJSON(GAS_HOOK, { type:'trace', stage:'submit-click', t:new Date().toISOString() });
-
   window.__lastResult = { score:s, verdict, advice, answers };
-  await sendJSON(GAS_HOOK, {
-    type:'result', ...window.__lastResult, t:new Date().toISOString(),
-    initData: tg?.initDataUnsafe || null
-  });
+  await sendJSON(GAS_HOOK, { type:'result', ...window.__lastResult, t:new Date().toISOString(), initData: tg?.initDataUnsafe || null });
 
-  // Показ результата + автоскролл + визуальный отклик
   document.getElementById('resTitle').textContent = `Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
   document.getElementById('resText').textContent  = advice;
   resBox.style.display = 'block';
@@ -261,46 +239,28 @@ async function submit() {
 
   MB_LOCK = true; hideMB();
 }
-
-/* Привязки кнопок */
 if (tg) tg.onEvent('mainButtonClicked', submit);
 submitBtn?.addEventListener('click', (e) => { e.preventDefault(); submit(); });
 
-/* ====== Lead Form ====== */
-function openLeadForm(){
-  MB_LOCK = true; hideMB();
-  leadForm.style.display = 'block';
-  setTimeout(() => leadForm.scrollIntoView({ behavior:'smooth', block:'start' }), 30);
-}
-ctaContact?.addEventListener('click', (e) => { e.preventDefault(); openLeadForm(); });
-document.addEventListener('click', (e) => {
-  const a = e.target.closest?.('#ctaContact'); if (a) { e.preventDefault(); openLeadForm(); }
-});
+function openLeadForm(){ MB_LOCK = true; hideMB(); leadForm.style.display='block'; setTimeout(()=>leadForm.scrollIntoView({behavior:'smooth',block:'start'}),30); }
+ctaContact?.addEventListener('click',(e)=>{ e.preventDefault(); openLeadForm(); });
+document.addEventListener('click',(e)=>{ const a=e.target.closest?.('#ctaContact'); if(a){ e.preventDefault(); openLeadForm(); }});
 
-document.getElementById('sendLead')?.addEventListener('click', async () => {
-  const name = document.getElementById('name').value.trim();
-  const company = document.getElementById('company').value.trim();
-  const phone = document.getElementById('phone').value.trim();
-  const comment = document.getElementById('comment').value.trim();
-  if (!name && !phone) { alert('Укажите хотя бы имя или телефон/email'); return; }
-
-  const lead = {
-    type:'lead', name, company, phone, comment, consent:true,
+document.getElementById('sendLead')?.addEventListener('click', async ()=>{
+  const name=document.getElementById('name').value.trim();
+  const company=document.getElementById('company').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const comment=document.getElementById('comment').value.trim();
+  if(!name && !phone){ alert('Укажите хотя бы имя или телефон/email'); return; }
+  const lead={ type:'lead', name, company, phone, comment, consent:true,
     policyUrl:'https://lekom.ru/politika-konfidencialnosti/',
-    result: window.__lastResult || null,
-    t: new Date().toISOString(),
-    initData: tg?.initDataUnsafe || null
-  };
+    result: window.__lastResult || null, t:new Date().toISOString(), initData: tg?.initDataUnsafe || null };
   await sendJSON(GAS_HOOK, lead);
   try { tg?.showAlert?.('Контакты отправлены'); } catch {}
-  const msg = document.getElementById('leadMsg'); const btn = document.getElementById('sendLead');
-  if (msg && btn) { msg.style.display='block'; btn.disabled = true; }
+  const msg=document.getElementById('leadMsg'); const btn=document.getElementById('sendLead');
+  if(msg&&btn){ msg.style.display='block'; btn.disabled=true; }
 });
-
-/* ====== Пинг (уйдёт в Logs) — для проверки связи сразу после загрузки ====== */
-(async () => { try { await sendJSON(GAS_HOOK, { type:'trace', stage:'loaded', t:new Date().toISOString() }); } catch {} })();
 </script>
-
   
 </body>
 </html>
