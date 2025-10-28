@@ -110,7 +110,7 @@ if (submitBtn){
   });
 }
 
-// === Обсудить с экспертом: сразу открыть чат @chelebaev + скопировать текст ===
+// === Обсудить с экспертом: копирование текста + открытие чата + всплывающая подсказка ===
 const ctaExpert = document.getElementById('ctaExpert');
 
 function composeExpertMsg() {
@@ -123,46 +123,58 @@ function composeExpertMsg() {
 Комментарий: ${a}`;
 }
 
-function openTG(url){
+function openTG(url) {
   try {
     if (window.Telegram?.WebApp?.openTelegramLink) {
       Telegram.WebApp.openTelegramLink(url);
       return true;
     }
-  } catch(_) {}
+  } catch (_) {}
   window.location.href = url;
   return true;
 }
 
-async function copyMsgToClipboard(text){
+async function copyMsgToClipboard(text) {
   try { await navigator.clipboard.writeText(text); return true; }
   catch { return false; }
 }
 
-function openExpertChat() {
-  // 1) пробуем deep link для приложений Telegram
-  openTG('tg://resolve?domain=chelebaev');
-  // 2) подстраховка для веба/десктопа — через https
-  setTimeout(()=>openTG('https://t.me/chelebaev'), 700);
+function showToast(message) {
+  let toast = document.createElement('div');
+  toast.textContent = message;
+  Object.assign(toast.style, {
+    position: 'fixed',
+    bottom: '25px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    background: 'rgba(0,0,0,0.8)',
+    color: '#fff',
+    padding: '10px 18px',
+    borderRadius: '12px',
+    fontSize: '15px',
+    zIndex: 9999,
+    opacity: 0,
+    transition: 'opacity 0.3s ease'
+  });
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = 1; }, 50);
+  setTimeout(() => {
+    toast.style.opacity = 0;
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
 }
 
-if (ctaExpert){
-  ctaExpert.addEventListener('click', async (e)=>{
+function openExpertChat() {
+  openTG('tg://resolve?domain=chelebaev');
+  setTimeout(() => openTG('https://t.me/chelebaev'), 700);
+}
+
+if (ctaExpert) {
+  ctaExpert.addEventListener('click', async (e) => {
     e.preventDefault();
     const msg = composeExpertMsg();
-
-    // заранее копируем текст — чтобы пользователь просто вставил его в открывшийся чат
     const copied = await copyMsgToClipboard(msg);
-    const hint = document.getElementById('sendMsg');
-    if (hint){
-      hint.style.display = 'block';
-      hint.textContent = copied
-        ? '✅ Текст скопирован. Открылся чат с экспертом — просто вставьте сообщение.'
-        : 'ℹ️ Открылся чат с экспертом. Если текст не подставился — вставьте вручную.';
-      setTimeout(()=> hint.style.display='none', 4000);
-    }
-
-    // сразу открываем личный чат эксперта
+    showToast('💬 Текст сообщения скопирован, вставьте в чат и отправьте');
     openExpertChat();
   });
 }
