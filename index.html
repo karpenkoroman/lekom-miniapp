@@ -6,35 +6,34 @@
 <title>ЛЕКОМ · Аудит печати</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  :root { --gap:14px; --radius:12px; --muted:#6b7280; }
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;margin:0;background:var(--tg-theme-secondary-bg-color,#f6f7fb);color:var(--tg-theme-text-color,#111)}
+  :root { --muted:#6b7280; }
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;margin:0;background:#0f1115;color:#f5f7fb}
   .wrap{max-width:900px;margin:0 auto;padding:20px}
-  .card{background:var(--tg-theme-bg-color,#fff);border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.06);padding:20px}
+  .card{background:#12151c;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.3);padding:20px}
   h1{margin:0 0 6px;font-size:22px}
   .sub{color:var(--muted);margin-bottom:8px}
-  .meta{font-size:13px;color:#6b7280;margin-bottom:12px}
-  .q{border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:14px;margin:12px 0;background:var(--tg-theme-secondary-bg-color,#f8f8f9)}
+  .meta{font-size:13px;color:#9aa0a6;margin-bottom:12px}
+  .q{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;margin:12px 0;background:rgba(255,255,255,.03)}
   .q legend{font-weight:700;margin-bottom:8px}
   .opt{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
   .opt input{margin-top:2px}
-  .progress{height:8px;background:#e5e7eb;border-radius:8px;overflow:hidden;margin:10px 0}
-  .bar{height:100%;width:0;background:var(--tg-theme-button-color,#0a84ff);transition:width .2s ease}
-  .hint{font-size:12px;color:#6b7280}
-  .result{display:none;margin-top:16px;padding:16px;border-left:4px solid var(--tg-theme-button-color,#0a84ff);background:rgba(10,132,255,.08);border-radius:10px}
-  .result h3{margin:0 0 6px;font-size:18px}
+  .progress{height:8px;background:#2a2f3a;border-radius:8px;overflow:hidden;margin:10px 0}
+  .bar{height:100%;width:0;background:#0a84ff;transition:width .2s ease}
+  .hint{font-size:12px;color:#9aa0a6}
+  .result{display:none;margin-top:16px;padding:16px;border-left:4px solid #0a84ff;background:rgba(10,132,255,.08);border-radius:10px}
   .ctas{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
   .cta{display:inline-block;text-decoration:none;padding:12px 14px;border-radius:10px;font-weight:700;cursor:pointer}
-  .cta.primary{background:var(--tg-theme-button-color,#0a84ff);color:var(--tg-theme-button-text-color,#fff)}
-  .cta.secondary{background:#eef1f5;color:#111}
+  .cta.primary{background:#0a84ff;color:#fff}
+  .cta.secondary{background:#1e2533;color:#fff}
   #leadForm{display:none;margin-top:20px}
-  input,textarea{font-family:inherit}
-  #leadForm input,#leadForm textarea{padding:10px;border-radius:8px;border:1px solid #ccc;width:100%}
-  .agree{display:flex;gap:10px;align-items:flex-start;margin:6px 0 2px 0;font-size:13px;color:#333}
-  .agree a{color:#0a84ff;text-decoration:underline}
+  input,textarea{font-family:inherit;background:#0e1420;color:#fff;border-color:#334155}
+  #leadForm input,#leadForm textarea{padding:10px;border-radius:8px;border:1px solid #334155;width:100%}
   #sendLead{background:#0a84ff;color:#fff;font-weight:700;padding:12px;border:none;border-radius:10px;cursor:pointer;width:100%;margin-top:8px}
-  #leadMsg{margin-top:10px;color:#0a84ff;display:none}
-  #fallbackSubmit{display:block;margin:14px 0 6px 0;width:100%;padding:12px 14px;border:0;border-radius:10px;background:#0a84ff;color:#fff;font-weight:700}
+  #leadMsg{margin-top:10px;color:#7dd3fc;display:none}
+  #fallbackSubmit{display:block;margin:14px 0 0;width:100%;padding:12px 14px;border:0;border-radius:10px;background:#0a84ff;color:#fff;font-weight:700}
   .in-tg #fallbackSubmit{display:none}
+  .consent-note{font-size:12px;color:#9aa0a6;margin-top:6px}
+  .consent-note a{color:#7dd3fc}
 </style>
 </head>
 <body>
@@ -48,6 +47,7 @@
     <div id="pc" class="hint">0/11</div>
 
     <form id="f">
+      <!-- 11 вопросов -->
       <fieldset class="q"><legend>1. Прозрачность учёта расходов?</legend>
         <label class="opt"><input type="radio" name="q1" value="1">Полный и точный учёт всех расходов</label>
         <label class="opt"><input type="radio" name="q1" value="0">Только расходные материалы</label>
@@ -116,8 +116,10 @@
       </fieldset>
     </form>
 
+    <!-- Фолбэк-кнопка для браузера (в Telegram скрыта) -->
     <button id="fallbackSubmit">Отправить результат (браузер)</button>
 
+    <!-- Результат -->
     <div id="res" class="result">
       <h3 id="resTitle">Ваш результат</h3>
       <div id="resText" class="hint"></div>
@@ -127,6 +129,7 @@
       </div>
     </div>
 
+    <!-- Форма контактов -->
     <div id="leadForm">
       <h3>Оставьте свои контакты</h3>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
@@ -134,104 +137,50 @@
         <input id="company" placeholder="Компания">
         <input id="phone" placeholder="Телефон или email">
         <textarea id="comment" placeholder="Комментарий" rows="3"></textarea>
-        <label class="agree">
-          <input type="checkbox" id="agree">
-          <span>Отправляя форму, подтверждаю согласие с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank" rel="noopener">политикой обработки персональных данных</a>.</span>
-        </label>
+        <div class="consent-note">Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank" rel="noopener">политикой конфиденциальности</a>.</div>
         <button id="sendLead">📩 Отправить контакты</button>
       </div>
       <div id="leadMsg">✅ Спасибо! Контакты отправлены.</div>
     </div>
-
-    <div class="hint" style="margin-top:10px">⚠️ Кнопка «Отправить результат» видна только в Telegram. В браузере используйте кнопку выше.</div>
   </div>
 </div>
 
 <script>
-const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-if (tg) { document.body.classList.add('in-tg'); try{ tg.ready(); tg.expand(); tg.MainButton.enable(); }catch(e){} }
-
+const tg = window.Telegram?.WebApp; if (tg){document.body.classList.add('in-tg');try{tg.ready();tg.expand();tg.MainButton.enable();}catch(e){}}
 const params = new URLSearchParams(location.search);
 const GAS_HOOK = params.get('hook') || '';
 
-const qGroups = Array.from(document.querySelectorAll('form fieldset.q'));
-const total = qGroups.length;
-const bar = document.getElementById('bar');
-const pc = document.getElementById('pc');
-const resBox = document.getElementById('res');
-const resTitle = document.getElementById('resTitle');
-const resText = document.getElementById('resText');
-const leadForm = document.getElementById('leadForm');
-const leadMsg = document.getElementById('leadMsg');
+const qGroups=[...document.querySelectorAll('form fieldset.q')];
+const total=qGroups.length, bar=document.getElementById('bar'), pc=document.getElementById('pc');
+function answered(){return qGroups.reduce((n,fs)=>n+(fs.querySelector('input[type="radio"]:checked')?1:0),0)}
+function ui(){const d=answered();bar.style.width=Math.round(d/Math.max(1,total)*100)+'%';pc.textContent=d+'/'+total; if(tg){try{d===total? (tg.MainButton.setText('Отправить результат'),tg.MainButton.show()) : tg.MainButton.hide();}catch(e){}}}
+document.addEventListener('change',e=>{if(e.target.matches('input[type="radio"]')) ui()},true);
+document.addEventListener('click',e=>{if(e.target.matches('label,input[type="radio"]')) setTimeout(ui,0)},true);
+document.addEventListener('DOMContentLoaded',()=>{ui();setTimeout(ui,200);setTimeout(ui,600);});
 
-function answeredCount(){ return qGroups.reduce((n,fs)=> n + (fs.querySelector('input[type="radio"]:checked')?1:0), 0); }
-function updateUI(){
-  const done = answeredCount();
-  bar.style.width = Math.round(done/Math.max(1,total)*100) + '%';
-  pc.textContent = done + '/' + total;
-  if (tg) {
-    try {
-      if(done===total) { tg.MainButton.setText('Отправить результат'); tg.MainButton.show(); }
-      else { tg.MainButton.hide(); }
-    } catch(e){}
-  }
-}
-document.addEventListener('change', (e)=>{ if(e.target.matches('input[type="radio"]')) updateUI(); }, true);
-document.addEventListener('click', (e)=>{ if(e.target.matches('label,input[type="radio"]')) setTimeout(updateUI,0); }, true);
-document.addEventListener('DOMContentLoaded', ()=>{ updateUI(); setTimeout(updateUI,200); setTimeout(updateUI,600); });
-
-async function postToGAS(url, obj) {
-  const body = JSON.stringify(obj);
-  try {
-    if (navigator.sendBeacon) {
-      const ok = navigator.sendBeacon(url, new Blob([body], { type: 'text/plain;charset=UTF-8' }));
-      if (ok) return true;
-    }
-  } catch(e){}
-  try { await fetch(url, { method:'POST', mode:'no-cors', keepalive:true, body }); return true; }
-  catch(e){ try { new Image().src = url + '?q=' + encodeURIComponent(body).slice(0,1800); return true; } catch(e2){ return false; } }
+async function postToGAS(url,obj){
+  const body=JSON.stringify(obj);
+  try{ if(navigator.sendBeacon){const ok=navigator.sendBeacon(url,new Blob([body],{type:'text/plain;charset=UTF-8'})); if(ok) return true;} }catch(e){}
+  try{ await fetch(url,{method:'POST',mode:'no-cors',keepalive:true,body}); return true;}catch(e){ try{new Image().src=url+'?q='+encodeURIComponent(body).slice(0,1800);return true;}catch(_){return false;}}
 }
 
 async function submit(){
-  const answers = {}; let score = 0;
-  qGroups.forEach((fs, i)=>{
-    const el = fs.querySelector('input[type="radio"]:checked');
-    const val = Number(el ? el.value : 0);
-    answers['q'+(i+1)] = val; if (val === 1) score += 1;
-  });
-  let verdict, advice, icon;
-  if(score>=8){ icon='⭐️'; verdict='Зрелая инфраструктура'; advice='Точечный аудит TCO и оптимизация «длинного хвоста».'; }
-  else if(score>=5){ icon='⚠️'; verdict='Контроль частичный'; advice='Пересмотр бюджета, унификация политики и KPI (TCO, SLA).'; }
-  else { icon='❗️'; verdict='Высокая уязвимость'; advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
-  window.__lastResult = { score, verdict, advice, answers };
-
-  if (GAS_HOOK) { await postToGAS(GAS_HOOK, { type:'result', ...window.__lastResult, t:new Date().toISOString(), initData: tg && tg.initDataUnsafe ? tg.initDataUnsafe : null }); }
-  try{ tg && tg.sendData(JSON.stringify({ type:'result', ...window.__lastResult })); }catch(e){}
-  resTitle.textContent = 'Ваш результат: ' + icon + ' ' + score + '/' + total + ' — ' + verdict;
-  resText.textContent  = advice;
-  resBox.style.display = 'block';
-  if (tg) { try { tg.MainButton.setText('Закрыть'); tg.offEvent && tg.offEvent('mainButtonClicked', submit); tg.onEvent && tg.onEvent('mainButtonClicked', ()=>tg.close()); tg.MainButton.show(); } catch(e){} }
-  resBox.scrollIntoView({behavior:'smooth'});
+  const answers={}, res=document.getElementById('res'), resTitle=document.getElementById('resTitle'), resText=document.getElementById('resText');
+  let score=0; qGroups.forEach((fs,i)=>{const c=fs.querySelector('input[type="radio"]:checked'); const v=Number(c?c.value:0); answers['q'+(i+1)]=v; if(v===1) score++;});
+  let verdict,advice,icon; if(score>=8){icon='⭐️';verdict='Зрелая инфраструктура';advice='Точечный аудит TCO и оптимизация «длинного хвоста».';} else if(score>=5){icon='⚠️';verdict='Контроль частичный';advice='Пересмотр бюджета, унификация политики и KPI (TCO, SLA).';} else {icon='❗️';verdict='Высокая уязвимость';advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.';}
+  window.__lastResult={score,verdict,advice,answers};
+  if(GAS_HOOK){await postToGAS(GAS_HOOK,{type:'result',...window.__lastResult,t:new Date().toISOString(),initData:tg?.initDataUnsafe||null});}
+  try{tg&&tg.sendData(JSON.stringify({type:'result',...window.__lastResult}));}catch(e){}
+  resTitle.textContent=`Ваш результат: ${icon} ${score}/${total} — ${verdict}`;
+  resText.textContent=advice; res.style.display='block';
+  if(tg){try{tg.MainButton.setText('Закрыть'); tg.offEvent&&tg.offEvent('mainButtonClicked',submit); tg.onEvent&&tg.onEvent('mainButtonClicked',()=>tg.close()); tg.MainButton.show();}catch(e){}}
+  res.scrollIntoView({behavior:'smooth'});
 }
+if(tg&&tg.onEvent) tg.onEvent('mainButtonClicked',submit);
+document.getElementById('fallbackSubmit').addEventListener('click',submit);
 
-if (tg && tg.onEvent) tg.onEvent('mainButtonClicked', submit);
-document.getElementById('fallbackSubmit').addEventListener('click', submit);
-
-document.getElementById('ctaContact').addEventListener('click', ()=>{ leadForm.style.display='block'; leadForm.scrollIntoView({behavior:'smooth'}); });
-
-document.getElementById('sendLead').addEventListener('click', async ()=>{
-  const name = document.getElementById('name').value.trim();
-  const company = document.getElementById('company').value.trim();
-  const phone = document.getElementById('phone').value.trim();
-  const comment = document.getElementById('comment').value.trim();
-  const agree = document.getElementById('agree').checked;
-  if (!agree) { alert('Пожалуйста, подтвердите согласие с политикой обработки персональных данных.'); return; }
-  if (!name && !phone) { alert('Укажите хотя бы имя или телефон/email'); return; }
-  const lead = { type:'lead', name, company, phone, comment, consent:true, policyUrl:'https://lekom.ru/politika-konfidencialnosti/', result: window.__lastResult || null, t:new Date().toISOString(), initData: tg && tg.initDataUnsafe ? tg.initDataUnsafe : null };
-  if (GAS_HOOK) { await postToGAS(GAS_HOOK, lead); }
-  leadMsg.style.display='block';
-  document.getElementById('sendLead').disabled = true;
-});
+document.getElementById('ctaContact').addEventListener('click',()=>{const lf=document.getElementById('leadForm'); lf.style.display='block'; lf.scrollIntoView({behavior:'smooth'});});
+document.getElementById('sendLead').addEventListener('click',async()=>{const name=document.getElementById('name').value.trim();const company=document.getElementById('company').value.trim();const phone=document.getElementById('phone').value.trim();const comment=document.getElementById('comment').value.trim(); if(!name && !phone){alert('Укажите хотя бы имя или телефон/email');return;} const lead={type:'lead',name,company,phone,comment,consent:true,policyUrl:'https://lekom.ru/politika-konfidencialnosti/',result:window.__lastResult||null,t:new Date().toISOString(),initData:tg?.initDataUnsafe||null}; if(GAS_HOOK){await postToGAS(GAS_HOOK,lead);} document.getElementById('leadMsg').style.display='block'; document.getElementById('sendLead').disabled=true;});
 </script>
 </body>
 </html>
