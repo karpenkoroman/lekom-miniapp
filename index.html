@@ -172,7 +172,7 @@ if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 
 /* ===== Hook ===== */
 const params   = new URLSearchParams(location.search);
-const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbw7nixHlSkSGCVwp8EN9c0YomPKI5tIaUeioI9-ea0k_bu8IH1R6niV-Nrak01IcxTU/exec';
+const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbzpOZsg6yiJ_An3Mu1rcLC1aY70QC4vI2LpjqxwynsPFSYDTt52m-vSEQIAUNH-FPI/exec';
 
 /* Внутри Telegram считаем, если объект WebApp есть (у некоторых initData пустой) */
 const IN_TG = !!tg;
