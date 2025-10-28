@@ -334,23 +334,6 @@ document.getElementById('sendLead')?.addEventListener('click', async ()=>{
   if(msg&&btn){ msg.style.display='block'; btn.disabled=true; }
 });
 
-    // Принудительная отладочная кнопка
-const forceBtn = document.createElement('button');
-forceBtn.textContent = '📤 Принудительно отправить результат';
-forceBtn.style.cssText = 'width:100%;margin-top:12px;padding:12px;border-radius:10px;background:#0a84ff;color:#fff;font-weight:700;border:none;';
-forceBtn.onclick = async ()=>{
-  await sendJSON(GAS_HOOK, {
-    type:'result',
-    score:7,
-    verdict:'Контроль частичный',
-    advice:'Проверка кнопки вручную',
-    answers:{q1:1,q2:0},
-    t:new Date().toISOString(),
-    initData:{user:{id:'999',username:'manual',first_name:'Test'}}
-  });
-  alert('Тестовый результат отправлен!');
-};
-(document.getElementById('leadForm')?.parentNode || document.body).appendChild(forceBtn);
     
 </script>
 
