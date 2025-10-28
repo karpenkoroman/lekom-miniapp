@@ -173,7 +173,7 @@ if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 
 /* ===== Hook & flags ===== */
 const params   = new URLSearchParams(location.search);
-const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/NEW_EXEC_ID/exec'; // <-- подставь актуальный /exec
+const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbzpOZsg6yiJ_An3Mu1rcLC1aY70QC4vI2LpjqxwynsPFSYDTt52m-vSEQIAUNH-FPI/exec'; // <-- подставь актуальный /exec
 const DEBUG    = params.get('debug') === '1';
 const TESTAUTO = params.get('test') === '1'; // ?test=1 — автосабмит через 2 сек
 const IN_TG    = !!tg;
