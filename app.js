@@ -1,6 +1,6 @@
 // === SETTINGS ===
-// HOOK используется ТОЛЬКО для аудита/лидов; опрос по темам — локально (без сети)
-const HOOK = 'https://script.google.com/macros/s/AKfycbyvq_c0Hx2jKQ5PyMpqMuCRiCY_PAaMaocgrCAf1X20fVbIrJlj_mQ3cp-TG0TRNUbw/exec';
+const HOOK = 'https://script.google.com/macros/s/AKfycbyV5bPJzurT8P8arbFABAvBwBcgVosK4p6YGVU6a2WiTbIye4ni9OtrMdZLByofVqAa/exec';
+const SUMMARY_URL = HOOK + (HOOK.includes('?')?'&':'?') + 'summary=webinar&callback=__LEKOM_SUMMARY_CB';
 
 // === Telegram initData (для аудита/лидов)
 let tgInit = {};
@@ -28,7 +28,6 @@ document.getElementById('goAudit').onclick = () => {
   if (subEl) subEl.style.display = 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
-
 document.getElementById('goWebinar').onclick = () => {
   start.style.display = 'none';
   webinar.style.display = 'block';
@@ -56,7 +55,7 @@ if (f){
   f.addEventListener('change', e=>{ if(e.target.matches('input[type="radio"]')) updateProgress(); }, {passive:true});
 }
 
-// === Отправка на GAS (только аудит/лиды)
+// === Отправка на GAS (аудит/лиды) + JSONP summary loader
 function send(obj){
   const json = JSON.stringify(obj);
   try{
@@ -76,11 +75,34 @@ function send(obj){
       .catch(()=>{}).finally(()=>clearTimeout(t));
   }catch(_){}
 }
+window.__LEKOM_SUMMARY_CB = function(data){
+  try{
+    const box = document.getElementById('summaryBody');
+    if (!box) return;
+    const total = data?.total || 0;
+    const items = Array.isArray(data?.items) ? data.items : [];
+    if (!total){
+      box.textContent = 'Пока нет голосов.';
+      return;
+    }
+    const lines = items.map(it=>{
+      const pct = Math.round(it.count * 100 / total);
+      return `<div class="mt"><div class="grid"><div>${it.topic}</div><div>${it.count} (${pct}%)</div></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+    }).join('');
+    box.innerHTML = `Всего голосов: <b>${total}</b><div class="mt">${lines}</div>`;
+  }catch(_){}
+};
+function loadSummary(){
+  const s=document.createElement('script');
+  s.src = SUMMARY_URL + '&_=' + Date.now();
+  s.async = true;
+  document.head.appendChild(s);
+}
 
-// Warm-up GAS для аудита/лидов
+// Warm-up & start summary
 window.addEventListener('load', ()=>{
   try{ send({type:'trace',stage:'loaded',t:new Date().toISOString()}); }catch(_){}
-  renderLocalSummary(); // показать сводку по темам
+  loadSummary();
 });
 
 // Submit audit
@@ -128,58 +150,7 @@ if (sendLeadBtn){
   });
 }
 
-// === WEBINAR POLL (локально, без сети) ===
-const WB_KEY = 'lekom_webinar_poll_v1';
-
-function readPoll(){
-  try{ return JSON.parse(localStorage.getItem(WB_KEY) || '{}'); }catch(_){ return {}; }
-}
-function writePoll(data){
-  try{ localStorage.setItem(WB_KEY, JSON.stringify(data)); }catch(_){}
-}
-function addVote(topic, otherText){
-  const db = readPoll();
-  const key = topic === 'Другая тема' ? (otherText || 'Другая тема') : topic;
-  db[key] = (db[key] || 0) + 1;
-  writePoll(db);
-  return db;
-}
-function summaryFromLocal(){
-  const db = readPoll();
-  const items = Object.keys(db).map(k=>({ topic:k, count:db[k] })).sort((a,b)=>b.count-a.count);
-  const total = items.reduce((s,i)=>s+i.count,0);
-  return { total, items };
-}
-function renderLocalSummary(){
-  const box = document.getElementById('summaryBody');
-  if (!box) return;
-  const { total, items } = summaryFromLocal();
-  if (!total){ box.textContent = 'Пока нет голосов.'; return; }
-
-  // рисуем список с мини-барами
-  const frag = document.createDocumentFragment();
-  const totalDiv = document.createElement('div');
-  totalDiv.innerHTML = `Всего голосов: <b>${total}</b>`;
-  frag.appendChild(totalDiv);
-
-  const list = document.createElement('div');
-  list.className = 'mt';
-  items.forEach(it=>{
-    const pct = Math.round(it.count*100/total);
-    const row = document.createElement('div');
-    row.className = 'mt';
-    row.innerHTML = `<div class="grid">
-        <div>${it.topic}</div><div>${it.count} (${pct}%)</div>
-      </div>
-      <div class="bar"><i style="width:${pct}%"></i></div>`;
-    list.appendChild(row);
-  });
-  frag.appendChild(list);
-
-  box.innerHTML = '';
-  box.appendChild(frag);
-}
-
+// === Webinar poll (через GAS, общий счёт) ===
 const wbOtherRadio = document.getElementById('wbOtherRadio');
 const wbOtherText  = document.getElementById('wbOtherText');
 const webinarOptions = document.getElementById('webinarOptions');
@@ -200,10 +171,12 @@ if (sendWebinar){
       other = (wbOtherText?.value || '').trim();
       if (other.length < 3){ alert('Пожалуйста, укажите тему (минимум 3 символа)'); return; }
     }
-    // ЛОКАЛЬНАЯ запись голоса
-    addVote(topic, other);
+    // Отправляем голос на GAS
+    send(withTelegramData({ type:'poll', poll:'webinar_topic', topic, other, t:new Date().toISOString() }));
     document.getElementById('webinarMsg').style.display='block';
     sendWebinar.disabled = true;
+    // Обновим сводку на старте после возврата (или сразу подтянуть можно):
+    setTimeout(loadSummary, 1200);
   });
 }
 
@@ -237,7 +210,7 @@ function goHome(){
   if (titleEl) titleEl.textContent = 'ЛЕКОМ · Интерактив';
   if (subEl) subEl.style.display = 'block';
   window.scrollTo({top:0,behavior:'smooth'});
-  renderLocalSummary(); // обновить сводку
+  loadSummary();
 }
 ['backHomeFromAudit','backHomeFromAuditTop','backHomeFromWebinar','backHomeFromWebinarTop']
   .forEach(id=>{
