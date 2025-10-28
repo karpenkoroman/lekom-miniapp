@@ -61,28 +61,28 @@ function sendQ(obj){
   document.head.appendChild(s);
 }
 
-// === JSONP сводка
+// JSONP сводка: показываем только темы и их счёт
 window.__LEKOM_SUMMARY_CB = function(data){
-  const box = document.getElementById('summaryBody'); if(!box) return;
+  const box = document.getElementById('summaryBody');
+  if (!box) return;
   const total = data?.total || 0;
   const items = Array.isArray(data?.items) ? data.items : [];
-  if (!total){ box.textContent = 'Пока нет голосов.'; return; }
+  if (!total){
+    box.textContent = 'Пока нет голосов.';
+    return;
+  }
   const lines = items.map(it=>{
-    const pct = Math.round(it.count*100/total);
-    return `<div class="mt"><div class="grid"><div>${it.topic}</div><div>${it.count} (${pct}%)</div></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+    const pct = Math.round(it.count * 100 / total);
+    return `<div class="mt">
+      <div class="grid">
+        <div>${it.topic}</div>
+        <div>${it.count} (${pct}%)</div>
+      </div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+    </div>`;
   }).join('');
   box.innerHTML = `Всего голосов: <b>${total}</b><div class="mt">${lines}</div>`;
 };
-function loadSummary(){
-  const s=document.createElement('script');
-  s.src = SUMMARY_URL + '&_=' + Date.now();
-  s.async = true;
-  document.head.appendChild(s);
-}
-window.addEventListener('load', ()=>{
-  try{ sendQ({type:'trace',stage:'loaded',t:new Date().toISOString()}); }catch(_){}
-  loadSummary();
-});
 
 // === Submit audit
 const submitBtn = document.getElementById('submitBtn');
