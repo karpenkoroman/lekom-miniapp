@@ -11,13 +11,14 @@ try {
 } catch(_) {}
 const withTelegramData = o => (o.initData = tgInit, o);
 
-// === UI refs ===
-const start = document.getElementById('start');
-const audit = document.getElementById('audit');
+// === Sections ===
+const start   = document.getElementById('start');
+const audit   = document.getElementById('audit');
 const webinar = document.getElementById('webinar');
 
-document.getElementById('goAudit').onclick = () => { start.style.display='none'; audit.style.display='block'; };
-document.getElementById('goWebinar').onclick = () => { start.style.display='none'; webinar.style.display='block'; };
+// nav
+document.getElementById('goAudit').onclick   = () => { start.style.display='none'; audit.style.display='block'; window.scrollTo({top:0,behavior:'smooth'}); };
+document.getElementById('goWebinar').onclick = () => { start.style.display='none'; webinar.style.display='block'; window.scrollTo({top:0,behavior:'smooth'}); };
 
 // === Audit logic ===
 const f = document.getElementById('f');
@@ -115,7 +116,6 @@ if (sendLeadBtn){
 // === Webinar poll logic ===
 const wbOtherRadio = document.getElementById('wbOtherRadio');
 const wbOtherText  = document.getElementById('wbOtherText');
-
 const webinarOptions = document.getElementById('webinarOptions');
 if (webinarOptions){
   webinarOptions.addEventListener('change', ()=>{
@@ -123,7 +123,6 @@ if (webinarOptions){
     if (wbOtherText) wbOtherText.style.display = isOther ? 'block' : 'none';
   });
 }
-
 const sendWebinar = document.getElementById('sendWebinar');
 if (sendWebinar){
   sendWebinar.addEventListener('click', ()=>{
@@ -140,3 +139,45 @@ if (sendWebinar){
     sendWebinar.disabled = true;
   });
 }
+
+// === Back to Start (универсально) ===
+function resetAudit(){
+  // сброс радио
+  flds.forEach(fs=>{
+    const checked = fs.querySelector('input:checked');
+    if (checked) checked.checked = false;
+  });
+  // скрыть результат и форму
+  const res = document.getElementById('res'); if (res) res.style.display='none';
+  const lf  = document.getElementById('leadForm'); if (lf) lf.style.display='none';
+  // очистить поля лида
+  ['name','company','phone','comment'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const leadMsg = document.getElementById('leadMsg'); if (leadMsg) leadMsg.style.display='none';
+  if (sendLeadBtn) sendLeadBtn.disabled=false;
+  if (progressText) progressText.textContent = `Вопрос 0 из ${total}`;
+  if (sendMsg) sendMsg.style.display='none';
+}
+
+function resetWebinar(){
+  const radios = document.querySelectorAll('input[name="webinar"]');
+  radios.forEach(r=>r.checked=false);
+  if (wbOtherText){ wbOtherText.value=''; wbOtherText.style.display='none'; }
+  const webinarMsg = document.getElementById('webinarMsg'); if (webinarMsg) webinarMsg.style.display='none';
+  if (sendWebinar) sendWebinar.disabled=false;
+}
+
+function goHome(){
+  resetAudit();
+  resetWebinar();
+  audit.style.display='none';
+  webinar.style.display='none';
+  start.style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// кнопки «↩️ На старт»
+['backHomeFromAudit','backHomeFromAuditTop','backHomeFromWebinar','backHomeFromWebinarTop']
+  .forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', (e)=>{ e.preventDefault(); goHome(); });
+  });
