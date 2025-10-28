@@ -110,7 +110,7 @@ if (submitBtn){
   });
 }
 
-// === Обсудить с экспертом: копирование текста + открытие чата + всплывающая подсказка ===
+// === Обсудить с экспертом: копируем текст, показываем заметный тост, открываем чат ===
 const ctaExpert = document.getElementById('ctaExpert');
 
 function composeExpertMsg() {
@@ -134,48 +134,74 @@ function openTG(url) {
   return true;
 }
 
-async function copyMsgToClipboard(text) {
-  try { await navigator.clipboard.writeText(text); return true; }
-  catch { return false; }
-}
-
-function showToast(message) {
-  let toast = document.createElement('div');
-  toast.textContent = message;
+// ВИДИМЫЙ ТОСТ: сверху, больше, 6с, по тапу закрывается
+function showToast(message, ms = 6000) {
+  const toast = document.createElement('div');
+  toast.innerHTML = `💬 ${message}`;
   Object.assign(toast.style, {
     position: 'fixed',
-    bottom: '25px',
+    top: `calc(env(safe-area-inset-top, 0px) + 14px)`,
     left: '50%',
     transform: 'translateX(-50%)',
-    background: 'rgba(0,0,0,0.8)',
+    background: '#111',
     color: '#fff',
-    padding: '10px 18px',
+    padding: '14px 18px',
     borderRadius: '12px',
-    fontSize: '15px',
-    zIndex: 9999,
+    fontSize: '16px',
+    lineHeight: '1.25',
+    maxWidth: '92vw',
+    textAlign: 'center',
+    boxShadow: '0 8px 24px rgba(0,0,0,.28)',
+    zIndex: 99999,
     opacity: 0,
-    transition: 'opacity 0.3s ease'
+    transition: 'opacity .25s ease, transform .25s ease',
+    cursor: 'pointer'
   });
   document.body.appendChild(toast);
-  setTimeout(() => { toast.style.opacity = 1; }, 50);
-  setTimeout(() => {
-    toast.style.opacity = 0;
-    setTimeout(() => toast.remove(), 400);
-  }, 3000);
+  // Плавное появление (слегка сдвигаем вниз)
+  requestAnimationFrame(() => {
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+    toast.style.opacity = '1';
+  });
+
+  // Закрытие по тапу
+  const hide = () => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(-6px)';
+    setTimeout(() => toast.remove(), 250);
+  };
+  toast.addEventListener('click', hide);
+
+  // Авто-скрытие
+  const t = setTimeout(hide, ms);
+  // Если уедем со страницы — убрать таймер
+  window.addEventListener('beforeunload', () => clearTimeout(t), { once: true });
 }
 
+// Открываем чат (deep-link → веб фоллбек)
 function openExpertChat() {
   openTG('tg://resolve?domain=chelebaev');
   setTimeout(() => openTG('https://t.me/chelebaev'), 700);
+}
+
+async function copyMsgToClipboard(text){
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch { return false; }
 }
 
 if (ctaExpert) {
   ctaExpert.addEventListener('click', async (e) => {
     e.preventDefault();
     const msg = composeExpertMsg();
-    const copied = await copyMsgToClipboard(msg);
-    showToast('💬 Текст сообщения скопирован, вставьте в чат и отправьте');
-    openExpertChat();
+
+    // 1) Показать тост повыше, держим 6 секунд
+    showToast('Текст сообщения скопирован, вставьте в чат и отправьте', 6000);
+
+    // 2) Скопировать в буфер (если браузер позволяет)
+    await copyMsgToClipboard(msg);
+
+    // 3) Дадим пользователю заметить тост ~1.2с, затем открываем чат
+    setTimeout(() => openExpertChat(), 1200);
   });
 }
 
