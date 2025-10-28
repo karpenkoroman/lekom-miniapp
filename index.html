@@ -159,9 +159,9 @@ const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 
 const params = new URLSearchParams(location.search);
-const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbxG1xY6gVvRY04Y8_yuLds3J51QMdOdYTVuY8c0iFRQ5fPEmpRZIjgOmkqhzoFwCRoM/exec';
+const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbwjJIv6fRqDpVQwyWR0CJz5o88IH-1vnnV52xtVHYIamLZl_KQq5lQH79m9Niax-Zsz/exec';
 
-// Глобальный флаг блокировки MainButton после сабмита/при открытии формы лида
+  // Глобальный флаг блокировки MainButton после сабмита/при открытии формы лида
 let MB_LOCK = false;
 
 // Тихий пинг (для связи со скриптом)
