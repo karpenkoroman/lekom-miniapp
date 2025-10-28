@@ -41,17 +41,88 @@
     <div id="pc" style="font-size:12px;color:#9aa0a6">0/11</div>
 
     <form id="f">
+      <!-- Блок 1. Иллюзия контроля -->
       <fieldset class="q"><legend>1. Как вы оцениваете прозрачность учёта расходов на печать?</legend>
-        <label class="opt"><input type="radio" name="q1" value="1">Полный учёт всех расходов</label>
-        <label class="opt"><input type="radio" name="q1" value="0">Учёт частичный или неточный</label>
+        <label class="opt"><input type="radio" name="q1" value="1">Мы ведём точный и полный учёт всех расходов, включая капитальные.</label>
+        <label class="opt"><input type="radio" name="q1" value="0">Учитываем только расходные материалы.</label>
+        <label class="opt"><input type="radio" name="q1" value="0">Учёт ведётся частично или в разных подразделениях по-разному.</label>
+        <label class="opt"><input type="radio" name="q1" value="0">Точных данных нет, расходы оцениваются «на глаз».</label>
       </fieldset>
 
-      <fieldset class="q"><legend>2. Включены ли капитальные затраты в расчёт стоимости печати?</legend>
-        <label class="opt"><input type="radio" name="q2" value="1">Да</label>
-        <label class="opt"><input type="radio" name="q2" value="0">Нет</label>
+      <fieldset class="q"><legend>2. Включены ли в расчёт стоимости печати капитальные затраты (амортизация, обновление парка)?</legend>
+        <label class="opt"><input type="radio" name="q2" value="1">Да, мы учитываем полную стоимость владения (TCO).</label>
+        <label class="opt"><input type="radio" name="q2" value="0">Частично, только при крупных закупках.</label>
+        <label class="opt"><input type="radio" name="q2" value="0">Нет, считаем только текущие затраты.</label>
+        <label class="opt"><input type="radio" name="q2" value="0">Не знаю / этим занимается другой отдел.</label>
       </fieldset>
 
-      <!-- … остальные вопросы … -->
+      <!-- Блок 2. Ловушка старых цен -->
+      <fieldset class="q"><legend>3. При планировании бюджета на обновление техники вы опираетесь на:</legend>
+        <label class="opt"><input type="radio" name="q3" value="1">Актуальные рыночные данные и котировки поставщиков.</label>
+        <label class="opt"><input type="radio" name="q3" value="0">Внутренние шаблоны или цифры прошлых лет.</label>
+        <label class="opt"><input type="radio" name="q3" value="0">Субъективные ожидания («примерно столько, сколько раньше»).</label>
+        <label class="opt"><input type="radio" name="q3" value="0">Не выделяем отдельный бюджет на обновление парка.</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>4. Проверяли ли вы соответствие бюджета реальной стоимости оборудования в последние 12 месяцев?</legend>
+        <label class="opt"><input type="radio" name="q4" value="1">Да, проводим регулярный пересмотр цен.</label>
+        <label class="opt"><input type="radio" name="q4" value="0">Один раз давно, цены могут быть неактуальны.</label>
+        <label class="opt"><input type="radio" name="q4" value="0">Нет, не пересматривали.</label>
+        <label class="opt"><input type="radio" name="q4" value="0">Не знаю.</label>
+      </fieldset>
+
+      <!-- Блок 3. «Патриотическая» наценка -->
+      <fieldset class="q"><legend>5. Учтено ли в бюджете требование закупать оборудование из реестра отечественных решений (где применимо)?</legend>
+        <label class="opt"><input type="radio" name="q5" value="1">Да, бюджет сформирован с учётом реестровых решений.</label>
+        <label class="opt"><input type="radio" name="q5" value="0">Частично, только для критичных закупок.</label>
+        <label class="opt"><input type="radio" name="q5" value="0">Нет, закупаем по остаточному принципу.</label>
+        <label class="opt"><input type="radio" name="q5" value="1">Не применимо (мы не попадаем под эти требования).</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>6. Готов ли ваш бюджет к сценарию роста цен 3–5× из-за регуляторных требований?</legend>
+        <label class="opt"><input type="radio" name="q6" value="1">Да, предусмотрен резерв или гибкий бюджет.</label>
+        <label class="opt"><input type="radio" name="q6" value="0">Нет, это стало бы серьёзной проблемой.</label>
+        <label class="opt"><input type="radio" name="q6" value="0">Пока не анализировали.</label>
+        <label class="opt"><input type="radio" name="q6" value="0">Не знаю.</label>
+      </fieldset>
+
+      <!-- Блок 4. Опасность делегирования -->
+      <fieldset class="q"><legend>7. Кто фактически принимает решения по печати?</legend>
+        <label class="opt"><input type="radio" name="q7" value="1">IT-директор / руководитель департамента.</label>
+        <label class="opt"><input type="radio" name="q7" value="0">Системный администратор или инженер.</label>
+        <label class="opt"><input type="radio" name="q7" value="0">Закупочный отдел.</label>
+        <label class="opt"><input type="radio" name="q7" value="0">Несколько лиц без ответственности.</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>8. На чём основаны решения по обслуживанию и эксплуатации печати?</legend>
+        <label class="opt"><input type="radio" name="q8" value="1">На данных TCO-анализа и объективных метриках.</label>
+        <label class="opt"><input type="radio" name="q8" value="0">На личном опыте исполнителей («всегда так делали»).</label>
+        <label class="opt"><input type="radio" name="q8" value="0">На внешних рекомендациях поставщиков.</label>
+        <label class="opt"><input type="radio" name="q8" value="0">На попытке минимизировать расходы «здесь и сейчас».</label>
+      </fieldset>
+
+      <!-- Блок 5. Эксплуатация и расходники -->
+      <fieldset class="q"><legend>9. Используете ли вы совместимые картриджи или заправку?</legend>
+        <label class="opt"><input type="radio" name="q9" value="1">Нет, только оригинальные расходники.</label>
+        <label class="opt"><input type="radio" name="q9" value="0">Да, массово.</label>
+        <label class="opt"><input type="radio" name="q9" value="0">Да, но частично.</label>
+        <label class="opt"><input type="radio" name="q9" value="0">Не знаю.</label>
+      </fieldset>
+
+      <!-- Блок 6. Самооценка -->
+      <fieldset class="q"><legend>10. Как вы оцениваете уровень зрелости управления печатью?</legend>
+        <label class="opt"><input type="radio" name="q10" value="1">Стратегический — есть политика, метрики, бюджет.</label>
+        <label class="opt"><input type="radio" name="q10" value="0">Тактический — решаем по мере задач.</label>
+        <label class="opt"><input type="radio" name="q10" value="0">Реактивный — действуем при сбоях.</label>
+        <label class="opt"><input type="radio" name="q10" value="0">Нет системы управления, процесс стихийный.</label>
+      </fieldset>
+
+      <fieldset class="q"><legend>11. Насколько вы уверены, что бюджет не содержит «слепых зон»?</legend>
+        <label class="opt"><input type="radio" name="q11" value="1">Полностью уверен.</label>
+        <label class="opt"><input type="radio" name="q11" value="0">Скорее уверен.</label>
+        <label class="opt"><input type="radio" name="q11" value="0">Есть сомнения.</label>
+        <label class="opt"><input type="radio" name="q11" value="0">Требует пересмотра.</label>
+      </fieldset>
     </form>
 
     <button id="submitBtn" style="width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;
@@ -82,9 +153,10 @@
 </div>
 
 <script>
-const HOOK = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiLATpYYrUUKFZ3DFC6_vzH5XSp8xuDK0LAbqLwYsq-3DCcJW75p8rjv2v53tby5rL2vHUGbMF-7LI6gL1b00FlxySinBWINSptE1_nffYfRWushlOY7rFod3JKnp3PRRyVJuECCX5loak1iHLHaPteR6yY961eXnZ6Xc0onD75YdhWen8USRn1aihOCDmiTNj1n2RPRbLcnuVwx4wyW0YjUEc6rltrt0Hw9xa2Bbafxg5Xo40qrViLraD49A3W53pzpb2LwgPs9_4Dyg-C2hkj2em9-g&lib=Mwwt52smGuohEdsmoK0zKBxnQJJj_G6cf';  // googleusercontent-хук
+const HOOK = 'YOUR_GOOGLE_HOOK_HERE';  // <-- вставь финальный googleusercontent-хук
 const flds = [...document.querySelectorAll('fieldset.q')];
 const total = flds.length, bar = document.getElementById('bar'), pc = document.getElementById('pc');
+
 function answered(){return flds.reduce((n,f)=>n+(f.querySelector('input:checked')?1:0),0);}
 function update(){const d=answered();bar.style.width=Math.round(d/Math.max(1,total)*100)+'%';pc.textContent=d+'/'+total;}
 document.addEventListener('change',e=>{if(e.target.matches('input'))update();});
@@ -104,6 +176,7 @@ document.getElementById('submitBtn').onclick = async ()=>{
   document.getElementById('resTitle').textContent=`Ваш результат: ${s}/${total} — ${verdict}`;
   document.getElementById('resText').textContent=advice;
   document.getElementById('res').style.display='block';
+  setTimeout(()=>document.getElementById('res').scrollIntoView({behavior:'smooth'}),10);
 };
 
 document.getElementById('ctaContact').onclick=()=>{
