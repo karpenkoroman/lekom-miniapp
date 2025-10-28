@@ -35,7 +35,7 @@
   .result{display:none;margin-top:16px;padding:16px;border-left:4px solid var(--brand);
           background:rgba(10,132,255,.08);border-radius:10px}
   .ctas{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-  .cta{display:inline-block;text-decoration:none;padding:12px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+  .cta{display:inline-block;text-decoration:none;padding:12px 14px;border-radius:10px;font-weight:700;cursor:pointer;min-width:240px;text-align:center}
   .cta.primary{background:var(--brand);color:#fff}
   .cta.secondary{background:#1e2533;color:#fff}
 
@@ -45,7 +45,6 @@
   #leadMsg{margin-top:10px;color:#7dd3fc;display:none}
   a{color:#7dd3fc}
 
-  /* мини-бар для сводки */
   .bar{height:8px;background:#1e2533;border-radius:8px;overflow:hidden}
   .bar>i{display:block;height:100%;background:var(--brand)}
   .grid{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center}
@@ -64,7 +63,7 @@
         <button id="goWebinar" class="btn secondary">🎤 Выбор темы вебинара</button>
       </div>
 
-      <!-- стартовая сводка по темам (общая, с GAS) -->
+      <!-- общая сводка с GAS -->
       <div id="startSummary" class="mt">
         <div class="section">📈 Итоги голосования по темам</div>
         <div id="summaryBody" class="hint">Загружаем…</div>
@@ -171,7 +170,7 @@
         <h3 id="resTitle">Ваш результат</h3>
         <div id="resText" class="hint"></div>
         <div class="ctas">
-          <a class="cta primary" target="_blank" href="https://t.me/chelebaev">💬 Обсудить с экспертом</a>
+          <a id="ctaExpert" class="cta primary" target="_blank" href="https://t.me/chelebaev">💬 Обсудить с экспертом</a>
           <a id="ctaContact" class="cta secondary">📩 Оставить контакты</a>
           <a id="backHomeFromAudit" class="cta secondary">↩️ Вернуться</a>
         </div>
