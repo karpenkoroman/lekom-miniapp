@@ -42,13 +42,11 @@
     <h1>Аудит печатной инфраструктуры</h1>
     <div class="sub">Неудобные вопросы, которые IT-директор должен задать сам себе</div>
     <div class="meta">⏱ ~5 минут · Ответы конфиденциальны</div>
-    <div id="diag" class="hint"></div>
 
     <div class="progress"><div id="bar" class="bar"></div></div>
     <div id="pc" class="hint">0/11</div>
 
     <form id="f">
-
       <div class="block-title">🧩 Блок 1. Иллюзия контроля</div>
       <fieldset class="q"><legend>1. Как вы оцениваете прозрачность учёта расходов на печать?</legend>
         <label class="opt"><input type="radio" name="q1" value="1"><span>Мы ведём точный и полный учёт всех расходов, включая капитальные.</span></label>
@@ -154,154 +152,102 @@
   </div>
 </div>
 
-<script>
+  <script>
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 
 const params = new URLSearchParams(location.search);
 const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbwjJIv6fRqDpVQwyWR0CJz5o88IH-1vnnV52xtVHYIamLZl_KQq5lQH79m9Niax-Zsz/exec';
-
-  // Глобальный флаг блокировки MainButton после сабмита/при открытии формы лида
 let MB_LOCK = false;
 
-// Тихий пинг (для связи со скриптом)
-(async () => {
-  try {
-    await fetch(GAS_HOOK, {
-      method: 'POST', mode: 'no-cors',
-      body: JSON.stringify({ type: 'result', score: -1, verdict: 'PING', t: new Date().toISOString() })
-    });
-  } catch {}
-})();
+// Тихий ping
+(async () => { try {
+  await fetch(GAS_HOOK, { method:'POST', mode:'no-cors',
+    body: JSON.stringify({ type:'result', score:-1, verdict:'PING', t: new Date().toISOString() })
+  });
+} catch {} })();
 
-const qGroups    = [...document.querySelectorAll('form fieldset.q')];
-const total      = qGroups.length;
-const bar        = document.getElementById('bar');
-const pc         = document.getElementById('pc');
-const resBox     = document.getElementById('res');
-const leadForm   = document.getElementById('leadForm');
+const qGroups = [...document.querySelectorAll('form fieldset.q')];
+const total   = qGroups.length;
+const bar     = document.getElementById('bar');
+const pc      = document.getElementById('pc');
+const resBox  = document.getElementById('res');
+const leadForm= document.getElementById('leadForm');
 const ctaContact = document.getElementById('ctaContact');
 
-function answered() {
-  return qGroups.reduce((n, fs) => n + (fs.querySelector('input:checked') ? 1 : 0), 0);
-}
+function answered(){ return qGroups.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0); }
 
-function hideMBHard() {
-  if (!tg) return;
-  try {
-    tg.offEvent && tg.offEvent('mainButtonClicked', submit);
-  } catch {}
-  try {
-    tg.MainButton.hide();
-  } catch {}
-}
+function hideMB(){ if(!tg)return; try{ tg.offEvent && tg.offEvent('mainButtonClicked', submit); }catch{} try{ tg.MainButton.hide(); }catch{} }
 
-function updateUI() {
+function updateUI(){
   const d = answered();
-  bar.style.width = Math.round(d / Math.max(1, total) * 100) + '%';
-  pc.textContent = d + '/' + total;
-
-  // Если заблокировали MainButton — всегда прячем
-  if (MB_LOCK) { hideMBHard(); return; }
-
+  bar.style.width = Math.round(d/Math.max(1,total)*100)+'%';
+  pc.textContent = d+'/'+total;
+  if (MB_LOCK) { hideMB(); return; }
   if (tg) {
-    try {
-      d === total
-        ? (tg.MainButton.setText('Отправить результат'), tg.MainButton.show())
-        : tg.MainButton.hide();
-    } catch {}
+    try { d===total ? (tg.MainButton.setText('Отправить результат'), tg.MainButton.show())
+                    : tg.MainButton.hide(); } catch {}
   }
 }
-document.addEventListener('change', e => {
-  if (e.target.matches('input[type="radio"]')) updateUI();
-});
-document.addEventListener('DOMContentLoaded', updateUI);
+document.addEventListener('change',e=>{ if(e.target.matches('input[type="radio"]')) updateUI(); });
+document.addEventListener('DOMContentLoaded',updateUI);
 
-async function postToGAS(url, obj) {
+async function postToGAS(url,obj){
   const b = JSON.stringify(obj);
-  try {
-    if (navigator.sendBeacon) {
-      if (navigator.sendBeacon(url, new Blob([b], { type: 'text/plain' }))) return;
-    }
-  } catch {}
-  try { await fetch(url, { method: 'POST', mode: 'no-cors', body: b }); return; } catch {}
-  try { new Image().src = url + '?q=' + encodeURIComponent(b).slice(0, 1800); } catch {}
+  try { if(navigator.sendBeacon){ if(navigator.sendBeacon(url,new Blob([b],{type:'text/plain'}))) return; } } catch{}
+  try { await fetch(url,{method:'POST',mode:'no-cors',body:b}); return; } catch{}
+  try { new Image().src = url+'?q='+encodeURIComponent(b).slice(0,1800); } catch{}
 }
 
-async function submit() {
-  const answers = {};
-  const fs = [...document.querySelectorAll('form fieldset.q')];
-  let s = 0;
-  fs.forEach((f, i) => {
-    const c = f.querySelector('input:checked');
-    const v = Number(c ? c.value : 0);
-    answers['q' + (i + 1)] = v;
-    if (v === 1) s++;
-  });
+async function submit(){
+  const answers={}, fs=[...document.querySelectorAll('form fieldset.q')]; let s=0;
+  fs.forEach((f,i)=>{const c=f.querySelector('input:checked');const v=Number(c?c.value:0);answers['q'+(i+1)]=v; if(v===1)s++;});
+  let verdict,advice,icon;
+  if(s>=8){icon='⭐️';verdict='Зрелая инфраструктура';advice='Точечный аудит TCO и оптимизация «длинного хвоста».';}
+  else if(s>=5){icon='⚠️';verdict='Контроль частичный';advice='Пересмотр бюджета, унификация KPI (TCO, SLA).';}
+  else{icon='❗️';verdict='Высокая уязвимость';advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.';}
+  window.__lastResult={score:s,verdict,advice,answers};
+  await postToGAS(GAS_HOOK,{type:'result',...window.__lastResult,t:new Date().toISOString(),initData:tg?.initDataUnsafe||null});
 
-  let verdict, advice, icon;
-  if (s >= 8) { icon = '⭐️'; verdict = 'Зрелая инфраструктура';   advice = 'Точечный аудит TCO и оптимизация «длинного хвоста».'; }
-  else if (s >= 5) { icon = '⚠️'; verdict = 'Контроль частичный'; advice = 'Пересмотр бюджета, унификация KPI (TCO, SLA).'; }
-  else { icon = '❗️'; verdict = 'Высокая уязвимость';             advice = 'Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
-
-  window.__lastResult = { score: s, verdict, advice, answers };
-  await postToGAS(GAS_HOOK, { type: 'result', ...window.__lastResult, t: new Date().toISOString(), initData: tg?.initDataUnsafe || null });
-
-  // Показ результата и автоскролл
+  // Показ результата + автоскролл
   document.getElementById('resTitle').textContent = `Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
   document.getElementById('resText').textContent  = advice;
-  resBox.style.display = 'block';
-  setTimeout(() => resBox.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  resBox.style.display='block';
+  setTimeout(()=>resBox.scrollIntoView({behavior:'smooth',block:'start'}),50);
 
-  // Жёстко блокируем и прячем MainButton навсегда (до перезагрузки)
-  MB_LOCK = true;
-  hideMBHard();
+  // Блокируем MainButton, чтобы не перекрывал «Отправить контакты»
+  MB_LOCK = true; hideMB();
 }
-
-// Привязываем MainButton к отправке
 if (tg) tg.onEvent('mainButtonClicked', submit);
 
-// Открытие формы лида — тоже блокирует и прячет MainButton, чтобы он не перекрывал кнопку отправки
-function openLeadForm() {
-  MB_LOCK = true;
-  hideMBHard();
-  if (!leadForm) return;
-  leadForm.style.display = 'block';
-  setTimeout(() => leadForm.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
+// Открытие формы лида — тоже скрывает MainButton и скроллит к форме
+function openLeadForm(){
+  MB_LOCK = true; hideMB();
+  if(!leadForm) return;
+  leadForm.style.display='block';
+  setTimeout(()=>leadForm.scrollIntoView({behavior:'smooth',block:'start'}),30);
 }
-if (ctaContact) {
-  ctaContact.setAttribute('role', 'button');
-  ctaContact.setAttribute('tabindex', '0');
-  ctaContact.addEventListener('click', (e) => { e.preventDefault(); openLeadForm(); });
-  ctaContact.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLeadForm(); }});
+if (ctaContact){
+  ctaContact.setAttribute('role','button');
+  ctaContact.setAttribute('tabindex','0');
+  ctaContact.addEventListener('click', (e)=>{ e.preventDefault(); openLeadForm(); });
+  ctaContact.addEventListener('keydown',(e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openLeadForm(); }});
 }
-document.addEventListener('click', (e) => {
-  const a = e.target.closest && e.target.closest('#ctaContact');
-  if (a) { e.preventDefault(); openLeadForm(); }
-});
+document.addEventListener('click',(e)=>{ const a=e.target.closest&&e.target.closest('#ctaContact'); if(a){ e.preventDefault(); openLeadForm(); }});
 
 // Отправка лида
-document.getElementById('sendLead')?.addEventListener('click', async () => {
-  const name    = document.getElementById('name').value.trim();
-  const company = document.getElementById('company').value.trim();
-  const phone   = document.getElementById('phone').value.trim();
-  const comment = document.getElementById('comment').value.trim();
-  if (!name && !phone) { alert('Укажите хотя бы имя или телефон/email'); return; }
-
-  const lead = {
-    type: 'lead',
-    name, company, phone, comment,
-    consent: true,
-    policyUrl: 'https://lekom.ru/politika-konfidencialnosti/',
-    result: window.__lastResult || null,
-    t: new Date().toISOString(),
-    initData: tg?.initDataUnsafe || null
-  };
+document.getElementById('sendLead')?.addEventListener('click', async ()=>{
+  const name=document.getElementById('name').value.trim();
+  const company=document.getElementById('company').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const comment=document.getElementById('comment').value.trim();
+  if(!name && !phone){ alert('Укажите хотя бы имя или телефон/email'); return; }
+  const lead={ type:'lead', name, company, phone, comment, consent:true,
+    policyUrl:'https://lekom.ru/politika-konfidencialnosti/',
+    result: window.__lastResult || null, t:new Date().toISOString(), initData: tg?.initDataUnsafe || null };
   await postToGAS(GAS_HOOK, lead);
-
-  const msg = document.getElementById('leadMsg');
-  const btn = document.getElementById('sendLead');
-  if (msg && btn) { msg.style.display = 'block'; btn.disabled = true; }
+  const msg=document.getElementById('leadMsg'); const btn=document.getElementById('sendLead');
+  if(msg&&btn){ msg.style.display='block'; btn.disabled=true; }
 });
 </script>
   
