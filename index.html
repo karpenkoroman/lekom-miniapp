@@ -84,7 +84,7 @@
 
       <fieldset class="q"><legend>4) Пересматривали ли цены за последние 12 месяцев?</legend>
         <label class="opt"><input type="radio" name="q4" value="1"><span>Да, регулярный пересмотр</span></label>
-        <label class="opt"><input type="radio" name="q4" value="0"><span>Один раз давно, могут быть неактуальны</span></label>
+        <label class="opt"><input type="radio" name="q4" value="0"><span>Один раз было давно, цены могут быть неактуальны</span></label>
         <label class="opt"><input type="radio" name="q4" value="0"><span>Нет, не пересматривали</span></label>
         <label class="opt"><input type="radio" name="q4" value="0"><span>Не знаю</span></label>
       </fieldset>
@@ -109,7 +109,7 @@
         <label class="opt"><input type="radio" name="q7" value="1"><span>IT-директор / руководитель департамента</span></label>
         <label class="opt"><input type="radio" name="q7" value="0"><span>Системный администратор или инженер</span></label>
         <label class="opt"><input type="radio" name="q7" value="0"><span>Закупочный отдел</span></label>
-        <label class="opt"><input type="radio" name="q7" value="0"><span>Несколько лиц без ответственности</span></label>
+        <label class="opt"><input type="radio" name="q7" value="0"><span>Несколько лиц без распределённой ответственности</span></label>
       </fieldset>
 
       <fieldset class="q"><legend>8) На чём основаны решения по обслуживанию и эксплуатации?</legend>
@@ -168,9 +168,20 @@
 </div>
 
 <script>
+/* === HOOK: поставь свой актуальный (/exec или googleusercontent) === */
 const HOOK = 'https://script.google.com/macros/s/AKfycbyvq_c0Hx2jKQ5PyMpqMuCRiCY_PAaMaocgrCAf1X20fVbIrJlj_mQ3cp-TG0TRNUbw/exec';
 
-/* === КЭМЕЛ: быстрый UI без лагов === */
+/* --- Telegram init data --- */
+let tgInit = {};
+try {
+  if (window.Telegram && window.Telegram.WebApp) {
+    window.Telegram.WebApp.ready();
+    tgInit = window.Telegram.WebApp.initDataUnsafe || {};
+  }
+} catch(_) {}
+function withTelegramData(obj){ obj.initData = tgInit; return obj; }
+
+/* === UI быстрый === */
 const f = document.getElementById('f');
 const flds = [...document.querySelectorAll('fieldset.q')];
 const total = flds.length, bar = document.getElementById('bar'), pc = document.getElementById('pc');
@@ -181,18 +192,14 @@ function scheduleUpdate(){
   if (rafId) return;
   rafId = requestAnimationFrame(()=>{ rafId = 0; const d=answered(); bar.style.width=(100*d/Math.max(1,total))+'%'; pc.textContent=d+'/'+total; });
 }
-
-/* Быстрый выбор по клику на плашку (делегирование) */
 f.addEventListener('click', (e)=>{
   const lab = e.target.closest('.opt'); if(!lab) return;
   const inp = lab.querySelector('input'); if(!inp) return;
   if (!inp.checked){ inp.checked = true; scheduleUpdate(); }
 }, { passive:true });
-
-/* На всякий — и change тоже */
 f.addEventListener('change', (e)=>{ if(e.target.matches('input[type="radio"]')) scheduleUpdate(); }, { passive:true });
 
-/* === Отправка в GAS (p= base64url) === */
+/* === Отправка в GAS: p= base64url === */
 async function send(obj){
   const json = JSON.stringify(obj);
   const b64  = btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -211,7 +218,7 @@ submitBtn.addEventListener('click', async (e)=>{
   const advice  = s>=8 ? 'Точечный аудит TCO и поддержание уровня.'
                        : s>=5 ? 'Пересмотр бюджета и KPI (TCO, SLA).'
                               : 'Экспресс-аудит, инвентаризация, быстрые меры экономии.';
-  const payload = { type:'result', score:s, verdict, advice, answers:ans, t:new Date().toISOString() };
+  const payload = withTelegramData({ type:'result', score:s, verdict, advice, answers:ans, t:new Date().toISOString() });
   await send(payload);
   document.getElementById('resTitle').textContent=`Ваш результат: ${s}/${total} — ${verdict}`;
   document.getElementById('resText').textContent=advice;
@@ -232,8 +239,10 @@ document.getElementById('sendLead').addEventListener('click', async (e)=>{
   const company=document.getElementById('company').value.trim();
   const phone=document.getElementById('phone').value.trim();
   const comment=document.getElementById('comment').value.trim();
-  const lead={ type:'lead', name, company, phone, comment, consent:true,
-               policyUrl:'https://lekom.ru/politika-konfidencialnosti/', t:new Date().toISOString() };
+  const lead=withTelegramData({
+    type:'lead', name, company, phone, comment, consent:true,
+    policyUrl:'https://lekom.ru/politika-konfidencialnosti/', t:new Date().toISOString()
+  });
   await send(lead);
   document.getElementById('leadMsg').style.display='block';
   document.getElementById('sendLead').disabled=true;
