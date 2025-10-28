@@ -49,53 +49,67 @@
   .bar>i{display:block;height:100%;background:var(--brand)}
   .grid{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center}
 
-.start-menu {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 20px;
-  gap: 16px;
+:root{
+  --lekom-blue:#0b3a8d;
+  --lekom-teal:#0fb8ad;
+  --lekom-blue-2:#0a3176;
+  --surface: #0f1320;           /* фон карточки в тёмной теме */
+  --text: rgba(255,255,255,.92);/* базовый текст на тёмном фоне */
+  --muted: rgba(255,255,255,.65);
 }
 
-.menu-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #222;
-  margin-bottom: 12px;
-  text-align: center;
+/* Карточка старта */
+.start-card{
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 20px 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25) inset,
+              0 8px 24px rgba(0,0,0,.28);
 }
+.app-title{ color: var(--text); margin: 0 0 4px; }
+.sub{ color: var(--muted); margin: 0 0 18px; }
 
-.menu-btn {
-  width: 90%;
-  max-width: 320px;
-  font-size: 16px;
-  font-weight: 500;
-  color: #fff;
-  background: linear-gradient(180deg, #0066ff 0%, #0052cc 100%);
-  border: none;
+/* Стек кнопок */
+.cta-stack{ display:flex; flex-direction:column; gap:14px; }
+
+/* Универсальная CTA-кнопка */
+.cta-btn{
+  width: 100%;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  color:#fff;
+  font-size:16px; font-weight:600;
+  padding:14px 18px;
+  border:none; border-radius:14px;
+  cursor:pointer;
+  background:
+    linear-gradient(135deg, var(--lekom-blue) 0%, var(--lekom-blue-2) 35%, var(--lekom-teal) 100%);
+  box-shadow: 0 10px 24px rgba(15,184,173,.25), inset 0 1px 0 rgba(255,255,255,.15);
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.cta-btn:hover{ transform: translateY(-1px); filter: brightness(1.03); }
+.cta-btn:active{ transform: translateY(1px); filter: brightness(.98); }
+.cta-ico{ font-size:18px; line-height:1; }
+.cta-text{ line-height:1; }
+
+/* Карточка сводки */
+.summary-card{
+  margin-top: 18px;
+  padding: 14px;
   border-radius: 12px;
-  padding: 14px 18px;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.3);
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
 }
+.summary-title{ color: var(--text); font-weight:700; margin-bottom:8px; }
+.summary-body{ color: var(--muted); }
 
-.menu-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 102, 255, 0.4);
-}
-
-.menu-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.25);
-}
-
-@media (max-width: 480px) {
-  .menu-btn {
-    font-size: 15px;
-    padding: 13px 16px;
-  }
+/* Полосы результатов (если они уже стилизуются — можно пропустить) */
+.summary-body .mt{ margin-top:10px; }
+.summary-body .grid{ display:flex; justify-content:space-between; gap:8px; color:var(--text); }
+.summary-body .bar{ height:8px; background:rgba(255,255,255,.12); border-radius:999px; overflow:hidden; }
+.summary-body .bar i{ display:block; height:100%;
+  background: linear-gradient(90deg, #2d72ff 0%, #0fb8ad 100%);
 }
 
 
@@ -108,16 +122,26 @@
     <div class="sub">Выберите, что хотите пройти</div>
 
     <!-- стартовый выбор -->
-    <div id="startMenu" class="start-menu">
-  <h2 class="menu-title">Выберите, что хотите пройти</h2>
+    <div id="start" class="start-card">
+  <h1 class="app-title">ЛЕКОМ · Интерактив</h1>
+  <p class="sub">Выберите, что хотите пройти</p>
 
-  <button id="btnAudit" class="menu-btn">
-    🧾 Пройти аудит печати
-  </button>
+  <div class="cta-stack">
+    <button id="goAudit" class="cta-btn">
+      <span class="cta-ico">🧾</span>
+      <span class="cta-text">Пройти аудит печати</span>
+    </button>
 
-  <button id="btnWebinar" class="menu-btn">
-    🎓 Выбрать тему вебинара
-  </button>
+    <button id="goWebinar" class="cta-btn">
+      <span class="cta-ico">🎓</span>
+      <span class="cta-text">Выбрать тему вебинара</span>
+    </button>
+  </div>
+
+  <div class="summary-card">
+    <div class="summary-title">📈 Итоги голосования по темам</div>
+    <div id="summaryBody" class="summary-body">Загружаем…</div>
+  </div>
 </div>
 
     <!--   
