@@ -161,7 +161,10 @@ if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 const params = new URLSearchParams(location.search);
 const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbxG1xY6gVvRY04Y8_yuLds3J51QMdOdYTVuY8c0iFRQ5fPEmpRZIjgOmkqhzoFwCRoM/exec';
 
-// Тихий пинг в GAS (для связи)
+// Глобальный флаг блокировки MainButton после сабмита/при открытии формы лида
+let MB_LOCK = false;
+
+// Тихий пинг (для связи со скриптом)
 (async () => {
   try {
     await fetch(GAS_HOOK, {
@@ -171,22 +174,36 @@ const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfyc
   } catch {}
 })();
 
-const qGroups   = [...document.querySelectorAll('form fieldset.q')];
-const total     = qGroups.length;
-const bar       = document.getElementById('bar');
-const pc        = document.getElementById('pc');
-const resBox    = document.getElementById('res');
-const leadForm  = document.getElementById('leadForm');
-const ctaContact= document.getElementById('ctaContact');
+const qGroups    = [...document.querySelectorAll('form fieldset.q')];
+const total      = qGroups.length;
+const bar        = document.getElementById('bar');
+const pc         = document.getElementById('pc');
+const resBox     = document.getElementById('res');
+const leadForm   = document.getElementById('leadForm');
+const ctaContact = document.getElementById('ctaContact');
 
 function answered() {
   return qGroups.reduce((n, fs) => n + (fs.querySelector('input:checked') ? 1 : 0), 0);
+}
+
+function hideMBHard() {
+  if (!tg) return;
+  try {
+    tg.offEvent && tg.offEvent('mainButtonClicked', submit);
+  } catch {}
+  try {
+    tg.MainButton.hide();
+  } catch {}
 }
 
 function updateUI() {
   const d = answered();
   bar.style.width = Math.round(d / Math.max(1, total) * 100) + '%';
   pc.textContent = d + '/' + total;
+
+  // Если заблокировали MainButton — всегда прячем
+  if (MB_LOCK) { hideMBHard(); return; }
+
   if (tg) {
     try {
       d === total
@@ -230,28 +247,24 @@ async function submit() {
   window.__lastResult = { score: s, verdict, advice, answers };
   await postToGAS(GAS_HOOK, { type: 'result', ...window.__lastResult, t: new Date().toISOString(), initData: tg?.initDataUnsafe || null });
 
-  // Показ результата
+  // Показ результата и автоскролл
   document.getElementById('resTitle').textContent = `Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
   document.getElementById('resText').textContent  = advice;
   resBox.style.display = 'block';
-
-  // Плавный скролл к результату
   setTimeout(() => resBox.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 
-  // Главное — НИЧЕГО не закрываем: прячем MainButton, чтобы не путал
-  if (tg) {
-    try {
-      tg.offEvent && tg.offEvent('mainButtonClicked', submit); // на всякий
-      tg.MainButton.hide();
-    } catch {}
-  }
+  // Жёстко блокируем и прячем MainButton навсегда (до перезагрузки)
+  MB_LOCK = true;
+  hideMBHard();
 }
 
 // Привязываем MainButton к отправке
 if (tg) tg.onEvent('mainButtonClicked', submit);
 
-// Надёжная обработка клика «Оставить контакты»
+// Открытие формы лида — тоже блокирует и прячет MainButton, чтобы он не перекрывал кнопку отправки
 function openLeadForm() {
+  MB_LOCK = true;
+  hideMBHard();
   if (!leadForm) return;
   leadForm.style.display = 'block';
   setTimeout(() => leadForm.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
@@ -262,7 +275,6 @@ if (ctaContact) {
   ctaContact.addEventListener('click', (e) => { e.preventDefault(); openLeadForm(); });
   ctaContact.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLeadForm(); }});
 }
-// На случай, если клики всплывают с вложенных элементов:
 document.addEventListener('click', (e) => {
   const a = e.target.closest && e.target.closest('#ctaContact');
   if (a) { e.preventDefault(); openLeadForm(); }
