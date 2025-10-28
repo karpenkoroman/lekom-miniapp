@@ -44,7 +44,6 @@
     <div id="pc" class="hint">0/11</div>
 
     <form id="f">
-      <!-- 11 вопросов -->
       <fieldset class="q"><legend>1. Прозрачность учёта расходов?</legend>
         <label class="opt"><input type="radio" name="q1" value="1">Полный и точный учёт всех расходов</label>
         <label class="opt"><input type="radio" name="q1" value="0">Только расходные материалы</label>
@@ -156,7 +155,7 @@ const params = new URLSearchParams(location.search);
 const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycby_DkAG_iACh4uuE93yaQ5LZ7zuXrzVxKSm7f3mlRJfZz49tPlxCNaJq3B4nPmAPf6X/exec';
 document.getElementById('diag').textContent = 'hook: ' + (new URL(GAS_HOOK).host);
 
-// пинг при загрузке (видно в Logs)
+// пинг при загрузке (видно в Logs/Results)
 (async()=>{try{await fetch(GAS_HOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({type:'result',score:-1,verdict:'PING',advice:'webapp-open',t:new Date().toISOString()})});}catch{}})();
 
 const qGroups=[...document.querySelectorAll('form fieldset.q')];
