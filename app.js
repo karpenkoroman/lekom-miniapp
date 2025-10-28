@@ -1,5 +1,5 @@
 // === SETTINGS ===
-const HOOK = 'https://script.google.com/macros/s/AKfycbyvq_c0Hx2jKQ5PyMpqMuCRiCY_PAaMaocgrCAf1X20fVbIrJlj_mQ3cp-TG0TRNUbw/exec';
+const HOOK = 'https://script.google.com/macros/s/AKfycbyV5bPJzurT8P8arbFABAvBwBcgVosK4p6YGVU6a2WiTbIye4ni9OtrMdZLByofVqAa/exec';
 const SUMMARY_URL = HOOK + (HOOK.includes('?')?'&':'?') + 'summary=webinar&callback=__LEKOM_SUMMARY_CB';
 
 // === Telegram initData (для аудита/лидов)
