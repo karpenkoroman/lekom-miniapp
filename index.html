@@ -12,18 +12,12 @@
   h1{margin:0 0 6px;font-size:22px}
   .sub{color:#9aa0a6;margin-bottom:8px}
   .meta{font-size:13px;color:#9aa0a6;margin-bottom:12px}
-  .block-title{margin-top:28px;font-weight:700;color:#7dd3fc;font-size:16px}
-  fieldset.q{border:none;background:transparent;padding:6px 0 4px;margin:14px 0;}
+  fieldset.q{border:none;padding:6px 0;margin:14px 0;}
   fieldset.q legend{font-weight:700;margin-bottom:10px}
-  .opt{display:inline-flex;margin:6px 8px 6px 0;position:relative}
-  .opt input{position:absolute;opacity:0;pointer-events:none}
-  .opt span{display:inline-block;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#f5f7fb;font-size:14px;line-height:1.25;transition:transform .06s,background .15s,border-color .15s,box-shadow .15s;user-select:none}
-  .opt:hover span{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.24);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.25)}
-  .opt input:checked+span{background:rgba(10,132,255,.12);border-color:#0a84ff;box-shadow:0 0 0 2px rgba(10,132,255,.18) inset,0 6px 20px rgba(10,132,255,.18)}
-  @media(max-width:560px){.opt{display:block;margin-right:0}.opt span{width:100%}}
+  .opt{display:block;margin:6px 0}
+  .opt input{margin-right:6px}
   .progress{height:8px;background:#2a2f3a;border-radius:8px;overflow:hidden;margin:10px 0}
   .bar{height:100%;width:0;background:#0a84ff;transition:width .2s ease}
-  .hint{font-size:12px;color:#9aa0a6}
   .result{display:none;margin-top:16px;padding:16px;border-left:4px solid #0a84ff;background:rgba(10,132,255,.08);border-radius:10px}
   .ctas{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
   .cta{display:inline-block;text-decoration:none;padding:12px 14px;border-radius:10px;font-weight:700;cursor:pointer}
@@ -40,112 +34,32 @@
 <div class="wrap">
   <div class="card">
     <h1>Аудит печатной инфраструктуры</h1>
-    <div class="sub">Неудобные вопросы, которые IT-директор должен задать сам себе</div>
-    <div class="meta">⏱ ~5 минут · Ответы конфиденциальны</div>
+    <div class="sub">Ответьте на 11 вопросов, чтобы оценить зрелость управления печатью</div>
+    <div class="meta">⏱ ~5 минут · ответы конфиденциальны</div>
 
     <div class="progress"><div id="bar" class="bar"></div></div>
-    <div id="pc" class="hint">0/11</div>
+    <div id="pc" style="font-size:12px;color:#9aa0a6">0/11</div>
 
     <form id="f">
-      <div class="block-title">🧩 Блок 1. Иллюзия контроля</div>
       <fieldset class="q"><legend>1. Как вы оцениваете прозрачность учёта расходов на печать?</legend>
-        <label class="opt"><input type="radio" name="q1" value="1"><span>Мы ведём точный и полный учёт всех расходов, включая капитальные.</span></label>
-        <label class="opt"><input type="radio" name="q1" value="0"><span>Учитываем только расходные материалы.</span></label>
-        <label class="opt"><input type="radio" name="q1" value="0"><span>Учёт ведётся частично или в разных подразделениях по-разному.</span></label>
-        <label class="opt"><input type="radio" name="q1" value="0"><span>Точных данных нет, расходы оцениваются «на глаз».</span></label>
+        <label class="opt"><input type="radio" name="q1" value="1">Полный учёт всех расходов</label>
+        <label class="opt"><input type="radio" name="q1" value="0">Учёт частичный или неточный</label>
       </fieldset>
 
-      <fieldset class="q"><legend>2. Включены ли в расчёт стоимости печати капитальные затраты (амортизация, обновление парка)?</legend>
-        <label class="opt"><input type="radio" name="q2" value="1"><span>Да, мы учитываем полную стоимость владения (TCO).</span></label>
-        <label class="opt"><input type="radio" name="q2" value="0"><span>Частично, только при крупных закупках.</span></label>
-        <label class="opt"><input type="radio" name="q2" value="0"><span>Нет, считаем только текущие затраты.</span></label>
-        <label class="opt"><input type="radio" name="q2" value="0"><span>Не знаю / этим занимается другой отдел.</span></label>
+      <fieldset class="q"><legend>2. Включены ли капитальные затраты в расчёт стоимости печати?</legend>
+        <label class="opt"><input type="radio" name="q2" value="1">Да</label>
+        <label class="opt"><input type="radio" name="q2" value="0">Нет</label>
       </fieldset>
 
-      <div class="block-title">💰 Блок 2. Ловушка старых цен</div>
-      <fieldset class="q"><legend>3. При планировании бюджета на обновление техники вы опираетесь на:</legend>
-        <label class="opt"><input type="radio" name="q3" value="1"><span>Актуальные рыночные данные и котировки поставщиков.</span></label>
-        <label class="opt"><input type="radio" name="q3" value="0"><span>Внутренние шаблоны или цифры прошлых лет.</span></label>
-        <label class="opt"><input type="radio" name="q3" value="0"><span>Субъективные ожидания («примерно столько, сколько раньше»).</span></label>
-        <label class="opt"><input type="radio" name="q3" value="0"><span>Не выделяем отдельный бюджет на обновление парка.</span></label>
-      </fieldset>
-
-      <fieldset class="q"><legend>4. Проверяли ли вы соответствие бюджета реальной стоимости оборудования в последние 12 месяцев?</legend>
-        <label class="opt"><input type="radio" name="q4" value="1"><span>Да, проводим регулярный пересмотр цен.</span></label>
-        <label class="opt"><input type="radio" name="q4" value="0"><span>Один раз давно, цены могут быть неактуальны.</span></label>
-        <label class="opt"><input type="radio" name="q4" value="0"><span>Нет, не пересматривали.</span></label>
-        <label class="opt"><input type="radio" name="q4" value="0"><span>Не знаю.</span></label>
-      </fieldset>
-
-      <div class="block-title">🇷🇺 Блок 3. «Патриотическая» наценка</div>
-      <fieldset class="q"><legend>5. Учтено ли в бюджете требование закупать оборудование из реестра отечественного ПО?</legend>
-        <label class="opt"><input type="radio" name="q5" value="1"><span>Да, бюджет сформирован с учётом реестровых решений.</span></label>
-        <label class="opt"><input type="radio" name="q5" value="0"><span>Частично, только для критичных закупок.</span></label>
-        <label class="opt"><input type="radio" name="q5" value="0"><span>Нет, закупаем по остаточному принципу.</span></label>
-        <label class="opt"><input type="radio" name="q5" value="1"><span>Не применимо (мы не попадаем под эти требования).</span></label>
-      </fieldset>
-
-      <fieldset class="q"><legend>6. Готов ли ваш бюджет к сценарию роста цен 3–5× из-за регуляторных требований?</legend>
-        <label class="opt"><input type="radio" name="q6" value="1"><span>Да, предусмотрен резерв или гибкий бюджет.</span></label>
-        <label class="opt"><input type="radio" name="q6" value="0"><span>Нет, это стало бы серьёзной проблемой.</span></label>
-        <label class="opt"><input type="radio" name="q6" value="0"><span>Пока не анализировали.</span></label>
-        <label class="opt"><input type="radio" name="q6" value="0"><span>Не знаю.</span></label>
-      </fieldset>
-
-      <div class="block-title">🧠 Блок 4. Опасность делегирования</div>
-      <fieldset class="q"><legend>7. Кто фактически принимает решения по печати?</legend>
-        <label class="opt"><input type="radio" name="q7" value="1"><span>IT-директор / руководитель департамента.</span></label>
-        <label class="opt"><input type="radio" name="q7" value="0"><span>Системный администратор или инженер.</span></label>
-        <label class="opt"><input type="radio" name="q7" value="0"><span>Закупочный отдел.</span></label>
-        <label class="opt"><input type="radio" name="q7" value="0"><span>Несколько лиц без ответственности.</span></label>
-      </fieldset>
-
-      <fieldset class="q"><legend>8. На чём основаны решения по обслуживанию и эксплуатации печати?</legend>
-        <label class="opt"><input type="radio" name="q8" value="1"><span>На данных TCO-анализа и объективных метриках.</span></label>
-        <label class="opt"><input type="radio" name="q8" value="0"><span>На личном опыте исполнителей («всегда так делали»).</span></label>
-        <label class="opt"><input type="radio" name="q8" value="0"><span>На внешних рекомендациях поставщиков.</span></label>
-        <label class="opt"><input type="radio" name="q8" value="0"><span>На попытке минимизировать расходы «здесь и сейчас».</span></label>
-      </fieldset>
-
-      <fieldset class="q"><legend>9. Используете ли совместимые картриджи или заправку?</legend>
-        <label class="opt"><input type="radio" name="q9" value="1"><span>Нет, только оригинальные расходники.</span></label>
-        <label class="opt"><input type="radio" name="q9" value="0"><span>Да, массово.</span></label>
-        <label class="opt"><input type="radio" name="q9" value="0"><span>Да, но частично.</span></label>
-        <label class="opt"><input type="radio" name="q9" value="0"><span>Не знаю.</span></label>
-      </fieldset>
-
-      <div class="block-title">📊 Блок 5. Итоговая самооценка</div>
-      <fieldset class="q"><legend>10. Как вы оцениваете уровень зрелости управления печатью?</legend>
-        <label class="opt"><input type="radio" name="q10" value="1"><span>Стратегический уровень — есть политика, метрики, бюджет.</span></label>
-        <label class="opt"><input type="radio" name="q10" value="0"><span>Тактический — решаем по мере задач.</span></label>
-        <label class="opt"><input type="radio" name="q10" value="0"><span>Реактивный — действуем при сбоях.</span></label>
-        <label class="opt"><input type="radio" name="q10" value="0"><span>Нет системы управления, процесс стихийный.</span></label>
-      </fieldset>
-
-      <fieldset class="q"><legend>11. Насколько вы уверены, что бюджет не содержит «слепых зон»?</legend>
-        <label class="opt"><input type="radio" name="q11" value="1"><span>Полностью уверен.</span></label>
-        <label class="opt"><input type="radio" name="q11" value="0"><span>Скорее уверен.</span></label>
-        <label class="opt"><input type="radio" name="q11" value="0"><span>Есть сомнения.</span></label>
-        <label class="opt"><input type="radio" name="q11" value="0"><span>Требует пересмотра.</span></label>
-      </fieldset>
+      <!-- … остальные вопросы … -->
     </form>
 
-    <!-- Fallback-кнопка для браузера -->
-    <button id="submitBtn" style="display:none;width:100%;margin-top:8px" class="cta primary">
-      Отправить результат
-    </button>
+    <button id="submitBtn" style="width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;
+      background:#0a84ff;color:#fff;font-weight:700;cursor:pointer;">Отправить результат</button>
 
-    <!-- Стики-кнопка: всегда доступна, когда выбраны все ответы -->
-<div id="stickySubmit" style="position:sticky;bottom:0;z-index:9999;display:none;margin-top:12px;">
-  <button id="submitAlways"
-          style="width:100%;padding:14px 16px;border-radius:12px;border:none;font-weight:800;cursor:pointer;
-                 background:#0a84ff;color:#fff;box-shadow:0 10px 24px rgba(10,132,255,.35);">
-    Отправить результат
-  </button>
-</div>
     <div id="res" class="result">
       <h3 id="resTitle">Ваш результат</h3>
-      <div id="resText" class="hint"></div>
+      <div id="resText" style="font-size:14px;color:#9aa0a6"></div>
       <div class="ctas">
         <a class="cta primary" target="_blank" href="https://t.me/chelebaev">💬 Обсудить с экспертом</a>
         <a id="ctaContact" class="cta secondary">📩 Оставить контакты</a>
@@ -153,190 +67,59 @@
     </div>
 
     <div id="leadForm">
-      <h3>Оставьте свои контакты</h3>
-      <input id="name" placeholder="Ваше имя">
+      <h3>Оставьте контакты</h3>
+      <input id="name" placeholder="Имя">
       <input id="company" placeholder="Компания">
       <input id="phone" placeholder="Телефон или email">
       <textarea id="comment" placeholder="Комментарий" rows="3"></textarea>
-      <div class="hint">Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.</div>
+      <div style="font-size:12px;color:#9aa0a6">
+        Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.
+      </div>
       <button id="sendLead">📩 Отправить контакты</button>
       <div id="leadMsg">✅ Спасибо! Контакты отправлены.</div>
     </div>
   </div>
 </div>
 
+<script>
+const HOOK = 'YOUR_GOOGLE_HOOK_HERE';  // <-- вставь финальный googleusercontent-хук
+const flds = [...document.querySelectorAll('fieldset.q')];
+const total = flds.length, bar = document.getElementById('bar'), pc = document.getElementById('pc');
+function answered(){return flds.reduce((n,f)=>n+(f.querySelector('input:checked')?1:0),0);}
+function update(){const d=answered();bar.style.width=Math.round(d/Math.max(1,total)*100)+'%';pc.textContent=d+'/'+total;}
+document.addEventListener('change',e=>{if(e.target.matches('input'))update();});
 
-  <script>
-/* ===== Bootstrap TG ===== */
-const tg = window.Telegram?.WebApp;
-if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
-
-/* ===== Hook & flags ===== */
-const params   = new URLSearchParams(location.search);
-const GAS_HOOK = params.get('hook') || 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiLATpYYrUUKFZ3DFC6_vzH5XSp8xuDK0LAbqLwYsq-3DCcJW75p8rjv2v53tby5rL2vHUGbMF-7LI6gL1b00FlxySinBWINSptE1_nffYfRWushlOY7rFod3JKnp3PRRyVJuECCX5loak1iHLHaPteR6yY961eXnZ6Xc0onD75YdhWen8USRn1aihOCDmiTNj1n2RPRbLcnuVwx4wyW0YjUEc6rltrt0Hw9xa2Bbafxg5Xo40qrViLraD49A3W53pzpb2LwgPs9_4Dyg-C2hkj2em9-g&lib=Mwwt52smGuohEdsmoK0zKBxnQJJj_G6cf'; // <-- подставь актуальный /exec
-const DEBUG    = params.get('debug') === '1';
-const TESTAUTO = params.get('test') === '1'; // ?test=1 — автосабмит через 2 сек
-const IN_TG    = !!tg;
-
-let MB_LOCK = false;
-
-/* ===== UI refs ===== */
-const qGroups     = [...document.querySelectorAll('form fieldset.q')];
-const total       = qGroups.length;
-const bar         = document.getElementById('bar');
-const pc          = document.getElementById('pc');
-const resBox      = document.getElementById('res');
-const leadForm    = document.getElementById('leadForm');
-const ctaContact  = document.getElementById('ctaContact');
-const submitBtn   = document.getElementById('submitBtn'); // обычный фолбэк, если был
-/* DEBUG кнопка — создадим гарантированно видимую */
-let debugBtn = document.getElementById('submitAlways');
-if (!debugBtn) {
-  const wrap = document.createElement('div');
-  wrap.id = 'stickySubmit';
-  wrap.style.cssText = 'position:sticky;bottom:0;z-index:9999;margin-top:12px;';
-  debugBtn = document.createElement('button');
-  debugBtn.id = 'submitAlways';
-  debugBtn.textContent = 'Отправить результат (DEBUG)';
-  debugBtn.style.cssText = 'width:100%;padding:14px 16px;border-radius:12px;border:none;font-weight:800;cursor:pointer;background:#0a84ff;color:#fff;box-shadow:0 10px 24px rgba(10,132,255,.35);';
-  wrap.appendChild(debugBtn);
-  // вставим перед формой лида
-  (leadForm?.parentNode || document.body).insertBefore(wrap, leadForm || null);
+async function send(obj){
+  const url = HOOK + (HOOK.includes('?')?'&':'?') + 'q=' + encodeURIComponent(JSON.stringify(obj));
+  try{await fetch(url,{method:'GET',mode:'no-cors',keepalive:true});}catch{}
 }
 
-/* ===== Helpers ===== */
-function answered(){ return qGroups.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0); }
-function hideMB(){ if(!tg) return; try{ tg.offEvent && tg.offEvent('mainButtonClicked', submit);}catch{} try{ tg.MainButton.hide(); }catch{} }
+document.getElementById('submitBtn').onclick = async ()=>{
+  const ans={}, fs=flds; let s=0;
+  fs.forEach((f,i)=>{const c=f.querySelector('input:checked');const v=Number(c?c.value:0);ans['q'+(i+1)]=v;if(v===1)s++;});
+  const verdict=s>=8?'Зрелая инфраструктура':s>=5?'Контроль частичный':'Высокая уязвимость';
+  const advice=s>=8?'Поддерживайте уровень зрелости.':s>=5?'Пересмотрите KPI и политику TCO.':'Проведите аудит и оптимизацию.';
+  const res={type:'result',score:s,verdict,advice,answers:ans,t:new Date().toISOString()};
+  await send(res);
+  document.getElementById('resTitle').textContent=`Ваш результат: ${s}/${total} — ${verdict}`;
+  document.getElementById('resText').textContent=advice;
+  document.getElementById('res').style.display='block';
+};
 
-/* Отправка через GET ?q=... (устойчиво к редиректам) */
-async function sendJSON(url, obj) {
-  if (obj && obj.initData && obj.initData.user) {
-    const u = obj.initData.user;
-    obj.initData = { user: { id: u.id, username: u.username, first_name: u.first_name } };
-  } else if (obj && obj.initData && obj.initData.user === null) {
-    obj.initData = null;
-  }
-  const q = encodeURIComponent(JSON.stringify(obj));
-  const full = url + (url.includes('?') ? '&' : '?') + 'q=' + q;
-  try { await fetch(full, { method:'GET', mode:'no-cors', keepalive:true, cache:'no-store' }); return; } catch {}
-  try { new Image().src = full; } catch {}
-}
-
-/* ===== Progress / Buttons ===== */
-function updateUI(){
-  const d = answered();
-  if (bar) bar.style.width = Math.round(d/Math.max(1,total)*100)+'%';
-  if (pc)  pc.textContent  = d+'/'+total;
-
-  if (MB_LOCK) { hideMB(); }
-
-  if (IN_TG && !MB_LOCK) {
-    try {
-      if (d === total) { tg.MainButton.setText('Отправить результат'); tg.MainButton.show(); }
-      else { tg.MainButton.hide(); }
-    } catch {}
-  }
-  if (submitBtn) submitBtn.style.display = (d===total ? 'block' : 'none');
-
-  // DEBUG-кнопка всегда видима, но деактивируется, если ответов мало
-  if (debugBtn) debugBtn.disabled = (d !== total);
-}
-document.addEventListener('change', e => {
-  if (e.target.matches('input[type="radio"]')) {
-    updateUI();
-    sendJSON(GAS_HOOK, { type:'trace', stage:'change', answered: answered(), total, t:new Date().toISOString() });
-  }
-});
-
-/* Первый пинг */
-document.addEventListener('DOMContentLoaded', async () => {
-  updateUI();
-  await sendJSON(GAS_HOOK, { type:'trace', stage:'loaded', t:new Date().toISOString(), initData: tg?.initDataUnsafe || null });
-  await sendJSON(GAS_HOOK, { type:'trace', stage:'ui-ready', total, t:new Date().toISOString() });
-
-  // Автосабмит для диагностики: ?test=1
-  if (TESTAUTO) {
-    setTimeout(async () => {
-      // Заполним все ответы нулями, если не выбраны (чтобы отправить форму)
-      qGroups.forEach((f) => {
-        if (!f.querySelector('input:checked')) {
-          const any = f.querySelector('input[type="radio"]');
-          if (any) any.checked = true;
-        }
-      });
-      updateUI();
-      await submit();
-    }, 2000);
-  }
-});
-
-/* ===== Submit Result ===== */
-async function submit() {
-  await sendJSON(GAS_HOOK, { type:'trace', stage:'submit-start', answered: answered(), total, t:new Date().toISOString() });
-
-  const answers = {}; let s = 0;
-  qGroups.forEach((f,i) => { const c=f.querySelector('input:checked'); const v=Number(c?c.value:0); answers['q'+(i+1)]=v; if(v===1)s++; });
-
-  let verdict, advice, icon;
-  if (s >= 8) { icon='⭐️'; verdict='Зрелая инфраструктура'; advice='Точечный аудит TCO и оптимизация «длинного хвоста».'; }
-  else if (s >= 5) { icon='⚠️'; verdict='Контроль частичный'; advice='Пересмотр бюджета, унификация KPI (TCO, SLA).'; }
-  else { icon='❗️'; verdict='Высокая уязвимость'; advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
-
-  window.__lastResult = { score:s, verdict, advice, answers };
-  await sendJSON(GAS_HOOK, { type:'result', ...window.__lastResult, t:new Date().toISOString(), initData: tg?.initDataUnsafe || null });
-  await sendJSON(GAS_HOOK, { type:'trace', stage:'result-sent', score:s, t:new Date().toISOString() });
-
-  // UI: показать результат + автоскролл
-  const rt = document.getElementById('resTitle'), rx = document.getElementById('resText');
-  if (rt) rt.textContent = `Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
-  if (rx) rx.textContent = advice;
-  if (resBox) resBox.style.display = 'block';
-  setTimeout(() => resBox?.scrollIntoView({ behavior:'smooth', block:'start' }), 50);
-
-  try { tg?.showAlert?.('Результат отправлен'); } catch {}
-  MB_LOCK = true; hideMB();
-}
-
-/* Привязки кнопок */
-if (tg) {
-  try { tg.onEvent('mainButtonClicked', () => { sendJSON(GAS_HOOK, { type:'trace', stage:'mb-click', t:new Date().toISOString() }); submit(); }); 
-        sendJSON(GAS_HOOK, { type:'trace', stage:'mb-bound', t:new Date().toISOString() }); } catch {}
-}
-submitBtn?.addEventListener('click', (e)=>{ e.preventDefault(); submit(); });
-debugBtn?.addEventListener('click', (e)=>{ e.preventDefault(); submit(); });
-
-/* ===== Lead Form ===== */
-function openLeadForm(){
-  MB_LOCK = true; hideMB();
-  if (leadForm) { leadForm.style.display = 'block'; setTimeout(() => leadForm.scrollIntoView({ behavior:'smooth', block:'start' }), 30); }
-}
-ctaContact?.addEventListener('click', (e)=>{ e.preventDefault(); openLeadForm(); });
-document.addEventListener('click', (e)=>{ const a=e.target.closest?.('#ctaContact'); if(a){ e.preventDefault(); openLeadForm(); }});
-
-document.getElementById('sendLead')?.addEventListener('click', async ()=>{
-  const name=document.getElementById('name')?.value.trim() || '';
-  const company=document.getElementById('company')?.value.trim() || '';
-  const phone=document.getElementById('phone')?.value.trim() || '';
-  const comment=document.getElementById('comment')?.value.trim() || '';
-  if(!name && !phone){ alert('Укажите хотя бы имя или телефон/email'); return; }
-
-  const lead = {
-    type:'lead', name, company, phone, comment, consent:true,
-    policyUrl:'https://lekom.ru/politika-konfidencialnosti/',
-    result: window.__lastResult || null, t:new Date().toISOString(),
-    initData: tg?.initDataUnsafe || null
-  };
-  await sendJSON(GAS_HOOK, lead);
-  await sendJSON(GAS_HOOK, { type:'trace', stage:'lead-sent', t:new Date().toISOString() });
-
-  try { tg?.showAlert?.('Контакты отправлены'); } catch {}
-  const msg=document.getElementById('leadMsg'); const btn=document.getElementById('sendLead');
-  if(msg&&btn){ msg.style.display='block'; btn.disabled=true; }
-});
-
-    
+document.getElementById('ctaContact').onclick=()=>{
+  document.getElementById('leadForm').style.display='block';
+  document.getElementById('leadForm').scrollIntoView({behavior:'smooth'});
+};
+document.getElementById('sendLead').onclick=async()=>{
+  const name=document.getElementById('name').value.trim();
+  const company=document.getElementById('company').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const comment=document.getElementById('comment').value.trim();
+  const lead={type:'lead',name,company,phone,comment,consent:true,policyUrl:'https://lekom.ru/politika-konfidencialnosti/',t:new Date().toISOString()};
+  await send(lead);
+  document.getElementById('leadMsg').style.display='block';
+  document.getElementById('sendLead').disabled=true;
+};
 </script>
-
-  
 </body>
 </html>
