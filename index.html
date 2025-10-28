@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="ru">
 <head>
@@ -39,11 +38,13 @@
     <h1>Аудит печатной инфраструктуры</h1>
     <div class="sub">Неудобные вопросы, которые IT-директор должен задать сам себе</div>
     <div class="meta">⏱ ~5 минут · Ответы конфиденциальны</div>
+    <div id="diag" class="hint"></div>
 
     <div class="progress"><div id="bar" class="bar"></div></div>
     <div id="pc" class="hint">0/11</div>
 
     <form id="f">
+      <!-- 11 вопросов -->
       <fieldset class="q"><legend>1. Прозрачность учёта расходов?</legend>
         <label class="opt"><input type="radio" name="q1" value="1">Полный и точный учёт всех расходов</label>
         <label class="opt"><input type="radio" name="q1" value="0">Только расходные материалы</label>
@@ -139,7 +140,7 @@
       <input id="company" placeholder="Компания">
       <input id="phone" placeholder="Телефон или email">
       <textarea id="comment" placeholder="Комментарий" rows="3"></textarea>
-      <div class="hint">Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank" rel="noopener">политикой конфиденциальности</a>.</div>
+      <div class="hint">Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.</div>
       <button id="sendLead">📩 Отправить контакты</button>
       <div id="leadMsg">✅ Спасибо! Контакты отправлены.</div>
     </div>
@@ -148,87 +149,61 @@
 
 <script>
 const tg = window.Telegram?.WebApp;
-if (tg){tg.ready();tg.expand();try{tg.MainButton.enable();}catch(e){}}
+if(tg){tg.ready();tg.expand();try{tg.MainButton.enable();}catch{}}
 
+// жёсткий фолбэк на твой exec
 const params = new URLSearchParams(location.search);
-const GAS_HOOK = params.get('hook') || '';
+const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycby_DkAG_iACh4uuE93yaQ5LZ7zuXrzVxKSm7f3mlRJfZz49tPlxCNaJq3B4nPmAPf6X/exec';
+document.getElementById('diag').textContent = 'hook: ' + (new URL(GAS_HOOK).host);
 
-// startapp → короткие коды → UTM
-const startParam = new URLSearchParams(location.search).get('tgWebAppStartParam') || '';
-const CODEMAP = { tgpost_oct25:{utm_source:'telegram',utm_medium:'post',utm_campaign:'audit_lekom_oct2025'} };
-const map = CODEMAP[startParam] || {};
-const UTM = {
-  utm_source: map.utm_source || params.get('utm_source') || '',
-  utm_medium: map.utm_medium || params.get('utm_medium') || '',
-  utm_campaign: map.utm_campaign || params.get('utm_campaign') || ''
-};
+// пинг при загрузке (видно в Logs)
+(async()=>{try{await fetch(GAS_HOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({type:'result',score:-1,verdict:'PING',advice:'webapp-open',t:new Date().toISOString()})});}catch{}})();
 
-const bar = document.getElementById('bar');
-const pc = document.getElementById('pc');
-const resBox = document.getElementById('res');
-const resTitle = document.getElementById('resTitle');
-const resText = document.getElementById('resText');
-const fallbackSubmitBtn = document.getElementById('fallbackSubmit');
-const ctaContact = document.getElementById('ctaContact');
-const leadForm = document.getElementById('leadForm');
-const sendLeadBtn = document.getElementById('sendLead');
-const leadMsg = document.getElementById('leadMsg');
-
-const qGroups = [...document.querySelectorAll('form fieldset.q')];
-const total = qGroups.length;
-
-function answered(){return qGroups.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0)}
-function updateUI(){
-  const d=answered();
-  bar.style.width = Math.round(d/Math.max(1,total)*100)+'%';
-  pc.textContent = d+'/'+total;
-  if (tg){
-    try{ d===total ? (tg.MainButton.setText('Отправить результат'), tg.MainButton.show())
-                   : tg.MainButton.hide(); }catch(e){}
-  }
-}
-document.addEventListener('change',(e)=>{ if(e.target.matches('input[type="radio"]')) updateUI(); }, true);
-document.addEventListener('click',(e)=>{ if(e.target.matches('label,input[type="radio"]')) setTimeout(updateUI,0); }, true);
-document.addEventListener('DOMContentLoaded',()=>{ updateUI(); setTimeout(updateUI,200); setTimeout(updateUI,600); });
+const qGroups=[...document.querySelectorAll('form fieldset.q')];
+const total=qGroups.length;
+const bar=document.getElementById('bar'),pc=document.getElementById('pc');
+function answered(){return qGroups.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0);}
+function updateUI(){const d=answered();bar.style.width=Math.round(d/Math.max(1,total)*100)+'%';pc.textContent=d+'/'+total;if(tg){try{d===total?(tg.MainButton.setText('Отправить результат'),tg.MainButton.show()):tg.MainButton.hide();}catch{}}}
+document.addEventListener('change',e=>{if(e.target.matches('input[type="radio"]'))updateUI();});
+document.addEventListener('DOMContentLoaded',updateUI);
 
 async function postToGAS(url,obj){
   const body=JSON.stringify(obj);
-  try{ if(navigator.sendBeacon){ const ok=navigator.sendBeacon(url,new Blob([body],{type:'text/plain'})); if(ok) return true; } }catch{}
-  try{ await fetch(url,{method:'POST',mode:'no-cors',keepalive:true,body}); return true; }catch{ return false; }
+  try{if(navigator.sendBeacon){if(navigator.sendBeacon(url,new Blob([body],{type:'text/plain'})))return true;}}catch{}
+  try{await fetch(url,{method:'POST',mode:'no-cors',body});return true;}catch{}
+  try{new Image().src=url+'?q='+encodeURIComponent(body).slice(0,1800);}catch{}
 }
 
 async function submit(){
-  const answers={}, qfs=[...document.querySelectorAll('form fieldset.q')];
-  let score=0;
-  qfs.forEach((fs,i)=>{ const c=fs.querySelector('input:checked'); const v=Number(c?c.value:0); answers['q'+(i+1)] = v; if(v===1) score++; });
+  const answers={},qfs=[...document.querySelectorAll('form fieldset.q')];let score=0;
+  qfs.forEach((fs,i)=>{const c=fs.querySelector('input:checked');const v=Number(c?c.value:0);answers['q'+(i+1)]=v;if(v===1)score++;});
   let verdict,advice,icon;
-  if(score>=8){ icon='⭐️'; verdict='Зрелая инфраструктура'; advice='Точечный аудит TCO и оптимизация «длинного хвоста».'; }
-  else if(score>=5){ icon='⚠️'; verdict='Контроль частичный'; advice='Пересмотр бюджета, унификация политики и KPI (TCO, SLA).'; }
-  else { icon='❗️'; verdict='Высокая уязвимость'; advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
-  window.__lastResult = { score, verdict, advice, answers };
-  if (GAS_HOOK) { await postToGAS(GAS_HOOK, { type:'result', ...window.__lastResult, t:new Date().toISOString(), initData: tg?.initDataUnsafe || null }); }
-  try{ tg && tg.sendData && tg.sendData(JSON.stringify({ type:'result', ...window.__lastResult })); }catch(e){}
-  resTitle.textContent = `Ваш результат: ${icon} ${score}/${total} — ${verdict}`;
-  resText.textContent  = advice;
-  resBox.style.display = 'block';
-  if (tg) { try{ tg.MainButton.setText('Закрыть'); tg.offEvent && tg.offEvent('mainButtonClicked', submit); tg.onEvent && tg.onEvent('mainButtonClicked', ()=>tg.close()); tg.MainButton.show(); }catch(e){} }
-  resBox.scrollIntoView({behavior:'smooth'});
+  if(score>=8){icon='⭐️';verdict='Зрелая инфраструктура';advice='Точечный аудит TCO и оптимизация «длинного хвоста».';}
+  else if(score>=5){icon='⚠️';verdict='Контроль частичный';advice='Пересмотр бюджета, унификация политики и KPI (TCO, SLA).';}
+  else{icon='❗️';verdict='Высокая уязвимость';advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.';}
+  window.__lastResult={score,verdict,advice,answers};
+  await postToGAS(GAS_HOOK,{type:'result',...window.__lastResult,t:new Date().toISOString(),initData:tg?.initDataUnsafe||null});
+  document.getElementById('resTitle').textContent=`Ваш результат: ${icon} ${score}/${total} — ${verdict}`;
+  document.getElementById('resText').textContent=advice;
+  document.getElementById('res').style.display='block';
+  if(tg){try{tg.MainButton.setText('Закрыть');tg.onEvent('mainButtonClicked',()=>tg.close());tg.MainButton.show();}catch{}}
 }
-if (tg && tg.onEvent) tg.onEvent('mainButtonClicked', submit);
-fallbackSubmitBtn.addEventListener('click', submit);
 
-ctaContact.addEventListener('click', ()=>{ leadForm.style.display='block'; leadForm.scrollIntoView({behavior:'smooth'}); });
+if(tg)tg.onEvent('mainButtonClicked',submit);
+document.getElementById('fallbackSubmit').addEventListener('click',submit);
 
-sendLeadBtn.addEventListener('click', async ()=>{
-  const name = document.getElementById('name').value.trim();
-  const company = document.getElementById('company').value.trim();
-  const phone = document.getElementById('phone').value.trim();
-  const comment = document.getElementById('comment').value.trim();
-  if (!name && !phone) { alert('Укажите хотя бы имя или телефон/email'); return; }
-  const lead = { type:'lead', name, company, phone, comment, consent:true, policyUrl:'https://lekom.ru/politika-konfidencialnosti/', result: window.__lastResult || null, t:new Date().toISOString(), initData: tg?.initDataUnsafe || null, ...UTM };
-  if (GAS_HOOK) { await postToGAS(GAS_HOOK, lead); }
-  leadMsg.style.display='block';
-  sendLeadBtn.disabled = true;
+document.getElementById('ctaContact').addEventListener('click',()=>{document.getElementById('leadForm').style.display='block';});
+
+document.getElementById('sendLead').addEventListener('click',async()=>{
+  const name=document.getElementById('name').value.trim();
+  const company=document.getElementById('company').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const comment=document.getElementById('comment').value.trim();
+  if(!name&&!phone){alert('Укажите хотя бы имя или телефон/email');return;}
+  const lead={type:'lead',name,company,phone,comment,consent:true,policyUrl:'https://lekom.ru/politika-konfidencialnosti/',result:window.__lastResult||null,t:new Date().toISOString(),initData:tg?.initDataUnsafe||null};
+  await postToGAS(GAS_HOOK,lead);
+  document.getElementById('leadMsg').style.display='block';
+  document.getElementById('sendLead').disabled=true;
 });
 </script>
 </body>
