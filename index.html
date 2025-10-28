@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ЛЕКОМ · Аудит и опрос</title>
+<title>ЛЕКОМ · Интерактив</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{--bg:#0f1115;--card:#12151c;--muted:#9aa0a6;--brand:#0a84ff}
@@ -44,6 +44,11 @@
   #sendLead{background:var(--brand);color:#fff;font-weight:700;padding:12px;border:none;border-radius:10px;cursor:pointer;width:100%;margin-top:8px}
   #leadMsg{margin-top:10px;color:#7dd3fc;display:none}
   a{color:#7dd3fc}
+
+  /* мини-бар для сводки */
+  .bar{height:8px;background:#1e2533;border-radius:8px;overflow:hidden}
+  .bar>i{display:block;height:100%;background:var(--brand)}
+  .grid{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center}
 </style>
 </head>
 <body>
@@ -58,13 +63,19 @@
         <button id="goAudit" class="btn">🧾 Аудит печати</button>
         <button id="goWebinar" class="btn secondary">🎤 Выбор темы вебинара</button>
       </div>
+
+      <!-- стартовая сводка по темам (локальная) -->
+      <div id="startSummary" class="mt">
+        <div class="section">📈 Итоги голосования по темам</div>
+        <div id="summaryBody" class="hint">Пока нет голосов.</div>
+      </div>
     </div>
 
     <!-- AUDIT -->
     <div id="audit" style="display:none">
       <div class="row" style="justify-content:space-between;align-items:center" class="mt">
         <div class="meta mt">⏱ ~5 минут · ответы конфиденциальны</div>
-        <button id="backHomeFromAuditTop" class="btn secondary">↩️ На старт</button>
+        <button id="backHomeFromAuditTop" class="btn secondary">↩️ Вернуться</button>
       </div>
       <div id="progressText" class="hint">Вопрос 0 из 11</div>
 
@@ -162,7 +173,7 @@
         <div class="ctas">
           <a class="cta primary" target="_blank" href="https://t.me/chelebaev">💬 Обсудить с экспертом</a>
           <a id="ctaContact" class="cta secondary">📩 Оставить контакты</a>
-          <a id="backHomeFromAudit" class="cta secondary">↩️ На старт</a>
+          <a id="backHomeFromAudit" class="cta secondary">↩️ Вернуться</a>
         </div>
       </div>
 
@@ -178,11 +189,11 @@
       </div>
     </div>
 
-    <!-- WEBINAR POLL -->
+    <!-- WEBINAR POLL (локально) -->
     <div id="webinar" style="display:none">
       <div class="row" style="justify-content:space-between;align-items:center">
         <div class="meta mt">Выберите тему, которую стоит разобрать на ближайшем вебинаре</div>
-        <button id="backHomeFromWebinarTop" class="btn secondary">↩️ На старт</button>
+        <button id="backHomeFromWebinarTop" class="btn secondary">↩️ Вернуться</button>
       </div>
       <div id="webinarOptions" class="mt">
         <label class="opt"><input type="radio" name="webinar" value="Обзор рынка и тренды 2025"><span>Обзор рынка и тренды 2025</span></label>
@@ -194,7 +205,7 @@
       <input id="wbOtherText" placeholder="Укажите вашу тему" style="display:none;margin-top:8px;width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#0e1420;color:#fff">
       <button id="sendWebinar" class="btn block mt">Отправить выбор</button>
       <div id="webinarMsg" class="hint" style="display:none;color:#7dd3fc;margin-top:8px;">✅ Спасибо, мнение учтено!</div>
-      <button id="backHomeFromWebinar" class="btn secondary block mt">↩️ На старт</button>
+      <button id="backHomeFromWebinar" class="btn secondary block mt">↩️ Вернуться</button>
     </div>
 
   </div>
