@@ -1,146 +1,34 @@
-// === SETTINGS ===
-const HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
-const SUMMARY_URL = HOOK + (HOOK.includes('?') ? '&' : '?') + 'summary=webinar&callback=__LEKOM_SUMMARY_CB';
+/* =========================
+   Lekom MiniApp — app.js
+   ========================= */
 
-// === Telegram initData
-let tgInit = {};
-try {
-  if (window.Telegram && window.Telegram.WebApp) {
-    window.Telegram.WebApp.ready();
-    tgInit = window.Telegram.WebApp.initDataUnsafe || {};
-  }
-} catch(_) {}
-const withTelegramData = o => (o.initData = tgInit, o);
+// === 1) НАСТРОЙКИ ===
+const HOOK = window.LEKOM_HOOK || 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec'; // можно пробросить через глобал
+const TELEGRAM = window.Telegram?.WebApp;
 
-// === DOM
-const start   = document.getElementById('start');
-const audit   = document.getElementById('audit');
-const webinar = document.getElementById('webinar');
-const titleEl = document.querySelector('h1');
-const subEl   = document.querySelector('.sub');
+// === 2) ГЛОБАЛЬНОЕ СОСТОЯНИЕ (минимум) ===
+let lastResult = null; // сюда положим {score, verdict, advice, answers}
+let total = 11;        // кол-во вопросов аудита (обнови при необходимости)
 
-// === Навигация
-document.getElementById('goAudit').onclick = () => {
-  start.style.display='none'; audit.style.display='block'; webinar.style.display='none';
-  if (titleEl) titleEl.textContent='Аудит печатной инфраструктуры';
-  if (subEl) subEl.style.display='none';
-  window.scrollTo({top:0,behavior:'smooth'});
-};
-document.getElementById('goWebinar').onclick = () => {
-  start.style.display='none'; webinar.style.display='block'; audit.style.display='none';
-  if (titleEl) titleEl.textContent='Выбор темы вебинара';
-  if (subEl) subEl.style.display='none';
-  window.scrollTo({top:0,behavior:'smooth'});
-};
-
-// === Audit
-let lastResult = null;
-const f = document.getElementById('f');
-const flds = f ? [...document.querySelectorAll('fieldset.q')] : [];
-const total = flds.length;
-const progressText = document.getElementById('progressText');
-const sendMsg = document.getElementById('sendMsg');
-
-function answered(){ return flds.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0); }
-function updateProgress(){ if(progressText) progressText.textContent = `Вопрос ${answered()} из ${total}`; }
-if (f){
-  f.addEventListener('click', e=>{
-    const lab=e.target.closest('.opt'); if(!lab) return;
-    const inp=lab.querySelector('input');
-    if (inp && !inp.checked){ inp.checked=true; updateProgress(); }
-  }, {passive:true});
-  f.addEventListener('change', e=>{ if(e.target.matches('input[type="radio"]')) updateProgress(); }, {passive:true});
+// === 3) УТИЛИТЫ ЭКРАНОВ ===
+function show(el){ if(el) el.style.display=''; }
+function hide(el){ if(el) el.style.display='none'; }
+function byId(id){ return document.getElementById(id); }
+function goScreen(screen){
+  const ids = ['start','audit','webinar'];
+  ids.forEach(i => hide(byId(i)));
+  show(byId(screen));
+  // Авто-скролл в начало экрана
+  byId(screen)?.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-// === Универсальная отправка в GAS через GET ?q= (без дублей и CORS)
-function sendQ(obj){
-  const url = HOOK + (HOOK.includes('?')?'&':'?') + 'q=' + encodeURIComponent(JSON.stringify(obj));
-  const s = document.createElement('script'); // JSONP-like для WebView
-  s.src = url + '&_=' + Date.now();
-  s.async = true;
-  document.head.appendChild(s);
-}
-
-// === JSONP сводка (только темы и счёт)
-window.__LEKOM_SUMMARY_CB = function(data){
-  const box = document.getElementById('summaryBody'); if(!box) return;
-  const total = data?.total || 0;
-  const items = Array.isArray(data?.items) ? data.items : [];
-  if (!total){ box.textContent = 'Пока нет голосов.'; return; }
-  const lines = items.map(it=>{
-    const pct = Math.round(it.count*100/total);
-    return `<div class="mt">
-      <div class="grid"><div>${it.topic}</div><div>${it.count} (${pct}%)</div></div>
-      <div class="bar"><i style="width:${pct}%"></i></div>
-    </div>`;
-  }).join('');
-  box.innerHTML = `Всего голосов: <b>${total}</b><div class="mt">${lines}</div>`;
-};
-function loadSummary(){
-  const s=document.createElement('script');
-  s.src = SUMMARY_URL + '&_=' + Date.now();
-  s.async = true;
-  document.head.appendChild(s);
-}
-window.addEventListener('load', ()=>{
-  try{ sendQ({type:'trace',stage:'loaded',t:new Date().toISOString()}); }catch(_){}
-  loadSummary();
-});
-
-// === Submit audit
-const submitBtn = document.getElementById('submitBtn');
-if (submitBtn){
-  submitBtn.addEventListener('click', e=>{
-    e.preventDefault();
-    const ans={},fs=flds;let s=0;
-    fs.forEach((fld,i)=>{ const c=fld.querySelector('input:checked'); const v=Number(c?c.value:0); ans['q'+(i+1)]=v; if(v===1)s++; });
-    const verdict = s>=8 ? 'Зрелая инфраструктура' : s>=5 ? 'Контроль частичный' : 'Высокая уязвимость';
-    const advice  = s>=8 ? 'Точечный аудит TCO и поддержание уровня.'
-                         : s>=5 ? 'Пересмотр бюджета и KPI (TCO, SLA).'
-                                : 'Экспресс-аудит, инвентаризация, быстрые меры экономии.';
-    lastResult = { score:s, verdict, advice, answers:ans };
-
-    sendQ(withTelegramData({ type:'result', ...lastResult, t:new Date().toISOString() }));
-
-    if (sendMsg){ sendMsg.style.display='block'; sendMsg.textContent='✅ Результаты отправлены!'; setTimeout(()=>sendMsg.style.display='none',3000); }
-    document.getElementById('resTitle').textContent = `Ваш результат: ${s}/${total} — ${verdict}`;
-    document.getElementById('resText').textContent  = advice;
-    const res = document.getElementById('res'); res.style.display='block';
-    setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'start'}),30);
-  });
-}
-
-// === Обсудить с экспертом: копируем текст, показываем заметный тост, открываем чат ===
-const ctaExpert = document.getElementById('ctaExpert');
-
-function composeExpertMsg() {
-  const s = lastResult?.score ?? '—';
-  const v = lastResult?.verdict || '—';
-  const a = lastResult?.advice || '';
-  return `Здравствуйте! Хочу обсудить аудит печати.
-Счёт: ${s}/${total}
-Вердикт: ${v}
-Комментарий: ${a}`;
-}
-
-function openTG(url) {
-  try {
-    if (window.Telegram?.WebApp?.openTelegramLink) {
-      Telegram.WebApp.openTelegramLink(url);
-      return true;
-    }
-  } catch (_) {}
-  window.location.href = url;
-  return true;
-}
-
-// ВИДИМЫЙ ТОСТ: сверху, больше, 6с, по тапу закрывается
-function showToast(message, ms = 36000) {
+// === 4) ТОСТ-УВЕДОМЛЕНИЕ (заметное, сверху) ===
+function showToast(message, ms = 6000) {
   const toast = document.createElement('div');
   toast.innerHTML = `💬 ${message}`;
   Object.assign(toast.style, {
     position: 'fixed',
-    top: `calc(env(safe-area-inset-top, 0px) + 50px)`,
+    top: `calc(env(safe-area-inset-top, 0px) + 14px)`,
     left: '50%',
     transform: 'translateX(-50%)',
     background: '#111',
@@ -158,143 +46,221 @@ function showToast(message, ms = 36000) {
     cursor: 'pointer'
   });
   document.body.appendChild(toast);
-  // Плавное появление (слегка сдвигаем вниз)
-  requestAnimationFrame(() => {
-    toast.style.transform = 'translateX(-50%) translateY(0)';
-    toast.style.opacity = '1';
-  });
-
-  // Закрытие по тапу
-  const hide = () => {
+  requestAnimationFrame(() => { toast.style.opacity = '1'; });
+  const hideFn = () => {
     toast.style.opacity = '0';
     toast.style.transform = 'translateX(-50%) translateY(-6px)';
     setTimeout(() => toast.remove(), 250);
   };
-  toast.addEventListener('click', hide);
-
-  // Авто-скрытие
-  const t = setTimeout(hide, ms);
-  // Если уедем со страницы — убрать таймер
-  window.addEventListener('beforeunload', () => clearTimeout(t), { once: true });
+  toast.addEventListener('click', hideFn);
+  const t = setTimeout(hideFn, ms);
+  window.addEventListener('beforeunload', ()=>clearTimeout(t), {once:true});
 }
 
-// Открываем чат (deep-link → веб фоллбек)
-function openExpertChat() {
-  openTG('tg://resolve?domain=chelebaev');
-  setTimeout(() => openTG('https://t.me/chelebaev'), 700);
+// === 5) TELEGRAM HELPERS ===
+function openTG(url){
+  try{
+    if (TELEGRAM?.openTelegramLink){ TELEGRAM.openTelegramLink(url); return true; }
+  }catch(_){}
+  window.location.href = url; return true;
+}
+async function copyToClipboard(text){
+  try{ await navigator.clipboard.writeText(text); return true; } catch{ return false; }
 }
 
-async function copyMsgToClipboard(text){
-  try { await navigator.clipboard.writeText(text); return true; }
-  catch { return false; }
+// === 6) СТАРТОВЫЙ ЭКРАН + СВОДКА ПО ТЕМАМ ===
+const SUMMARY_TARGET_ID = 'summaryStart';
+
+function renderSummaryTo(targetId, data){
+  const box = byId(targetId);
+  if (!box) return;
+  box.innerHTML = '';
+  if (!data || !data.items || !data.items.length){
+    box.textContent = 'Пока нет голосов.';
+    return;
+  }
+  const totalVotes = Number(data.total || 0);
+  const head = document.createElement('div');
+  head.style.marginBottom = '6px';
+  head.style.color = 'rgba(255,255,255,.75)';
+  head.textContent = `Всего голосов: ${totalVotes}`;
+  box.appendChild(head);
+
+  data.items
+    .slice()
+    .sort((a,b)=>b.count-a.count)
+    .forEach(({topic, count})=>{
+      const row = document.createElement('div');
+      row.className = 'mt';
+      const pct = totalVotes ? Math.round(count*100/totalVotes) : 0;
+      row.innerHTML = `
+        <div class="grid"><span>${topic}</span><span>${count} (${pct}%)</span></div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+      `;
+      box.appendChild(row);
+    });
 }
 
-if (ctaExpert) {
-  ctaExpert.addEventListener('click', async (e) => {
+function loadWebinarSummary(){
+  // чистим предыдущий JSONP
+  const old = byId('__lekom_jsonp');
+  if (old) old.remove();
+
+  window.__LEKOM_SUMMARY_CB = (data)=>renderSummaryTo(SUMMARY_TARGET_ID, data);
+  const s = document.createElement('script');
+  s.id = '__lekom_jsonp';
+  s.src = `${HOOK}?summary=webinar&callback=__LEKOM_SUMMARY_CB&_=${Date.now()}`;
+  document.body.appendChild(s);
+}
+
+function showStart(){
+  goScreen('start');
+  loadWebinarSummary();
+}
+
+// === 7) ОБРАБОТЧИК «ОБСУДИТЬ С ЭКСПЕРТОМ» ===
+function composeExpertMsg(){
+  const s = lastResult?.score ?? '—';
+  const v = lastResult?.verdict || '—';
+  const a = lastResult?.advice || '';
+  return `Здравствуйте! Хочу обсудить аудит печати.
+Счёт: ${s}/${total}
+Вердикт: ${v}
+Комментарий: ${a}`;
+}
+
+function hookExpertCta(){
+  const cta = byId('ctaExpert');
+  if (!cta) return;
+  cta.addEventListener('click', async (e)=>{
     e.preventDefault();
     const msg = composeExpertMsg();
-
-    // 1) Показать тост повыше, держим 6 секунд
     showToast('Текст сообщения скопирован, вставьте в чат и отправьте', 6000);
-
-    // 2) Скопировать в буфер (если браузер позволяет)
-    await copyMsgToClipboard(msg);
-
-    // 3) Дадим пользователю заметить тост ~1.2с, затем открываем чат
-    setTimeout(() => openExpertChat(), 1200);
+    await copyToClipboard(msg);
+    // deep-link → фоллбек
+    openTG('tg://resolve?domain=chelebaev');
+    setTimeout(()=>openTG('https://t.me/chelebaev'), 700);
   });
 }
 
-// === Lead form
-const ctaContact = document.getElementById('ctaContact');
-if (ctaContact){
-  ctaContact.addEventListener('click', e=>{
-    e.preventDefault();
-    const lf=document.getElementById('leadForm'); lf.style.display='block';
-    lf.scrollIntoView({behavior:'smooth',block:'start'});
-  });
-}
-const sendLeadBtn = document.getElementById('sendLead');
-if (sendLeadBtn){
-  sendLeadBtn.addEventListener('click', e=>{
-    e.preventDefault();
-    const name=document.getElementById('name').value.trim();
-    const company=document.getElementById('company').value.trim();
-    const phone=document.getElementById('phone').value.trim();
-    const comment=document.getElementById('comment').value.trim();
-    const leadPayload = {
-      type:'lead',
-      name, company, phone, comment,
-      consent:true, policyUrl:'https://lekom.ru/politika-konfidencialnosti/',
-      result: lastResult || null,
-      t:new Date().toISOString()
-    };
-    sendQ(withTelegramData(leadPayload));
-    document.getElementById('leadMsg').style.display='block';
-    sendLeadBtn.disabled=true;
-  });
+// === 8) ОТПРАВКА ДАННЫХ В GAS ===
+let clickLock = false;
+function lockClicks(ms=900){ if(clickLock) return false; clickLock=true; setTimeout(()=>clickLock=false, ms); return true; }
+
+async function postJSON(obj){
+  const qs = new URLSearchParams({ q: JSON.stringify(obj) }).toString();
+  const url = `${HOOK}?${qs}`;
+  const r = await fetch(url, { method:'GET' }); // JSONP/GET — надёжнее для MiniApp
+  return r.text();
 }
 
-// === Webinar poll (общий счёт в Google)
-const wbOtherRadio = document.getElementById('wbOtherRadio');
-const wbOtherText  = document.getElementById('wbOtherText');
-const webinarOptions = document.getElementById('webinarOptions');
-if (webinarOptions){
-  webinarOptions.addEventListener('change', ()=>{
-    const isOther = wbOtherRadio && wbOtherRadio.checked;
-    if (wbOtherText) wbOtherText.style.display = isOther ? 'block' : 'none';
-  });
-}
-const sendWebinar = document.getElementById('sendWebinar');
-if (sendWebinar){
-  sendWebinar.addEventListener('click', ()=>{
-    const c = document.querySelector('input[name="webinar"]:checked');
-    if(!c){ alert('Выберите вариант'); return; }
-    const topic = c.value;
-    let other = '';
-    if (topic === 'Другая тема'){
-      other = (wbOtherText?.value || '').trim();
-      if (other.length < 3){ alert('Пожалуйста, укажите тему (минимум 3 символа)'); return; }
-    }
-    // отправка + мягкий антидребезг кнопки (1.2 сек)
-    sendQ(withTelegramData({ type:'poll', poll:'webinar_topic', topic, other, t:new Date().toISOString() }));
-    document.getElementById('webinarMsg').style.display='block';
-    sendWebinar.disabled = true;
-    setTimeout(()=>{ sendWebinar.disabled = false; }, 1200);
-
-    // обновим сводку
-    setTimeout(loadSummary, 800);
-  });
+// Результат аудита
+async function sendResult(resultObj){
+  if (!lockClicks()) return;
+  const payload = {
+    type:'result',
+    score: resultObj.score,
+    verdict: resultObj.verdict,
+    advice: resultObj.advice,
+    answers: resultObj.answers || null,
+    t: new Date().toISOString(),
+    initData: TELEGRAM?.initDataUnsafe || {}
+  };
+  try{
+    await postJSON(payload);
+    lastResult = { score: payload.score, verdict: payload.verdict, advice: payload.advice, answers: payload.answers };
+    showToast('Результат отправлен — прокрутил к итогу');
+    // Показываем блок результата, если он есть
+    byId('resultBlock')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  }catch(_){
+    showToast('Не удалось отправить результат. Проверьте сеть.');
+  }
 }
 
-// === Reset & Back
-function resetAudit(){
-  flds.forEach(fs=>{ const ch = fs.querySelector('input:checked'); if(ch) ch.checked=false; });
-  const res = document.getElementById('res'); if(res) res.style.display='none';
-  const lf  = document.getElementById('leadForm'); if(lf) lf.style.display='none';
-  ['name','company','phone','comment'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  const leadMsg = document.getElementById('leadMsg'); if(leadMsg) leadMsg.style.display='none';
-  if (sendLeadBtn) sendLeadBtn.disabled=false;
-  if (progressText) progressText.textContent = `Вопрос 0 из ${total}`;
-  if (sendMsg) sendMsg.style.display='none';
-  lastResult = null;
+// Лид (контакт)
+async function sendLead(lead){
+  if (!lockClicks()) return;
+  const payload = {
+    type:'lead',
+    name: lead.name || '',
+    company: lead.company || '',
+    phone: lead.phone || '',
+    comment: lead.comment || '',
+    consent: !!lead.consent,
+    policyUrl: 'https://lekom.ru/politika-konfidencialnosti/',
+    result: lastResult || {},
+    utm_source: lead.utm_source || '',
+    utm_medium:  lead.utm_medium || '',
+    utm_campaign: lead.utm_campaign || '',
+    t: new Date().toISOString(),
+    initData: TELEGRAM?.initDataUnsafe || {}
+  };
+  try{
+    await postJSON(payload);
+    showToast('Контакт отправлен. Мы свяжемся с вами.');
+  }catch(_){
+    showToast('Не удалось отправить контакт. Проверьте сеть.');
+  }
 }
-function resetWebinar(){
-  const radios = document.querySelectorAll('input[name="webinar"]');
-  radios.forEach(r=>r.checked=false);
-  if (wbOtherText){ wbOtherText.value=''; wbOtherText.style.display='none'; }
-  const webinarMsg = document.getElementById('webinarMsg'); if (webinarMsg) webinarMsg.style.display='none';
-  if (sendWebinar) sendWebinar.disabled=false;
+
+// Голос по теме вебинара
+async function sendWebinarVote(topic, otherText=''){
+  if (!lockClicks()) return;
+  const payload = {
+    type:'poll',
+    poll:'webinar_topic',
+    topic,
+    other: otherText || '',
+    t: new Date().toISOString(),
+    initData: TELEGRAM?.initDataUnsafe || {}
+  };
+  try{
+    await postJSON(payload);
+    showToast('Голос учтён!');
+    // обновим сводку после голосования
+    setTimeout(loadWebinarSummary, 600);
+  }catch(_){
+    showToast('Не удалось отправить голос. Повторите позже.');
+  }
 }
-function goHome(){
-  resetAudit(); resetWebinar();
-  audit.style.display='none'; webinar.style.display='none'; start.style.display='block';
-  if (titleEl) titleEl.textContent = 'ЛЕКОМ · Интерактив';
-  if (subEl) subEl.style.display = 'block';
-  window.scrollTo({top:0,behavior:'smooth'});
-  loadSummary();
+
+// === 9) ПРИВЯЗКИ КНОПОК СТАРТА ===
+function bindStartButtons(){
+  byId('goAudit')?.addEventListener('click', ()=>{
+    goScreen('audit');
+    // здесь должен запускаться ваш рендер/логика опроса аудита
+    // (после завершения нужно вызвать sendResult({...}))
+  });
+  byId('goWebinar')?.addEventListener('click', ()=>{
+    goScreen('webinar');
+    // на экране webinar повесь клики на варианты:
+    // document.querySelectorAll('[data-topic]').forEach(btn=>{
+    //   btn.addEventListener('click', ()=> sendWebinarVote(btn.dataset.topic));
+    // });
+  });
+
+  // Кнопки "Вернуться" на внутренних экранах (если есть)
+  byId('btnBackAudit')?.addEventListener('click', showStart);
+  byId('btnBackWebinar')?.addEventListener('click', showStart);
 }
-['backHomeFromAudit','backHomeFromAuditTop','backHomeFromWebinar','backHomeFromWebinarTop'].forEach(id=>{
-  const el=document.getElementById(id);
-  if(el){ el.textContent='↩️ Вернуться'; el.addEventListener('click', e=>{ e.preventDefault(); goHome(); }); }
+
+// === 10) ИНИЦИАЛИЗАЦИЯ ===
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Telegram UI улучшалки
+  try{
+    TELEGRAM?.ready();
+    TELEGRAM?.expand();
+  }catch(_){}
+
+  hookExpertCta();
+  bindStartButtons();
+  showStart(); // загрузит сводку на старте
 });
+
+// === 11) Экспорт функций (если вызываешь из HTML онкликами)
+window.LEKOM = {
+  sendResult,   // LEKOM.sendResult({score, verdict, advice, answers})
+  sendLead,     // LEKOM.sendLead({name,company,phone,comment,consent})
+  sendWebinarVote,
+  showStart
+};
