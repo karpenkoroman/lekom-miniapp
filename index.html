@@ -6,7 +6,7 @@
 <title>ЛЕКОМ · Аудит печати</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  :root{--bg:#0f1115;--card:#12151c;--muted:#9aa0a6;--line:#2a2f3a;--brand:#0a84ff}
+  :root{--bg:#0f1115;--card:#12151c;--muted:#9aa0a6;--brand:#0a84ff}
   *{box-sizing:border-box}
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;margin:0;background:var(--bg);color:#f5f7fb;-webkit-font-smoothing:antialiased;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   .wrap{max-width:900px;margin:0 auto;padding:20px}
@@ -14,26 +14,21 @@
   h1{margin:0 0 6px;font-size:22px}
   .sub{color:var(--muted);margin-bottom:8px}
   .meta{font-size:13px;color:var(--muted);margin-bottom:12px}
+  .hint{font-size:13px;color:var(--muted);margin:8px 0}
   .section{margin-top:22px;font-weight:800;color:#7dd3fc;font-size:15px}
   fieldset.q{border:none;background:transparent;padding:6px 0 4px;margin:14px 0}
   fieldset.q legend{font-weight:700;margin-bottom:10px}
-
-  /* Плашки-ответы (радио-стиль) */
   .opt{display:inline-flex;margin:6px 8px 6px 0;position:relative}
   .opt input{position:absolute;opacity:0;pointer-events:none}
   .opt span{display:inline-block;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
             background:rgba(255,255,255,.05);color:#f5f7fb;font-size:14px;line-height:1.25;
-            transition:transform .06s,background .12s,border-color .12s;user-select:none}
+            transition:background .12s,border-color .12s;user-select:none}
   .opt:focus-within span,.opt:hover span{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.24)}
   .opt input:checked+span{background:rgba(10,132,255,.14);border-color:var(--brand)}
   @media(max-width:560px){.opt{display:block;margin-right:0}.opt span{width:100%}}
 
-  .progress{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin:10px 0}
-  .bar{height:100%;width:0;background:var(--brand)}
-  .hint{font-size:12px;color:var(--muted)}
   .submit{width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;background:var(--brand);
           color:#fff;font-weight:700;cursor:pointer}
-
   .result{display:none;margin-top:16px;padding:16px;border-left:4px solid var(--brand);
           background:rgba(10,132,255,.08);border-radius:10px}
   .ctas{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
@@ -54,10 +49,9 @@
     <h1>Аудит печатной инфраструктуры</h1>
     <div class="sub">Ответьте на 11 вопросов, чтобы оценить зрелость управления печатью</div>
     <div class="meta">⏱ ~5 минут · ответы конфиденциальны</div>
+    <div id="progressText" class="hint">Вопрос 0 из 11</div>
 
-    <div class="progress"><div id="bar" class="bar"></div></div>
-    <div id="pc" class="hint">0/11</div>
-
+    <!-- вопросы -->
     <form id="f">
       <div class="section">🧩 Блок 1. Иллюзия контроля</div>
       <fieldset class="q"><legend>1) Как вы оцениваете прозрачность учёта расходов на печать?</legend>
@@ -144,6 +138,7 @@
     </form>
 
     <button id="submitBtn" class="submit">Отправить результат</button>
+    <div id="sendMsg" class="hint" style="display:none;color:#7dd3fc;margin-top:8px;">✅ Результаты отправлены!</div>
 
     <div id="res" class="result">
       <h3 id="resTitle">Ваш результат</h3>
@@ -160,7 +155,7 @@
       <input id="company" placeholder="Компания">
       <input id="phone" placeholder="Телефон или email">
       <textarea id="comment" placeholder="Комментарий" rows="3"></textarea>
-      <div class="hint">Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.</div>
+      <div class="hint">Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politика-konfidencialности/" target="_blank">политикой конфиденциальности</a>.</div>
       <button id="sendLead">📩 Отправить контакты</button>
       <div id="leadMsg">✅ Спасибо! Контакты отправлены.</div>
     </div>
@@ -168,81 +163,62 @@
 </div>
 
 <script>
-/* === HOOK: поставь свой актуальный (/exec или googleusercontent) === */
-const HOOK = 'https://script.google.com/macros/s/AKfycbyvq_c0Hx2jKQ5PyMpqMuCRiCY_PAaMaocgrCAf1X20fVbIrJlj_mQ3cp-TG0TRNUbw/exec';
+const HOOK='https://script.google.com/macros/s/AKfycbyvq_c0Hx2jKQ5PyMpqMuCRiCY_PAaMaocgrCAf1X20fVbIrJlj_mQ3cp-TG0TRNUbw/exec';
 
-/* --- Telegram init data --- */
-let tgInit = {};
-try {
-  if (window.Telegram && window.Telegram.WebApp) {
-    window.Telegram.WebApp.ready();
-    tgInit = window.Telegram.WebApp.initDataUnsafe || {};
-  }
-} catch(_) {}
-function withTelegramData(obj){ obj.initData = tgInit; return obj; }
+/* Telegram initData */
+let tgInit={};
+try{if(window.Telegram&&window.Telegram.WebApp){window.Telegram.WebApp.ready();tgInit=window.Telegram.WebApp.initDataUnsafe||{};}}catch(_){}
+function withTelegramData(o){o.initData=tgInit;return o;}
 
-/* === UI быстрый === */
-const f = document.getElementById('f');
-const flds = [...document.querySelectorAll('fieldset.q')];
-const total = flds.length, bar = document.getElementById('bar'), pc = document.getElementById('pc');
+const f=document.getElementById('f');
+const flds=[...document.querySelectorAll('fieldset.q')];
+const total=flds.length;
+const progressText=document.getElementById('progressText');
+const sendMsg=document.getElementById('sendMsg');
 
-let rafId = 0;
-function answered(){ return flds.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0); }
-function scheduleUpdate(){
-  if (rafId) return;
-  rafId = requestAnimationFrame(()=>{ rafId = 0; const d=answered(); bar.style.width=(100*d/Math.max(1,total))+'%'; pc.textContent=d+'/'+total; });
-}
-f.addEventListener('click', (e)=>{
-  const lab = e.target.closest('.opt'); if(!lab) return;
-  const inp = lab.querySelector('input'); if(!inp) return;
-  if (!inp.checked){ inp.checked = true; scheduleUpdate(); }
-}, { passive:true });
-f.addEventListener('change', (e)=>{ if(e.target.matches('input[type="radio"]')) scheduleUpdate(); }, { passive:true });
+function answered(){return flds.reduce((n,f)=>n+(f.querySelector('input:checked')?1:0),0);}
+function updateProgress(){progressText.textContent=`Вопрос ${answered()} из ${total}`;}
+f.addEventListener('click',e=>{const lab=e.target.closest('.opt');if(!lab)return;const inp=lab.querySelector('input');if(inp&&!inp.checked){inp.checked=true;updateProgress();}}, {passive:true});
+f.addEventListener('change',e=>{if(e.target.matches('input[type="radio"]'))updateProgress();},{passive:true});
 
-/* === Отправка в GAS: p= base64url === */
 async function send(obj){
-  const json = JSON.stringify(obj);
-  const b64  = btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  const url  = HOOK + (HOOK.includes('?')?'&':'?') + 'p=' + b64;
-  try { await fetch(url,{ method:'GET', mode:'no-cors', keepalive:true, cache:'no-store' }); } catch {}
+  const json=JSON.stringify(obj);
+  const b64=btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const url=HOOK+(HOOK.includes('?')?'&':'?')+'p='+b64;
+  try{await fetch(url,{method:'GET',mode:'no-cors',keepalive:true,cache:'no-store'});}catch{}
 }
 
-/* === Сабмит результата === */
-const submitBtn = document.getElementById('submitBtn');
-submitBtn.addEventListener('click', async (e)=>{
+document.getElementById('submitBtn').addEventListener('click',async e=>{
   e.preventDefault();
-  submitBtn.disabled = true;
-  const ans={}, fs=flds; let s=0;
-  fs.forEach((fld,i)=>{ const c=fld.querySelector('input:checked'); const v=Number(c?c.value:0); ans['q'+(i+1)]=v; if(v===1)s++; });
-  const verdict = s>=8 ? 'Зрелая инфраструктура' : s>=5 ? 'Контроль частичный' : 'Высокая уязвимость';
-  const advice  = s>=8 ? 'Точечный аудит TCO и поддержание уровня.'
-                       : s>=5 ? 'Пересмотр бюджета и KPI (TCO, SLA).'
-                              : 'Экспресс-аудит, инвентаризация, быстрые меры экономии.';
-  const payload = withTelegramData({ type:'result', score:s, verdict, advice, answers:ans, t:new Date().toISOString() });
+  const ans={},fs=flds;let s=0;
+  fs.forEach((fld,i)=>{const c=fld.querySelector('input:checked');const v=Number(c?c.value:0);ans['q'+(i+1)]=v;if(v===1)s++;});
+  const verdict=s>=8?'Зрелая инфраструктура':s>=5?'Контроль частичный':'Высокая уязвимость';
+  const advice=s>=8?'Точечный аудит TCO и поддержание уровня.':s>=5?'Пересмотр бюджета и KPI (TCO, SLA).':'Экспресс-аудит, инвентаризация, быстрые меры экономии.';
+  const payload=withTelegramData({type:'result',score:s,verdict,advice,answers:ans,t:new Date().toISOString()});
   await send(payload);
+
+  sendMsg.style.display='block';
+  sendMsg.textContent='✅ Результаты отправлены!';
+  setTimeout(()=>sendMsg.style.display='none',3000);
+
   document.getElementById('resTitle').textContent=`Ваш результат: ${s}/${total} — ${verdict}`;
   document.getElementById('resText').textContent=advice;
-  const res = document.getElementById('res'); res.style.display='block';
+  const res=document.getElementById('res');res.style.display='block';
   setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'start'}),30);
-  setTimeout(()=>{ submitBtn.disabled=false; }, 600);
 });
 
-/* === Контакты === */
-document.getElementById('ctaContact').addEventListener('click', (e)=>{
+document.getElementById('ctaContact').addEventListener('click',e=>{
   e.preventDefault();
-  const lf = document.getElementById('leadForm'); lf.style.display='block';
+  const lf=document.getElementById('leadForm');lf.style.display='block';
   lf.scrollIntoView({behavior:'smooth',block:'start'});
 });
-document.getElementById('sendLead').addEventListener('click', async (e)=>{
+document.getElementById('sendLead').addEventListener('click',async e=>{
   e.preventDefault();
   const name=document.getElementById('name').value.trim();
   const company=document.getElementById('company').value.trim();
   const phone=document.getElementById('phone').value.trim();
   const comment=document.getElementById('comment').value.trim();
-  const lead=withTelegramData({
-    type:'lead', name, company, phone, comment, consent:true,
-    policyUrl:'https://lekom.ru/politika-konfidencialnosti/', t:new Date().toISOString()
-  });
+  const lead=withTelegramData({type:'lead',name,company,phone,comment,consent:true,policyUrl:'https://lekom.ru/politика-конфиденциальности/',t:new Date().toISOString()});
   await send(lead);
   document.getElementById('leadMsg').style.display='block';
   document.getElementById('sendLead').disabled=true;
