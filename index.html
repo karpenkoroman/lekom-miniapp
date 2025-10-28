@@ -184,20 +184,29 @@ function updateProgress(){progressText.textContent=`Вопрос ${answered()} �
 f.addEventListener('click',e=>{const lab=e.target.closest('.opt');if(!lab)return;const inp=lab.querySelector('input');if(inp&&!inp.checked){inp.checked=true;updateProgress();}}, {passive:true});
 f.addEventListener('change',e=>{if(e.target.matches('input[type="radio"]'))updateProgress();},{passive:true});
 
-/* — неблокирующая отправка — */
 function send(obj){
-  const json=JSON.stringify(obj);
-  const b64=btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  const url=HOOK+(HOOK.includes('?')?'&':'?')+'p='+b64;
-  try{
-    if(navigator.sendBeacon){const ok=navigator.sendBeacon(url);if(ok)return;}
-  }catch(_){}
-  try{
-    const ctrl=new AbortController();
-    const t=setTimeout(()=>ctrl.abort(),1200);
-    fetch(url,{method:'GET',mode:'no-cors',keepalive:true,cache:'no-store',signal:ctrl.signal})
+  const json = JSON.stringify(obj);
+
+  // 1) Мгновенно и надёжно: POST через sendBeacon с телом (text/plain)
+  try {
+    if (navigator.sendBeacon) {
+      const blob = new Blob([json], { type: 'text/plain;charset=UTF-8' });
+      const ok = navigator.sendBeacon(HOOK, blob); // <-- тело передаём сюда
+      if (ok) return; // всё, запрос ушёл
+    }
+  } catch(_) {}
+
+  // 2) Фолбэк: быстрый GET с p=base64url (не блокирует UI)
+  try {
+    const b64 = btoa(unescape(encodeURIComponent(json)))
+      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    const url = HOOK + (HOOK.includes('?')?'&':'?') + 'p=' + b64;
+
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 1200);
+    fetch(url, { method:'GET', mode:'no-cors', keepalive:true, cache:'no-store', signal:ctrl.signal })
       .catch(()=>{}).finally(()=>clearTimeout(t));
-  }catch(_){}
+  } catch(_) {}
 }
 
 document.getElementById('submitBtn').addEventListener('click',e=>{
