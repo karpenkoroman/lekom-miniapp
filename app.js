@@ -55,34 +55,37 @@ if (f){
 // === Универсальная отправка в GAS через GET ?q= (без дублей и CORS)
 function sendQ(obj){
   const url = HOOK + (HOOK.includes('?')?'&':'?') + 'q=' + encodeURIComponent(JSON.stringify(obj));
-  const s = document.createElement('script'); // JSONP-like to bypass WebView quirks
+  const s = document.createElement('script'); // JSONP-like для WebView
   s.src = url + '&_=' + Date.now();
   s.async = true;
   document.head.appendChild(s);
 }
 
-// JSONP сводка: показываем только темы и их счёт
+// === JSONP сводка (только темы и счёт)
 window.__LEKOM_SUMMARY_CB = function(data){
-  const box = document.getElementById('summaryBody');
-  if (!box) return;
+  const box = document.getElementById('summaryBody'); if(!box) return;
   const total = data?.total || 0;
   const items = Array.isArray(data?.items) ? data.items : [];
-  if (!total){
-    box.textContent = 'Пока нет голосов.';
-    return;
-  }
+  if (!total){ box.textContent = 'Пока нет голосов.'; return; }
   const lines = items.map(it=>{
-    const pct = Math.round(it.count * 100 / total);
+    const pct = Math.round(it.count*100/total);
     return `<div class="mt">
-      <div class="grid">
-        <div>${it.topic}</div>
-        <div>${it.count} (${pct}%)</div>
-      </div>
+      <div class="grid"><div>${it.topic}</div><div>${it.count} (${pct}%)</div></div>
       <div class="bar"><i style="width:${pct}%"></i></div>
     </div>`;
   }).join('');
   box.innerHTML = `Всего голосов: <b>${total}</b><div class="mt">${lines}</div>`;
 };
+function loadSummary(){
+  const s=document.createElement('script');
+  s.src = SUMMARY_URL + '&_=' + Date.now();
+  s.async = true;
+  document.head.appendChild(s);
+}
+window.addEventListener('load', ()=>{
+  try{ sendQ({type:'trace',stage:'loaded',t:new Date().toISOString()}); }catch(_){}
+  loadSummary();
+});
 
 // === Submit audit
 const submitBtn = document.getElementById('submitBtn');
@@ -104,12 +107,10 @@ if (submitBtn){
     document.getElementById('resText').textContent  = advice;
     const res = document.getElementById('res'); res.style.display='block';
     setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'start'}),30);
-
-    setTimeout(loadSummary, 800);
   });
 }
 
-// === CTA «Обсудить с экспертом» — подставляем результат в текст
+// === CTA «Обсудить с экспертом»
 const ctaExpert = document.getElementById('ctaExpert');
 if (ctaExpert){
   ctaExpert.addEventListener('click', ()=>{
@@ -151,7 +152,7 @@ if (sendLeadBtn){
   });
 }
 
-// === Webinar poll (общая сводка через GAS)
+// === Webinar poll (общий счёт в Google)
 const wbOtherRadio = document.getElementById('wbOtherRadio');
 const wbOtherText  = document.getElementById('wbOtherText');
 const webinarOptions = document.getElementById('webinarOptions');
@@ -172,9 +173,13 @@ if (sendWebinar){
       other = (wbOtherText?.value || '').trim();
       if (other.length < 3){ alert('Пожалуйста, укажите тему (минимум 3 символа)'); return; }
     }
+    // отправка + мягкий антидребезг кнопки (1.2 сек)
     sendQ(withTelegramData({ type:'poll', poll:'webinar_topic', topic, other, t:new Date().toISOString() }));
     document.getElementById('webinarMsg').style.display='block';
     sendWebinar.disabled = true;
+    setTimeout(()=>{ sendWebinar.disabled = false; }, 1200);
+
+    // обновим сводку
     setTimeout(loadSummary, 800);
   });
 }
