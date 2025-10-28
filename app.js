@@ -1,5 +1,5 @@
 // === SETTINGS ===
-const HOOK = 'https://script.google.com/macros/s/AKfycbyV5bPJzurT8P8arbFABAvBwBcgVosK4p6YGVU6a2WiTbIye4ni9OtrMdZLByofVqAa/exec';
+const HOOK = 'https://script.google.com/macros/s/AKfycbyvq_c0Hx2jKQ5PyMpqMuCRiCY_PAaMaocgrCAf1X20fVbIrJlj_mQ3cp-TG0TRNUbw/exec';
 const SUMMARY_URL = HOOK + (HOOK.includes('?')?'&':'?') + 'summary=webinar&callback=__LEKOM_SUMMARY_CB';
 
 // === Telegram initData (для аудита/лидов)
@@ -38,6 +38,7 @@ document.getElementById('goWebinar').onclick = () => {
 };
 
 // === Audit logic
+let lastResult = null; // для формирования сообщения эксперту
 const f = document.getElementById('f');
 const flds = f ? [...document.querySelectorAll('fieldset.q')] : [];
 const total = flds.length;
@@ -55,9 +56,27 @@ if (f){
   f.addEventListener('change', e=>{ if(e.target.matches('input[type="radio"]')) updateProgress(); }, {passive:true});
 }
 
-// === Отправка на GAS (аудит/лиды) + JSONP summary loader
-function send(obj){
+// === Надёжная отправка: POST JSON -> sendBeacon -> GET
+async function send(obj){
   const json = JSON.stringify(obj);
+
+  // 1) POST JSON (no-cors + keepalive)
+  try{
+    const ctrl = new AbortController();
+    setTimeout(()=>ctrl.abort(), 1500);
+    await fetch(HOOK, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: json,
+      mode:'no-cors',
+      keepalive:true,
+      cache:'no-store',
+      signal:ctrl.signal
+    });
+    return;
+  }catch(_){}
+
+  // 2) sendBeacon
   try{
     if(navigator.sendBeacon){
       const blob = new Blob([json], { type:'text/plain;charset=UTF-8' });
@@ -65,16 +84,19 @@ function send(obj){
       if (ok) return;
     }
   }catch(_){}
+
+  // 3) GET fallback (base64url в ?p=)
   try{
     const b64 = btoa(unescape(encodeURIComponent(json)))
       .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     const url = HOOK + (HOOK.includes('?')?'&':'?') + 'p=' + b64;
     const ctrl = new AbortController();
-    const t = setTimeout(()=>ctrl.abort(), 1200);
-    fetch(url, { method:'GET', mode:'no-cors', keepalive:true, cache:'no-store', signal:ctrl.signal })
-      .catch(()=>{}).finally(()=>clearTimeout(t));
+    setTimeout(()=>ctrl.abort(), 1200);
+    await fetch(url, { method:'GET', mode:'no-cors', keepalive:true, cache:'no-store', signal:ctrl.signal });
   }catch(_){}
 }
+
+// JSONP сводка
 window.__LEKOM_SUMMARY_CB = function(data){
   try{
     const box = document.getElementById('summaryBody');
@@ -108,7 +130,7 @@ window.addEventListener('load', ()=>{
 // Submit audit
 const submitBtn = document.getElementById('submitBtn');
 if (submitBtn){
-  submitBtn.addEventListener('click', e=>{
+  submitBtn.addEventListener('click', async e=>{
     e.preventDefault();
     const ans={},fs=flds;let s=0;
     fs.forEach((fld,i)=>{ const c=fld.querySelector('input:checked'); const v=Number(c?c.value:0); ans['q'+(i+1)]=v; if(v===1)s++; });
@@ -116,13 +138,31 @@ if (submitBtn){
     const advice  = s>=8 ? 'Точечный аудит TCO и поддержание уровня.'
                          : s>=5 ? 'Пересмотр бюджета и KPI (TCO, SLA).'
                                 : 'Экспресс-аудит, инвентаризация, быстрые меры экономии.';
-    const payload = withTelegramData({ type:'result', score:s, verdict, advice, answers:ans, t:new Date().toISOString() });
-    send(payload);
+    lastResult = { score:s, verdict, advice, answers:ans };
+
+    await send(withTelegramData({ type:'result', ...lastResult, t:new Date().toISOString() }));
+
     if (sendMsg){ sendMsg.style.display='block'; sendMsg.textContent='✅ Результаты отправлены!'; setTimeout(()=>sendMsg.style.display='none',3000); }
     document.getElementById('resTitle').textContent = `Ваш результат: ${s}/${total} — ${verdict}`;
     document.getElementById('resText').textContent  = advice;
     const res = document.getElementById('res'); res.style.display='block';
     setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'start'}),30);
+
+    // обновим сводку голосования на главной после возврата
+    setTimeout(loadSummary, 1000);
+  });
+}
+
+// Expert CTA — формируем сообщение со счётом и вердиктом
+const ctaExpert = document.getElementById('ctaExpert');
+if (ctaExpert){
+  ctaExpert.addEventListener('click', (e)=>{
+    // если есть lastResult — подставим в текст
+    if (lastResult){
+      const msg = `Здравствуйте! Хочу обсудить аудит печати.\nСчёт: ${lastResult.score}/${total}\nВердикт: ${lastResult.verdict}`;
+      const url = `https://t.me/chelebaev?text=${encodeURIComponent(msg)}`;
+      ctaExpert.setAttribute('href', url);
+    }
   });
 }
 
@@ -137,20 +177,26 @@ if (ctaContact){
 }
 const sendLeadBtn = document.getElementById('sendLead');
 if (sendLeadBtn){
-  sendLeadBtn.addEventListener('click', e=>{
+  sendLeadBtn.addEventListener('click', async e=>{
     e.preventDefault();
     const name=document.getElementById('name').value.trim();
     const company=document.getElementById('company').value.trim();
     const phone=document.getElementById('phone').value.trim();
     const comment=document.getElementById('comment').value.trim();
-    const lead=withTelegramData({type:'lead',name,company,phone,comment,consent:true,policyUrl:'https://lekom.ru/politika-konfidencialnosti/',t:new Date().toISOString()});
-    send(lead);
+    const leadPayload = {
+      type:'lead',
+      name, company, phone, comment,
+      consent:true, policyUrl:'https://lekom.ru/politika-konfidencialnosti/',
+      result: lastResult || null,
+      t:new Date().toISOString()
+    };
+    await send(withTelegramData(leadPayload));
     document.getElementById('leadMsg').style.display='block';
     sendLeadBtn.disabled=true;
   });
 }
 
-// === Webinar poll (через GAS, общий счёт) ===
+// Webinar poll → GAS
 const wbOtherRadio = document.getElementById('wbOtherRadio');
 const wbOtherText  = document.getElementById('wbOtherText');
 const webinarOptions = document.getElementById('webinarOptions');
@@ -162,7 +208,7 @@ if (webinarOptions){
 }
 const sendWebinar = document.getElementById('sendWebinar');
 if (sendWebinar){
-  sendWebinar.addEventListener('click', ()=>{
+  sendWebinar.addEventListener('click', async ()=>{
     const c = document.querySelector('input[name="webinar"]:checked');
     if(!c){ alert('Выберите вариант'); return; }
     const topic = c.value;
@@ -171,12 +217,10 @@ if (sendWebinar){
       other = (wbOtherText?.value || '').trim();
       if (other.length < 3){ alert('Пожалуйста, укажите тему (минимум 3 символа)'); return; }
     }
-    // Отправляем голос на GAS
-    send(withTelegramData({ type:'poll', poll:'webinar_topic', topic, other, t:new Date().toISOString() }));
+    await send(withTelegramData({ type:'poll', poll:'webinar_topic', topic, other, t:new Date().toISOString() }));
     document.getElementById('webinarMsg').style.display='block';
     sendWebinar.disabled = true;
-    // Обновим сводку на старте после возврата (или сразу подтянуть можно):
-    setTimeout(loadSummary, 1200);
+    setTimeout(loadSummary, 800);
   });
 }
 
