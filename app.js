@@ -135,12 +135,12 @@ function openTG(url) {
 }
 
 // ВИДИМЫЙ ТОСТ: сверху, больше, 6с, по тапу закрывается
-function showToast(message, ms = 6000) {
+function showToast(message, ms = 36000) {
   const toast = document.createElement('div');
   toast.innerHTML = `💬 ${message}`;
   Object.assign(toast.style, {
     position: 'fixed',
-    top: `calc(env(safe-area-inset-top, 0px) + 14px)`,
+    top: `calc(env(safe-area-inset-top, 0px) + 50px)`,
     left: '50%',
     transform: 'translateX(-50%)',
     background: '#111',
