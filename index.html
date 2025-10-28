@@ -17,7 +17,7 @@
   fieldset.q legend{font-weight:700;margin-bottom:10px}
   .opt{display:inline-flex;margin:6px 8px 6px 0;position:relative}
   .opt input{position:absolute;opacity:0;pointer-events:none}
-  .opt span{display:inline-block;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#f5f7fb;font-size:14px;line-height:1.25;transition:transform .06s ease,background .15s ease,border-color .15s ease,box-shadow .15s ease;user-select:none}
+  .opt span{display:inline-block;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#f5f7fb;font-size:14px;line-height:1.25;transition:transform .06s,background .15s,border-color .15s,box-shadow .15s;user-select:none}
   .opt:hover span{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.24);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.25)}
   .opt input:checked+span{background:rgba(10,132,255,.12);border-color:#0a84ff;box-shadow:0 0 0 2px rgba(10,132,255,.18) inset,0 6px 20px rgba(10,132,255,.18)}
   @media(max-width:560px){.opt{display:block;margin-right:0}.opt span{width:100%}}
@@ -130,6 +130,11 @@
       </fieldset>
     </form>
 
+    <!-- Fallback-кнопка для браузера -->
+    <button id="submitBtn" style="display:none;width:100%;margin-top:8px" class="cta primary">
+      Отправить результат
+    </button>
+
     <div id="res" class="result">
       <h3 id="resTitle">Ваш результат</h3>
       <div id="resText" class="hint"></div>
@@ -152,56 +157,65 @@
   </div>
 </div>
 
-  <script>
+<script>
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 
-const params = new URLSearchParams(location.search);
-const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbwjJIv6fRqDpVQwyWR0CJz5o88IH-1vnnV52xtVHYIamLZl_KQq5lQH79m9Niax-Zsz/exec';
+const params  = new URLSearchParams(location.search);
+const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbw7nixHlSkSGCVwp8EN9c0YomPKI5tIaUeioI9-ea0k_bu8IH1R6niV-Nrak01IcxTU/exec';
+
+  // IN_TG — только если есть user в initData
+const IN_TG   = !!(tg && tg.initDataUnsafe && tg.initDataUnsafe.user);
+// debug=1 — принудительно показать браузерную кнопку
+const DEBUG   = params.get('debug') === '1';
+
 let MB_LOCK = false;
 
-// Тихий ping
+// Тихий ping (для связи)
 (async () => { try {
-  await fetch(GAS_HOOK, { method:'POST', mode:'no-cors',
-    body: JSON.stringify({ type:'result', score:-1, verdict:'PING', t: new Date().toISOString() })
-  });
+  await fetch(GAS_HOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({type:'result',score:-1,verdict:'PING',t:new Date().toISOString()})});
 } catch {} })();
 
-const qGroups = [...document.querySelectorAll('form fieldset.q')];
-const total   = qGroups.length;
-const bar     = document.getElementById('bar');
-const pc      = document.getElementById('pc');
-const resBox  = document.getElementById('res');
-const leadForm= document.getElementById('leadForm');
-const ctaContact = document.getElementById('ctaContact');
+const qGroups=[...document.querySelectorAll('form fieldset.q')];
+const total  = qGroups.length;
+const bar    = document.getElementById('bar');
+const pc     = document.getElementById('pc');
+const resBox = document.getElementById('res');
+const leadForm=document.getElementById('leadForm');
+const ctaContact=document.getElementById('ctaContact');
+const submitBtn=document.getElementById('submitBtn');
 
-function answered(){ return qGroups.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0); }
-
-function hideMB(){ if(!tg)return; try{ tg.offEvent && tg.offEvent('mainButtonClicked', submit); }catch{} try{ tg.MainButton.hide(); }catch{} }
+function answered(){return qGroups.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0);}
+function hideMB(){ if(!tg)return; try{ tg.offEvent && tg.offEvent('mainButtonClicked', submit);}catch{} try{ tg.MainButton.hide(); }catch{} }
 
 function updateUI(){
-  const d = answered();
-  bar.style.width = Math.round(d/Math.max(1,total)*100)+'%';
-  pc.textContent = d+'/'+total;
-  if (MB_LOCK) { hideMB(); return; }
-  if (tg) {
+  const d=answered();
+  bar.style.width=Math.round(d/Math.max(1,total)*100)+'%';
+  pc.textContent=d+'/'+total;
+
+  if (MB_LOCK) { hideMB(); }
+
+  if (IN_TG && !MB_LOCK) {
     try { d===total ? (tg.MainButton.setText('Отправить результат'), tg.MainButton.show())
                     : tg.MainButton.hide(); } catch {}
+  }
+  if (!IN_TG || DEBUG) {
+    submitBtn.style.display = (d===total) ? 'block' : 'none';
   }
 }
 document.addEventListener('change',e=>{ if(e.target.matches('input[type="radio"]')) updateUI(); });
 document.addEventListener('DOMContentLoaded',updateUI);
 
 async function postToGAS(url,obj){
-  const b = JSON.stringify(obj);
-  try { if(navigator.sendBeacon){ if(navigator.sendBeacon(url,new Blob([b],{type:'text/plain'}))) return; } } catch{}
-  try { await fetch(url,{method:'POST',mode:'no-cors',body:b}); return; } catch{}
-  try { new Image().src = url+'?q='+encodeURIComponent(b).slice(0,1800); } catch{}
+  const b=JSON.stringify(obj);
+  try{ if(navigator.sendBeacon){ if(navigator.sendBeacon(url,new Blob([b],{type:'text/plain'}))) return; } }catch{}
+  try{ await fetch(url,{method:'POST',mode:'no-cors',body:b}); return; }catch{}
+  try{ new Image().src=url+'?q='+encodeURIComponent(b).slice(0,1800); }catch{}
 }
 
 async function submit(){
-  const answers={}, fs=[...document.querySelectorAll('form fieldset.q')]; let s=0;
-  fs.forEach((f,i)=>{const c=f.querySelector('input:checked');const v=Number(c?c.value:0);answers['q'+(i+1)]=v; if(v===1)s++;});
+  const answers={},fs=[...document.querySelectorAll('form fieldset.q')]; let s=0;
+  fs.forEach((f,i)=>{const c=f.querySelector('input:checked');const v=Number(c?c.value:0);answers['q'+(i+1)]=v;if(v===1)s++;});
   let verdict,advice,icon;
   if(s>=8){icon='⭐️';verdict='Зрелая инфраструктура';advice='Точечный аудит TCO и оптимизация «длинного хвоста».';}
   else if(s>=5){icon='⚠️';verdict='Контроль частичный';advice='Пересмотр бюджета, унификация KPI (TCO, SLA).';}
@@ -210,32 +224,25 @@ async function submit(){
   await postToGAS(GAS_HOOK,{type:'result',...window.__lastResult,t:new Date().toISOString(),initData:tg?.initDataUnsafe||null});
 
   // Показ результата + автоскролл
-  document.getElementById('resTitle').textContent = `Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
-  document.getElementById('resText').textContent  = advice;
+  document.getElementById('resTitle').textContent=`Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
+  document.getElementById('resText').textContent=advice;
   resBox.style.display='block';
   setTimeout(()=>resBox.scrollIntoView({behavior:'smooth',block:'start'}),50);
 
-  // Блокируем MainButton, чтобы не перекрывал «Отправить контакты»
-  MB_LOCK = true; hideMB();
+  // Блокируем MainButton, чтобы не мешал форме лида
+  MB_LOCK=true; hideMB();
 }
 if (tg) tg.onEvent('mainButtonClicked', submit);
+submitBtn?.addEventListener('click', (e)=>{ e.preventDefault(); submit(); });
 
-// Открытие формы лида — тоже скрывает MainButton и скроллит к форме
 function openLeadForm(){
-  MB_LOCK = true; hideMB();
-  if(!leadForm) return;
+  MB_LOCK=true; hideMB();
   leadForm.style.display='block';
   setTimeout(()=>leadForm.scrollIntoView({behavior:'smooth',block:'start'}),30);
 }
-if (ctaContact){
-  ctaContact.setAttribute('role','button');
-  ctaContact.setAttribute('tabindex','0');
-  ctaContact.addEventListener('click', (e)=>{ e.preventDefault(); openLeadForm(); });
-  ctaContact.addEventListener('keydown',(e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openLeadForm(); }});
-}
-document.addEventListener('click',(e)=>{ const a=e.target.closest&&e.target.closest('#ctaContact'); if(a){ e.preventDefault(); openLeadForm(); }});
+ctaContact?.addEventListener('click',(e)=>{ e.preventDefault(); openLeadForm(); });
+document.addEventListener('click',(e)=>{ const a=e.target.closest?.('#ctaContact'); if(a){ e.preventDefault(); openLeadForm(); }});
 
-// Отправка лида
 document.getElementById('sendLead')?.addEventListener('click', async ()=>{
   const name=document.getElementById('name').value.trim();
   const company=document.getElementById('company').value.trim();
@@ -250,6 +257,5 @@ document.getElementById('sendLead')?.addEventListener('click', async ()=>{
   if(msg&&btn){ msg.style.display='block'; btn.disabled=true; }
 });
 </script>
-  
 </body>
 </html>
