@@ -137,7 +137,10 @@
       </fieldset>
     </form>
 
-    <button id="submitBtn" class="submit">Отправить результат</button>
+   
+    
+    
+ <button id="submitBtn" class="submit">Посмотреть результат</button>
     <div id="sendMsg" class="hint" style="display:none;color:#7dd3fc;margin-top:8px;">✅ Результаты отправлены!</div>
 
     <div id="res" class="result">
@@ -155,7 +158,7 @@
       <input id="company" placeholder="Компания">
       <input id="phone" placeholder="Телефон или email">
       <textarea id="comment" placeholder="Комментарий" rows="3"></textarea>
-      <div class="hint">Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politика-konfidencialности/" target="_blank">политикой конфиденциальности</a>.</div>
+      <div class="hint">Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politика-конфиденциальности/" target="_blank">политикой конфиденциальности</a>.</div>
       <button id="sendLead">📩 Отправить контакты</button>
       <div id="leadMsg">✅ Спасибо! Контакты отправлены.</div>
     </div>
@@ -181,21 +184,30 @@ function updateProgress(){progressText.textContent=`Вопрос ${answered()} �
 f.addEventListener('click',e=>{const lab=e.target.closest('.opt');if(!lab)return;const inp=lab.querySelector('input');if(inp&&!inp.checked){inp.checked=true;updateProgress();}}, {passive:true});
 f.addEventListener('change',e=>{if(e.target.matches('input[type="radio"]'))updateProgress();},{passive:true});
 
-async function send(obj){
+/* — неблокирующая отправка — */
+function send(obj){
   const json=JSON.stringify(obj);
   const b64=btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   const url=HOOK+(HOOK.includes('?')?'&':'?')+'p='+b64;
-  try{await fetch(url,{method:'GET',mode:'no-cors',keepalive:true,cache:'no-store'});}catch{}
+  try{
+    if(navigator.sendBeacon){const ok=navigator.sendBeacon(url);if(ok)return;}
+  }catch(_){}
+  try{
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),1200);
+    fetch(url,{method:'GET',mode:'no-cors',keepalive:true,cache:'no-store',signal:ctrl.signal})
+      .catch(()=>{}).finally(()=>clearTimeout(t));
+  }catch(_){}
 }
 
-document.getElementById('submitBtn').addEventListener('click',async e=>{
+document.getElementById('submitBtn').addEventListener('click',e=>{
   e.preventDefault();
   const ans={},fs=flds;let s=0;
   fs.forEach((fld,i)=>{const c=fld.querySelector('input:checked');const v=Number(c?c.value:0);ans['q'+(i+1)]=v;if(v===1)s++;});
   const verdict=s>=8?'Зрелая инфраструктура':s>=5?'Контроль частичный':'Высокая уязвимость';
   const advice=s>=8?'Точечный аудит TCO и поддержание уровня.':s>=5?'Пересмотр бюджета и KPI (TCO, SLA).':'Экспресс-аудит, инвентаризация, быстрые меры экономии.';
   const payload=withTelegramData({type:'result',score:s,verdict,advice,answers:ans,t:new Date().toISOString()});
-  await send(payload);
+  send(payload); // не ждём сеть
 
   sendMsg.style.display='block';
   sendMsg.textContent='✅ Результаты отправлены!';
@@ -212,14 +224,14 @@ document.getElementById('ctaContact').addEventListener('click',e=>{
   const lf=document.getElementById('leadForm');lf.style.display='block';
   lf.scrollIntoView({behavior:'smooth',block:'start'});
 });
-document.getElementById('sendLead').addEventListener('click',async e=>{
+document.getElementById('sendLead').addEventListener('click',e=>{
   e.preventDefault();
   const name=document.getElementById('name').value.trim();
   const company=document.getElementById('company').value.trim();
   const phone=document.getElementById('phone').value.trim();
   const comment=document.getElementById('comment').value.trim();
   const lead=withTelegramData({type:'lead',name,company,phone,comment,consent:true,policyUrl:'https://lekom.ru/politика-конфиденциальности/',t:new Date().toISOString()});
-  await send(lead);
+  send(lead);
   document.getElementById('leadMsg').style.display='block';
   document.getElementById('sendLead').disabled=true;
 });
