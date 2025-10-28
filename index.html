@@ -161,7 +161,7 @@ if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 const params = new URLSearchParams(location.search);
 const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbxG1xY6gVvRY04Y8_yuLds3J51QMdOdYTVuY8c0iFRQ5fPEmpRZIjgOmkqhzoFwCRoM/exec';
 
-// Ping для проверки связи (незаметно)
+// Тихий пинг в GAS (для связи)
 (async () => {
   try {
     await fetch(GAS_HOOK, {
@@ -171,13 +171,13 @@ const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfyc
   } catch {}
 })();
 
-const qGroups = [...document.querySelectorAll('form fieldset.q')];
-const total   = qGroups.length;
-const bar     = document.getElementById('bar');
-const pc      = document.getElementById('pc');
-const resBox  = document.getElementById('res');
-const leadForm= document.getElementById('leadForm');
-const ctaContact = document.getElementById('ctaContact');
+const qGroups   = [...document.querySelectorAll('form fieldset.q')];
+const total     = qGroups.length;
+const bar       = document.getElementById('bar');
+const pc        = document.getElementById('pc');
+const resBox    = document.getElementById('res');
+const leadForm  = document.getElementById('leadForm');
+const ctaContact= document.getElementById('ctaContact');
 
 function answered() {
   return qGroups.reduce((n, fs) => n + (fs.querySelector('input:checked') ? 1 : 0), 0);
@@ -224,7 +224,7 @@ async function submit() {
 
   let verdict, advice, icon;
   if (s >= 8) { icon = '⭐️'; verdict = 'Зрелая инфраструктура';   advice = 'Точечный аудит TCO и оптимизация «длинного хвоста».'; }
-  else if (s >= 5) { icon = '⚠️'; verdict = 'Контроль частичный'; advice = 'Пересмотр бюджета, унификация политики и KPI (TCO, SLA).'; }
+  else if (s >= 5) { icon = '⚠️'; verdict = 'Контроль частичный'; advice = 'Пересмотр бюджета, унификация KPI (TCO, SLA).'; }
   else { icon = '❗️'; verdict = 'Высокая уязвимость';             advice = 'Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
 
   window.__lastResult = { score: s, verdict, advice, answers };
@@ -232,40 +232,47 @@ async function submit() {
 
   // Показ результата
   document.getElementById('resTitle').textContent = `Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
-  document.getElementById('resText').textContent = advice;
+  document.getElementById('resText').textContent  = advice;
   resBox.style.display = 'block';
 
-  // Скроллим к результату
+  // Плавный скролл к результату
   setTimeout(() => resBox.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 
-  // Меняем кнопку на «Закрыть»
+  // Главное — НИЧЕГО не закрываем: прячем MainButton, чтобы не путал
   if (tg) {
     try {
-      tg.MainButton.setText('Закрыть');
-      tg.offEvent && tg.offEvent('mainButtonClicked', submit);
-      tg.onEvent && tg.onEvent('mainButtonClicked', () => tg.close());
-      tg.MainButton.show();
+      tg.offEvent && tg.offEvent('mainButtonClicked', submit); // на всякий
+      tg.MainButton.hide();
     } catch {}
   }
 }
 
-// Telegram MainButton
+// Привязываем MainButton к отправке
 if (tg) tg.onEvent('mainButtonClicked', submit);
 
-// Кнопка «Оставить контакты»
-if (ctaContact) {
-  ctaContact.addEventListener('click', (e) => {
-    e.preventDefault();
-    leadForm.style.display = 'block';
-    setTimeout(() => leadForm.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
-  });
+// Надёжная обработка клика «Оставить контакты»
+function openLeadForm() {
+  if (!leadForm) return;
+  leadForm.style.display = 'block';
+  setTimeout(() => leadForm.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
 }
+if (ctaContact) {
+  ctaContact.setAttribute('role', 'button');
+  ctaContact.setAttribute('tabindex', '0');
+  ctaContact.addEventListener('click', (e) => { e.preventDefault(); openLeadForm(); });
+  ctaContact.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLeadForm(); }});
+}
+// На случай, если клики всплывают с вложенных элементов:
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('#ctaContact');
+  if (a) { e.preventDefault(); openLeadForm(); }
+});
 
 // Отправка лида
 document.getElementById('sendLead')?.addEventListener('click', async () => {
-  const name = document.getElementById('name').value.trim();
+  const name    = document.getElementById('name').value.trim();
   const company = document.getElementById('company').value.trim();
-  const phone = document.getElementById('phone').value.trim();
+  const phone   = document.getElementById('phone').value.trim();
   const comment = document.getElementById('comment').value.trim();
   if (!name && !phone) { alert('Укажите хотя бы имя или телефон/email'); return; }
 
@@ -285,5 +292,6 @@ document.getElementById('sendLead')?.addEventListener('click', async () => {
   if (msg && btn) { msg.style.display = 'block'; btn.disabled = true; }
 });
 </script>
+  
 </body>
 </html>
