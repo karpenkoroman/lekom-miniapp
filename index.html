@@ -152,7 +152,7 @@ if(tg){tg.ready();tg.expand();try{tg.MainButton.enable();}catch{}}
 
 // жёсткий фолбэк на твой exec
 const params = new URLSearchParams(location.search);
-const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycby_DkAG_iACh4uuE93yaQ5LZ7zuXrzVxKSm7f3mlRJfZz49tPlxCNaJq3B4nPmAPf6X/exec';
+const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbxG1xY6gVvRY04Y8_yuLds3J51QMdOdYTVuY8c0iFRQ5fPEmpRZIjgOmkqhzoFwCRoM/exec';
 document.getElementById('diag').textContent = 'hook: ' + (new URL(GAS_HOOK).host);
 
 // пинг при загрузке (видно в Logs/Results)
