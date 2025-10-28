@@ -173,7 +173,7 @@ if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 
 /* ===== Hook & flags ===== */
 const params   = new URLSearchParams(location.search);
-const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbzpOZsg6yiJ_An3Mu1rcLC1aY70QC4vI2LpjqxwynsPFSYDTt52m-vSEQIAUNH-FPI/exec'; // <-- подставь актуальный /exec
+const GAS_HOOK = params.get('hook') || 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiLATpYYrUUKFZ3DFC6_vzH5XSp8xuDK0LAbqLwYsq-3DCcJW75p8rjv2v53tby5rL2vHUGbMF-7LI6gL1b00FlxySinBWINSptE1_nffYfRWushlOY7rFod3JKnp3PRRyVJuECCX5loak1iHLHaPteR6yY961eXnZ6Xc0onD75YdhWen8USRn1aihOCDmiTNj1n2RPRbLcnuVwx4wyW0YjUEc6rltrt0Hw9xa2Bbafxg5Xo40qrViLraD49A3W53pzpb2LwgPs9_4Dyg-C2hkj2em9-g&lib=Mwwt52smGuohEdsmoK0zKBxnQJJj_G6cf'; // <-- подставь актуальный /exec
 const DEBUG    = params.get('debug') === '1';
 const TESTAUTO = params.get('test') === '1'; // ?test=1 — автосабмит через 2 сек
 const IN_TG    = !!tg;
