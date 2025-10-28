@@ -224,6 +224,7 @@
 </div>
 
 <script>
+  <script>
 (function(){
   const form   = document.getElementById('auditForm');
   const btn    = document.getElementById('sendAudit');
@@ -233,72 +234,58 @@
 
   if(!form || !btn) return;
 
-  // единообразный вид плашек-ответов при выборе
-  const SELECTED_CSS = 'box-shadow:0 0 0 2px rgba(15,184,173,.85) inset;background:rgba(255,255,255,.08);';
-
-  function updateProgress(){
-    const answered = new Set(
-      [...form.querySelectorAll('.ans.selected')].map(b => b.dataset.q)
-    ).size;
-    if (prog) prog.textContent = `Ответы: ${answered} / ${TOTAL}`;
-  }
-
-  // Выбор ответов (взаимоисключающий на вопрос)
+  // выбор плашки
   form.addEventListener('click', (e)=>{
-    const btn = e.target.closest('.ans');
-    if(!btn) return;
-    const q = btn.dataset.q;
-    // снять выбор у всех в этом вопросе
-    form.querySelectorAll(`.ans[data-q="${q}"]`).forEach(x=>{
-      x.classList.remove('selected');
-      x.style.cssText = '';
-    });
-    // отметить выбранный
-    btn.classList.add('selected');
-    btn.style.cssText = SELECTED_CSS;
+    const b = e.target.closest('.pill');
+    if(!b) return;
+    const q = b.dataset.q;
+    // снять с siblings
+    form.querySelectorAll(`.pill[data-q="${q}"]`).forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
     updateProgress();
   });
 
-  function calcScoreAndAnswers(){
-    let score = 0;
-    const answers = {};
+  function updateProgress(){
+    const answered = new Set([...form.querySelectorAll('.pill.selected')].map(x=>x.dataset.q)).size;
+    if (prog) prog.textContent = `Ответы: ${answered} / ${TOTAL}`;
+  }
+  updateProgress();
+
+  function calc(){
+    let score = 0, answers = {};
     for(let i=1;i<=TOTAL;i++){
-      const sel = form.querySelector(`.ans.selected[data-q="q${i}"]`);
-      if (sel){
+      const sel = form.querySelector(`.pill.selected[data-q="q${i}"]`);
+      if(sel){
         answers['q'+i] = sel.dataset.value;
         score += Number(sel.dataset.score||0);
       } else {
         answers['q'+i] = null;
       }
     }
-    return { score, answers };
+    return {score, answers};
+  }
+  function verdict(score){
+    if(score >= 9)  return { v:'Зрелая инфраструктура', a:'Можно оптимизировать закупки и мониторинг.' };
+    if(score >= 5)  return { v:'Частичный контроль',   a:'Есть риски — полезен TCO-аудит и политика печати.' };
+    return            { v:'Высокая уязвимость',       a:'Рекомендованы ревизия парка и контроль бюджета.' };
   }
 
-  function makeVerdict(score){
-    if(score >= 9) return { v:'Зрелая инфраструктура', a:'Можно оптимизировать процессы закупок и мониторинг.' };
-    if(score >= 5) return { v:'Частичный контроль', a:'Есть риски — стоит провести аудит печати и TCO-анализ.' };
-    return { v:'Высокая уязвимость', a:'Рекомендуем ревизию парка, политику печати и контроль бюджета.' };
-  }
-
-  // Начальный прогресс
-  updateProgress();
-
-  // Посчитать и отправить (даже если есть пропуски)
   btn.addEventListener('click', ()=>{
-    const {score, answers} = calcScoreAndAnswers();
-    const {v, a} = makeVerdict(score);
+    const {score, answers} = calc();
+    const {v, a} = verdict(score);
 
-    // Обновим блок результата рядом
+    // Показать итог локально ВСЕГДА (даже если не всё заполнено)
     if (result){
       result.innerHTML = `Итоговый счёт: <b>${score}/11</b><br>Вердикт: <b>${v}</b><br><span class="muted">${a}</span>`;
     }
-    // Отправка на сервер (функция из app.js)
+
+    // Отправить на сервер (если подключён app.js с LEKOM.sendResult)
     if (window.LEKOM?.sendResult){
-      LEKOM.sendResult({ score, verdict: v, advice: a, answers });
+      window.LEKOM.sendResult({ score, verdict: v, advice: a, answers });
     }
   });
 })();
-</script>
+</script></script>
 
 
 
