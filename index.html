@@ -62,7 +62,10 @@
 
     <!-- AUDIT -->
     <div id="audit" style="display:none">
-      <div class="meta mt">⏱ ~5 минут · ответы конфиденциальны</div>
+      <div class="row" style="justify-content:space-between;align-items:center" class="mt">
+        <div class="meta mt">⏱ ~5 минут · ответы конфиденциальны</div>
+        <button id="backHomeFromAuditTop" class="btn secondary">↩️ На старт</button>
+      </div>
       <div id="progressText" class="hint">Вопрос 0 из 11</div>
 
       <form id="f" class="mt">
@@ -159,6 +162,7 @@
         <div class="ctas">
           <a class="cta primary" target="_blank" href="https://t.me/chelebaev">💬 Обсудить с экспертом</a>
           <a id="ctaContact" class="cta secondary">📩 Оставить контакты</a>
+          <a id="backHomeFromAudit" class="cta secondary">↩️ На старт</a>
         </div>
       </div>
 
@@ -176,7 +180,10 @@
 
     <!-- WEBINAR POLL -->
     <div id="webinar" style="display:none">
-      <div class="meta mt">Выберите тему, которую стоит разобрать на ближайшем вебинаре</div>
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div class="meta mt">Выберите тему, которую стоит разобрать на ближайшем вебинаре</div>
+        <button id="backHomeFromWebinarTop" class="btn secondary">↩️ На старт</button>
+      </div>
       <div id="webinarOptions" class="mt">
         <label class="opt"><input type="radio" name="webinar" value="Обзор рынка и тренды 2025"><span>Обзор рынка и тренды 2025</span></label>
         <label class="opt"><input type="radio" name="webinar" value="Закупки по 44-ФЗ / 223-ФЗ"><span>Закупки по 44-ФЗ / 223-ФЗ</span></label>
@@ -187,6 +194,7 @@
       <input id="wbOtherText" placeholder="Укажите вашу тему" style="display:none;margin-top:8px;width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#0e1420;color:#fff">
       <button id="sendWebinar" class="btn block mt">Отправить выбор</button>
       <div id="webinarMsg" class="hint" style="display:none;color:#7dd3fc;margin-top:8px;">✅ Спасибо, мнение учтено!</div>
+      <button id="backHomeFromWebinar" class="btn secondary block mt">↩️ На старт</button>
     </div>
 
   </div>
