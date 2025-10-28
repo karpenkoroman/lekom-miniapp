@@ -158,25 +158,21 @@
 </div>
 
 <script>
+/* ====== Telegram WebApp bootstrap ====== */
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 
+/* ====== Hook ====== */
 const params   = new URLSearchParams(location.search);
 const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbw7nixHlSkSGCVwp8EN9c0YomPKI5tIaUeioI9-ea0k_bu8IH1R6niV-Nrak01IcxTU/exec';
 
-// В некоторых клиентах initDataUnsafe может быть пустым — считаем, что мы в TG, если есть объект WebApp
+/* В некоторых клиентах initDataUnsafe может быть пустым — считаем, что мы в TG, если есть WebApp */
 const IN_TG = !!tg;
 const DEBUG = params.get('debug') === '1';
 
 let MB_LOCK = false;
 
-// Тихий ping (для связи)
-(async () => { try {
-  await fetch(GAS_HOOK, { method:'POST', mode:'no-cors',
-    body: JSON.stringify({ type:'result', score:-1, verdict:'PING', t: new Date().toISOString() })
-  });
-} catch {} })();
-
+/* ====== UI refs ====== */
 const qGroups   = [...document.querySelectorAll('form fieldset.q')];
 const total     = qGroups.length;
 const bar       = document.getElementById('bar');
@@ -186,57 +182,55 @@ const leadForm  = document.getElementById('leadForm');
 const ctaContact= document.getElementById('ctaContact');
 const submitBtn = document.getElementById('submitBtn');
 
+/* ====== Helpers ====== */
 function answered(){ return qGroups.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0); }
 function hideMB(){ if(!tg) return; try{ tg.offEvent && tg.offEvent('mainButtonClicked', submit);}catch{} try{ tg.MainButton.hide(); }catch{} }
 
+/* ПЕРЕДАЧА ДАННЫХ: всегда через GET ?q=... (обходит редирект с потерей тела) */
+async function sendJSON(url, obj) {
+  // ужимаем initData: берём только user.id/username/first_name
+  if (obj && obj.initData && obj.initData.user) {
+    const u = obj.initData.user;
+    obj.initData = { user: { id: u.id, username: u.username, first_name: u.first_name } };
+  } else {
+    obj.initData = null;
+  }
+  const q = encodeURIComponent(JSON.stringify(obj));
+  const full = url + (url.includes('?') ? '&' : '?') + 'q=' + q;
+
+  // 1) Пытаемся fetch GET (в webview Telegram это работает надёжно)
+  try {
+    await fetch(full, { method: 'GET', mode: 'no-cors', keepalive: true, cache: 'no-store' });
+    return;
+  } catch {}
+  // 2) Фолбэк: пиксель-картинка
+  try { new Image().src = full; } catch {}
+}
+
+/* ====== Progress / Buttons ====== */
 function updateUI(){
   const d = answered();
   bar.style.width = Math.round(d/Math.max(1,total)*100)+'%';
-  pc.textContent = d+'/'+total;
+  pc.textContent  = d+'/'+total;
 
   if (MB_LOCK) { hideMB(); }
 
-  // Показываем MainButton внутри Telegram
   if (IN_TG && !MB_LOCK) {
     try { d===total ? (tg.MainButton.setText('Отправить результат'), tg.MainButton.show())
                     : tg.MainButton.hide(); } catch {}
   }
-  // Показываем fallback-кнопку в браузере ИЛИ если в TG MainButton не появился
   if (!IN_TG || DEBUG) {
     submitBtn.style.display = (d===total) ? 'block' : 'none';
   } else {
-    // внутри TG — показываем запасную кнопку, если MainButton не доступен
-    submitBtn.style.display = (d===total && (!tg || !tg.MainButton || tg.MainButton.isVisible === false)) ? 'block' : 'none';
+    // запасная кнопка и в TG, если MainButton вдруг недоступен
+    const visible = (d===total && (!tg || !tg.MainButton));
+    submitBtn.style.display = visible ? 'block' : 'none';
   }
 }
 document.addEventListener('change', e => { if (e.target.matches('input[type="radio"]')) updateUI(); });
 document.addEventListener('DOMContentLoaded', updateUI);
 
-// Отправка с максимальной совместимостью в webview Telegram
-async function postToGAS(url, obj) {
-  const b = JSON.stringify(obj);
-  // 1) fetch + keepalive (лучший вариант для webview)
-  try {
-    await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      keepalive: true,
-      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-      body: b
-    });
-    return;
-  } catch {}
-  // 2) sendBeacon (fallback)
-  try {
-    if (navigator.sendBeacon) {
-      const ok = navigator.sendBeacon(url, new Blob([b], { type: 'text/plain' }));
-      if (ok) return;
-    }
-  } catch {}
-  // 3) img-пиксель с ?q= (последний шанс)
-  try { new Image().src = url + '?q=' + encodeURIComponent(b).slice(0, 1800); } catch {}
-}
-
+/* ====== Submit Result ====== */
 async function submit() {
   const answers = {}; let s = 0;
   qGroups.forEach((f,i) => {
@@ -249,30 +243,30 @@ async function submit() {
   else if (s >= 5) { icon='⚠️'; verdict='Контроль частичный'; advice='Пересмотр бюджета, унификация KPI (TCO, SLA).'; }
   else { icon='❗️'; verdict='Высокая уязвимость'; advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
 
-  // Трассировка клика (увидишь в листе Logs)
-  await postToGAS(GAS_HOOK, { type:'trace', stage:'submit-click', t:new Date().toISOString() });
+  // трасса клика — увидишь в Logs
+  await sendJSON(GAS_HOOK, { type:'trace', stage:'submit-click', t:new Date().toISOString() });
 
   window.__lastResult = { score:s, verdict, advice, answers };
-  await postToGAS(GAS_HOOK, {
+  await sendJSON(GAS_HOOK, {
     type:'result', ...window.__lastResult, t:new Date().toISOString(),
     initData: tg?.initDataUnsafe || null
   });
 
-  // Показ результата + автоскролл
+  // Показ результата + автоскролл + визуальный отклик
   document.getElementById('resTitle').textContent = `Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
   document.getElementById('resText').textContent  = advice;
   resBox.style.display = 'block';
   setTimeout(() => resBox.scrollIntoView({ behavior:'smooth', block:'start' }), 50);
-
-  // Визуальный отклик внутри Telegram
   try { tg?.showAlert?.('Результат отправлен'); } catch {}
 
   MB_LOCK = true; hideMB();
 }
+
+/* Привязки кнопок */
 if (tg) tg.onEvent('mainButtonClicked', submit);
 submitBtn?.addEventListener('click', (e) => { e.preventDefault(); submit(); });
 
-// Открытие формы лида
+/* ====== Lead Form ====== */
 function openLeadForm(){
   MB_LOCK = true; hideMB();
   leadForm.style.display = 'block';
@@ -283,7 +277,6 @@ document.addEventListener('click', (e) => {
   const a = e.target.closest?.('#ctaContact'); if (a) { e.preventDefault(); openLeadForm(); }
 });
 
-// Отправка лида
 document.getElementById('sendLead')?.addEventListener('click', async () => {
   const name = document.getElementById('name').value.trim();
   const company = document.getElementById('company').value.trim();
@@ -298,11 +291,14 @@ document.getElementById('sendLead')?.addEventListener('click', async () => {
     t: new Date().toISOString(),
     initData: tg?.initDataUnsafe || null
   };
-  await postToGAS(GAS_HOOK, lead);
+  await sendJSON(GAS_HOOK, lead);
   try { tg?.showAlert?.('Контакты отправлены'); } catch {}
   const msg = document.getElementById('leadMsg'); const btn = document.getElementById('sendLead');
   if (msg && btn) { msg.style.display='block'; btn.disabled = true; }
 });
+
+/* ====== Пинг (уйдёт в Logs) — для проверки связи сразу после загрузки ====== */
+(async () => { try { await sendJSON(GAS_HOOK, { type:'trace', stage:'loaded', t:new Date().toISOString() }); } catch {} })();
 </script>
 
   
