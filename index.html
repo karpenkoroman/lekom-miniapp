@@ -165,93 +165,114 @@
   </div>
 </div>
 
-<script>
+
+  <script>
 /* ===== Bootstrap TG ===== */
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 
-/* ===== Hook ===== */
+/* ===== Hook & flags ===== */
 const params   = new URLSearchParams(location.search);
-const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbzpOZsg6yiJ_An3Mu1rcLC1aY70QC4vI2LpjqxwynsPFSYDTt52m-vSEQIAUNH-FPI/exec';
-
-/* Внутри Telegram считаем, если объект WebApp есть (у некоторых initData пустой) */
-const IN_TG = !!tg;
-const DEBUG = params.get('debug') === '1';
+const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/NEW_EXEC_ID/exec'; // <-- подставь актуальный /exec
+const DEBUG    = params.get('debug') === '1';
+const TESTAUTO = params.get('test') === '1'; // ?test=1 — автосабмит через 2 сек
+const IN_TG    = !!tg;
 
 let MB_LOCK = false;
 
 /* ===== UI refs ===== */
-const qGroups    = [...document.querySelectorAll('form fieldset.q')];
-const total      = qGroups.length;
-const bar        = document.getElementById('bar');
-const pc         = document.getElementById('pc');
-const resBox     = document.getElementById('res');
-const leadForm   = document.getElementById('leadForm');
-const ctaContact = document.getElementById('ctaContact');
-const submitBtn  = document.getElementById('submitBtn');      // браузерный фолбэк
-const stickyWrap = document.getElementById('stickySubmit');   // стики-контейнер
-const submitAlways = document.getElementById('submitAlways'); // стики-кнопка
+const qGroups     = [...document.querySelectorAll('form fieldset.q')];
+const total       = qGroups.length;
+const bar         = document.getElementById('bar');
+const pc          = document.getElementById('pc');
+const resBox      = document.getElementById('res');
+const leadForm    = document.getElementById('leadForm');
+const ctaContact  = document.getElementById('ctaContact');
+const submitBtn   = document.getElementById('submitBtn'); // обычный фолбэк, если был
+/* DEBUG кнопка — создадим гарантированно видимую */
+let debugBtn = document.getElementById('submitAlways');
+if (!debugBtn) {
+  const wrap = document.createElement('div');
+  wrap.id = 'stickySubmit';
+  wrap.style.cssText = 'position:sticky;bottom:0;z-index:9999;margin-top:12px;';
+  debugBtn = document.createElement('button');
+  debugBtn.id = 'submitAlways';
+  debugBtn.textContent = 'Отправить результат (DEBUG)';
+  debugBtn.style.cssText = 'width:100%;padding:14px 16px;border-radius:12px;border:none;font-weight:800;cursor:pointer;background:#0a84ff;color:#fff;box-shadow:0 10px 24px rgba(10,132,255,.35);';
+  wrap.appendChild(debugBtn);
+  // вставим перед формой лида
+  (leadForm?.parentNode || document.body).insertBefore(wrap, leadForm || null);
+}
 
 /* ===== Helpers ===== */
 function answered(){ return qGroups.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0); }
 function hideMB(){ if(!tg) return; try{ tg.offEvent && tg.offEvent('mainButtonClicked', submit);}catch{} try{ tg.MainButton.hide(); }catch{} }
 
-/* Передаём ВСЁ через GET ?q=... (надёжно для Telegram webview с редиректами) */
+/* Отправка через GET ?q=... (устойчиво к редиректам) */
 async function sendJSON(url, obj) {
-  // Ужимаем initData до user.{id,username,first_name}, чтобы URL не раздувать
   if (obj && obj.initData && obj.initData.user) {
     const u = obj.initData.user;
     obj.initData = { user: { id: u.id, username: u.username, first_name: u.first_name } };
-  } else {
+  } else if (obj && obj.initData && obj.initData.user === null) {
     obj.initData = null;
   }
   const q = encodeURIComponent(JSON.stringify(obj));
   const full = url + (url.includes('?') ? '&' : '?') + 'q=' + q;
-
-  // 1) fetch GET
   try { await fetch(full, { method:'GET', mode:'no-cors', keepalive:true, cache:'no-store' }); return; } catch {}
-  // 2) img-пиксель
   try { new Image().src = full; } catch {}
 }
 
 /* ===== Progress / Buttons ===== */
 function updateUI(){
   const d = answered();
-  bar.style.width = Math.round(d/Math.max(1,total)*100)+'%';
-  pc.textContent  = d+'/'+total;
+  if (bar) bar.style.width = Math.round(d/Math.max(1,total)*100)+'%';
+  if (pc)  pc.textContent  = d+'/'+total;
 
   if (MB_LOCK) { hideMB(); }
 
-  // MainButton в Telegram
   if (IN_TG && !MB_LOCK) {
-    try { d===total ? (tg.MainButton.setText('Отправить результат'), tg.MainButton.show())
-                    : tg.MainButton.hide(); } catch {}
+    try {
+      if (d === total) { tg.MainButton.setText('Отправить результат'); tg.MainButton.show(); }
+      else { tg.MainButton.hide(); }
+    } catch {}
   }
+  if (submitBtn) submitBtn.style.display = (d===total ? 'block' : 'none');
 
-  // Браузерный фолбэк
-  if (!IN_TG || DEBUG) {
-    if (submitBtn) submitBtn.style.display = (d===total) ? 'block' : 'none';
-  } else if (submitBtn) {
-    // в Telegram — показываем запасную кнопку ТОЛЬКО если нет MainButton
-    const visible = (d===total && (!tg || !tg.MainButton));
-    submitBtn.style.display = visible ? 'block' : 'none';
-  }
-
-  // Стики-кнопка — всегда наш «план Б» (и в Telegram, и в браузере)
-  if (stickyWrap) stickyWrap.style.display = (d===total) ? 'block' : 'none';
+  // DEBUG-кнопка всегда видима, но деактивируется, если ответов мало
+  if (debugBtn) debugBtn.disabled = (d !== total);
 }
-document.addEventListener('change', e => { if (e.target.matches('input[type="radio"]')) updateUI(); });
+document.addEventListener('change', e => {
+  if (e.target.matches('input[type="radio"]')) {
+    updateUI();
+    sendJSON(GAS_HOOK, { type:'trace', stage:'change', answered: answered(), total, t:new Date().toISOString() });
+  }
+});
 
-/* Первый пинг + отметка ui-ready */
+/* Первый пинг */
 document.addEventListener('DOMContentLoaded', async () => {
   updateUI();
-  await sendJSON(GAS_HOOK, { type:'trace', stage:'loaded', t:new Date().toISOString() });
+  await sendJSON(GAS_HOOK, { type:'trace', stage:'loaded', t:new Date().toISOString(), initData: tg?.initDataUnsafe || null });
   await sendJSON(GAS_HOOK, { type:'trace', stage:'ui-ready', total, t:new Date().toISOString() });
+
+  // Автосабмит для диагностики: ?test=1
+  if (TESTAUTO) {
+    setTimeout(async () => {
+      // Заполним все ответы нулями, если не выбраны (чтобы отправить форму)
+      qGroups.forEach((f) => {
+        if (!f.querySelector('input:checked')) {
+          const any = f.querySelector('input[type="radio"]');
+          if (any) any.checked = true;
+        }
+      });
+      updateUI();
+      await submit();
+    }, 2000);
+  }
 });
 
 /* ===== Submit Result ===== */
 async function submit() {
-  await sendJSON(GAS_HOOK, { type:'trace', stage:'submit-start', t:new Date().toISOString() });
+  await sendJSON(GAS_HOOK, { type:'trace', stage:'submit-start', answered: answered(), total, t:new Date().toISOString() });
 
   const answers = {}; let s = 0;
   qGroups.forEach((f,i) => { const c=f.querySelector('input:checked'); const v=Number(c?c.value:0); answers['q'+(i+1)]=v; if(v===1)s++; });
@@ -261,40 +282,42 @@ async function submit() {
   else if (s >= 5) { icon='⚠️'; verdict='Контроль частичный'; advice='Пересмотр бюджета, унификация KPI (TCO, SLA).'; }
   else { icon='❗️'; verdict='Высокая уязвимость'; advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
 
-  // Отправляем результат
-  const payload = { type:'result', score:s, verdict, advice, answers, t:new Date().toISOString(), initData: tg?.initDataUnsafe || null };
-  await sendJSON(GAS_HOOK, payload);
+  window.__lastResult = { score:s, verdict, advice, answers };
+  await sendJSON(GAS_HOOK, { type:'result', ...window.__lastResult, t:new Date().toISOString(), initData: tg?.initDataUnsafe || null });
   await sendJSON(GAS_HOOK, { type:'trace', stage:'result-sent', score:s, t:new Date().toISOString() });
 
   // UI: показать результат + автоскролл
-  document.getElementById('resTitle').textContent = `Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
-  document.getElementById('resText').textContent  = advice;
-  resBox.style.display = 'block';
-  setTimeout(() => resBox.scrollIntoView({ behavior:'smooth', block:'start' }), 50);
+  const rt = document.getElementById('resTitle'), rx = document.getElementById('resText');
+  if (rt) rt.textContent = `Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
+  if (rx) rx.textContent = advice;
+  if (resBox) resBox.style.display = 'block';
+  setTimeout(() => resBox?.scrollIntoView({ behavior:'smooth', block:'start' }), 50);
 
   try { tg?.showAlert?.('Результат отправлен'); } catch {}
   MB_LOCK = true; hideMB();
 }
 
 /* Привязки кнопок */
-if (tg) tg.onEvent('mainButtonClicked', submit);
+if (tg) {
+  try { tg.onEvent('mainButtonClicked', () => { sendJSON(GAS_HOOK, { type:'trace', stage:'mb-click', t:new Date().toISOString() }); submit(); }); 
+        sendJSON(GAS_HOOK, { type:'trace', stage:'mb-bound', t:new Date().toISOString() }); } catch {}
+}
 submitBtn?.addEventListener('click', (e)=>{ e.preventDefault(); submit(); });
-submitAlways?.addEventListener('click', (e)=>{ e.preventDefault(); submit(); });
+debugBtn?.addEventListener('click', (e)=>{ e.preventDefault(); submit(); });
 
 /* ===== Lead Form ===== */
 function openLeadForm(){
   MB_LOCK = true; hideMB();
-  leadForm.style.display = 'block';
-  setTimeout(() => leadForm.scrollIntoView({ behavior:'smooth', block:'start' }), 30);
+  if (leadForm) { leadForm.style.display = 'block'; setTimeout(() => leadForm.scrollIntoView({ behavior:'smooth', block:'start' }), 30); }
 }
 ctaContact?.addEventListener('click', (e)=>{ e.preventDefault(); openLeadForm(); });
 document.addEventListener('click', (e)=>{ const a=e.target.closest?.('#ctaContact'); if(a){ e.preventDefault(); openLeadForm(); }});
 
 document.getElementById('sendLead')?.addEventListener('click', async ()=>{
-  const name=document.getElementById('name').value.trim();
-  const company=document.getElementById('company').value.trim();
-  const phone=document.getElementById('phone').value.trim();
-  const comment=document.getElementById('comment').value.trim();
+  const name=document.getElementById('name')?.value.trim() || '';
+  const company=document.getElementById('company')?.value.trim() || '';
+  const phone=document.getElementById('phone')?.value.trim() || '';
+  const comment=document.getElementById('comment')?.value.trim() || '';
   if(!name && !phone){ alert('Укажите хотя бы имя или телефон/email'); return; }
 
   const lead = {
