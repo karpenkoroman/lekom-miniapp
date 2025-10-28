@@ -5,97 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ЛЕКОМ · Интерактив</title>
   <meta name="color-scheme" content="dark light" />
+
+  
   <style>
-    :root{
-      --lekom-blue:#0b3a8d;
-      --lekom-blue-2:#0a3176;
-      --lekom-teal:#0fb8ad;
-      --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.70);
-      --muted-2: rgba(255,255,255,.55);
-      --card: rgba(255,255,255,.04);
-      --stroke: rgba(255,255,255,.08);
-      --bg: #0e1220;
-      --bar-bg: rgba(255,255,255,.12);
-      --bar-fill-start:#2d72ff;
-      --bar-fill-end:#0fb8ad;
-      --danger:#ff4d4f;
-      --ok:#19c37d;
-    }
-    html,body{margin:0;padding:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Arial,sans-serif;color:var(--text);}
-    .wrap{max-width:720px;margin:10px auto 36px;padding:0 14px;}
+   /* --- Единый стиль кнопок --- */
+.btn, .btn-primary, .btn-ghost, .cta-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-weight: 700; font-size: 16px; line-height: 1;
+  padding: 14px 18px; border-radius: 14px; border: 0; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: transform .12s, filter .12s, box-shadow .12s;
+}
 
-    /* Общая карточка */
-    .card{
-      background: var(--card);
-      border: 1px solid var(--stroke);
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.24) inset, 0 8px 24px rgba(0,0,0,.28);
-      padding: 18px;
-    }
-    .mt-2{margin-top:12px;}
-    .mt-3{margin-top:18px;}
-    .mt-4{margin-top:24px;}
-    .mb-2{margin-bottom:12px;}
-    .muted{color:var(--muted);}
+/* градиент ЛЕКОМ единый для всех основных CTA */
+.btn-primary, .cta-btn {
+  color:#fff;
+  background: linear-gradient(135deg, var(--lekom-blue) 0%, var(--lekom-blue-2) 35%, var(--lekom-teal) 100%);
+  box-shadow: 0 10px 24px rgba(15,184,173,.25), inset 0 1px 0 rgba(255,255,255,.15);
+}
+.btn-primary:hover, .cta-btn:hover { transform: translateY(-1px); filter: brightness(1.03); }
+.btn-primary:active, .cta-btn:active { transform: translateY(1px); filter: brightness(.98); }
 
-    /* Заголовки */
-    .app-title{margin:0 0 4px;font-size:22px;font-weight:800;letter-spacing:.2px;}
-    .sub{margin:0 0 18px;color:var(--muted);}
+.btn-ghost {
+  color: var(--text);
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--stroke);
+}
+.btn-ghost:hover { background: rgba(255,255,255,.08); }
 
-    /* CTA кнопки (единый стиль) */
-    .cta-stack{display:flex;flex-direction:column;gap:14px;}
-    .cta-btn{
-      width:100%;
-      display:flex;align-items:center;justify-content:center;gap:10px;
-      color:#fff;font-size:16px;font-weight:700;
-      padding:14px 18px;border:none;border-radius:14px;cursor:pointer;
-      background: linear-gradient(135deg, var(--lekom-blue) 0%, var(--lekom-blue-2) 35%, var(--lekom-teal) 100%);
-      box-shadow: 0 10px 24px rgba(15,184,173,.25), inset 0 1px 0 rgba(255,255,255,.15);
-      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .cta-btn:hover{ transform: translateY(-1px); filter: brightness(1.03); }
-    .cta-btn:active{ transform: translateY(1px); filter: brightness(.98); }
-    .cta-ico{font-size:18px;line-height:1;}
+/* --- Плашки-ответы (без радиокнопок) --- */
+.pill {
+  width: 100%; text-align: left;
+  padding: 14px 16px; border-radius: 14px;
+  background: rgba(255,255,255,.05); border: 1px solid var(--stroke);
+  color: var(--text); cursor: pointer;
+}
+.pill + .pill { margin-top: 10px; }
+.pill:hover { background: rgba(255,255,255,.08); }
+.pill.selected {
+  background: rgba(11,58,141,.18);
+  border-color: rgba(15,184,173,.55);
+  box-shadow: 0 0 0 2px rgba(15,184,173,.35) inset;
+}
 
-    /* Блок сводки */
-    .summary-card{margin-top:18px;padding:14px;border-radius:12px;background:var(--card);border:1px solid var(--stroke);}
-    .summary-title{font-weight:800;margin-bottom:8px;}
-    .summary-body .mt{margin-top:10px;}
-    .summary-body .grid{display:flex;justify-content:space-between;gap:8px;color:var(--text);}
-    .summary-body .bar{height:8px;background:var(--bar-bg);border-radius:999px;overflow:hidden;}
-    .summary-body .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--bar-fill-start),var(--bar-fill-end));}
-
-    /* Кнопки возврата */
-    .back{display:inline-flex;align-items:center;gap:8px;margin:6px 0 16px;padding:8px 12px;border-radius:10px;border:1px solid var(--stroke);background:rgba(255,255,255,.05);color:var(--text);cursor:pointer;}
-    .back:hover{background:rgba(255,255,255,.08);}
-
-    /* Кнопки-ответы (вебинар) */
-    .pill{display:block;width:100%;text-align:left;color:var(--text);padding:12px 14px;border-radius:14px;border:1px solid var(--stroke);background:rgba(255,255,255,.04);cursor:pointer;}
-    .pill + .pill{margin-top:10px;}
-    .pill:hover{background:rgba(255,255,255,.07);}
-    .pill:active{background:rgba(255,255,255,.10);}
-
-    /* Инпуты */
-    .field{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
-    input[type="text"], input[type="tel"], input[type="email"], textarea{
-      width:100%;padding:12px 12px;border-radius:12px;border:1px solid var(--stroke);
-      background:rgba(255,255,255,.06);color:var(--text);font-size:15px;outline:none;
-    }
-    textarea{min-height:88px;resize:vertical;}
-
-    .row{display:flex;gap:12px;flex-wrap:wrap;}
-    .row .half{flex:1 1 260px;}
-
-    .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;}
-    .btn-primary{color:#fff;background:linear-gradient(135deg, var(--lekom-blue) 0%, var(--lekom-teal) 100%);box-shadow:0 8px 18px rgba(15,184,173,.25);}
-    .btn-primary:hover{filter:brightness(1.03);}
-    .btn-ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--stroke);}
-    .hint{color:var(--muted-2);font-size:13px;margin-top:8px;}
-    .ok{color:var(--ok);}
-    .danger{color:var(--danger);}
+/* Блок результата */
+#resultBlock { margin-top: 20px; }
+#resultText { padding: 12px 14px; border:1px solid var(--stroke); border-radius: 12px; background: rgba(255,255,255,.04); } 
   </style>
+
+  
 </head>
 <body>
   <div class="wrap">
