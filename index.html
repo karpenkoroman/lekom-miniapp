@@ -161,101 +161,150 @@
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 
-const params  = new URLSearchParams(location.search);
+const params   = new URLSearchParams(location.search);
 const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbw7nixHlSkSGCVwp8EN9c0YomPKI5tIaUeioI9-ea0k_bu8IH1R6niV-Nrak01IcxTU/exec';
 
-  // IN_TG — только если есть user в initData
-const IN_TG   = !!(tg && tg.initDataUnsafe && tg.initDataUnsafe.user);
-// debug=1 — принудительно показать браузерную кнопку
-const DEBUG   = params.get('debug') === '1';
+// В некоторых клиентах initDataUnsafe может быть пустым — считаем, что мы в TG, если есть объект WebApp
+const IN_TG = !!tg;
+const DEBUG = params.get('debug') === '1';
 
 let MB_LOCK = false;
 
 // Тихий ping (для связи)
 (async () => { try {
-  await fetch(GAS_HOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({type:'result',score:-1,verdict:'PING',t:new Date().toISOString()})});
+  await fetch(GAS_HOOK, { method:'POST', mode:'no-cors',
+    body: JSON.stringify({ type:'result', score:-1, verdict:'PING', t: new Date().toISOString() })
+  });
 } catch {} })();
 
-const qGroups=[...document.querySelectorAll('form fieldset.q')];
-const total  = qGroups.length;
-const bar    = document.getElementById('bar');
-const pc     = document.getElementById('pc');
-const resBox = document.getElementById('res');
-const leadForm=document.getElementById('leadForm');
-const ctaContact=document.getElementById('ctaContact');
-const submitBtn=document.getElementById('submitBtn');
+const qGroups   = [...document.querySelectorAll('form fieldset.q')];
+const total     = qGroups.length;
+const bar       = document.getElementById('bar');
+const pc        = document.getElementById('pc');
+const resBox    = document.getElementById('res');
+const leadForm  = document.getElementById('leadForm');
+const ctaContact= document.getElementById('ctaContact');
+const submitBtn = document.getElementById('submitBtn');
 
-function answered(){return qGroups.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0);}
-function hideMB(){ if(!tg)return; try{ tg.offEvent && tg.offEvent('mainButtonClicked', submit);}catch{} try{ tg.MainButton.hide(); }catch{} }
+function answered(){ return qGroups.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0); }
+function hideMB(){ if(!tg) return; try{ tg.offEvent && tg.offEvent('mainButtonClicked', submit);}catch{} try{ tg.MainButton.hide(); }catch{} }
 
 function updateUI(){
-  const d=answered();
-  bar.style.width=Math.round(d/Math.max(1,total)*100)+'%';
-  pc.textContent=d+'/'+total;
+  const d = answered();
+  bar.style.width = Math.round(d/Math.max(1,total)*100)+'%';
+  pc.textContent = d+'/'+total;
 
   if (MB_LOCK) { hideMB(); }
 
+  // Показываем MainButton внутри Telegram
   if (IN_TG && !MB_LOCK) {
     try { d===total ? (tg.MainButton.setText('Отправить результат'), tg.MainButton.show())
                     : tg.MainButton.hide(); } catch {}
   }
+  // Показываем fallback-кнопку в браузере ИЛИ если в TG MainButton не появился
   if (!IN_TG || DEBUG) {
     submitBtn.style.display = (d===total) ? 'block' : 'none';
+  } else {
+    // внутри TG — показываем запасную кнопку, если MainButton не доступен
+    submitBtn.style.display = (d===total && (!tg || !tg.MainButton || tg.MainButton.isVisible === false)) ? 'block' : 'none';
   }
 }
-document.addEventListener('change',e=>{ if(e.target.matches('input[type="radio"]')) updateUI(); });
-document.addEventListener('DOMContentLoaded',updateUI);
+document.addEventListener('change', e => { if (e.target.matches('input[type="radio"]')) updateUI(); });
+document.addEventListener('DOMContentLoaded', updateUI);
 
-async function postToGAS(url,obj){
-  const b=JSON.stringify(obj);
-  try{ if(navigator.sendBeacon){ if(navigator.sendBeacon(url,new Blob([b],{type:'text/plain'}))) return; } }catch{}
-  try{ await fetch(url,{method:'POST',mode:'no-cors',body:b}); return; }catch{}
-  try{ new Image().src=url+'?q='+encodeURIComponent(b).slice(0,1800); }catch{}
+// Отправка с максимальной совместимостью в webview Telegram
+async function postToGAS(url, obj) {
+  const b = JSON.stringify(obj);
+  // 1) fetch + keepalive (лучший вариант для webview)
+  try {
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      keepalive: true,
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body: b
+    });
+    return;
+  } catch {}
+  // 2) sendBeacon (fallback)
+  try {
+    if (navigator.sendBeacon) {
+      const ok = navigator.sendBeacon(url, new Blob([b], { type: 'text/plain' }));
+      if (ok) return;
+    }
+  } catch {}
+  // 3) img-пиксель с ?q= (последний шанс)
+  try { new Image().src = url + '?q=' + encodeURIComponent(b).slice(0, 1800); } catch {}
 }
 
-async function submit(){
-  const answers={},fs=[...document.querySelectorAll('form fieldset.q')]; let s=0;
-  fs.forEach((f,i)=>{const c=f.querySelector('input:checked');const v=Number(c?c.value:0);answers['q'+(i+1)]=v;if(v===1)s++;});
-  let verdict,advice,icon;
-  if(s>=8){icon='⭐️';verdict='Зрелая инфраструктура';advice='Точечный аудит TCO и оптимизация «длинного хвоста».';}
-  else if(s>=5){icon='⚠️';verdict='Контроль частичный';advice='Пересмотр бюджета, унификация KPI (TCO, SLA).';}
-  else{icon='❗️';verdict='Высокая уязвимость';advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.';}
-  window.__lastResult={score:s,verdict,advice,answers};
-  await postToGAS(GAS_HOOK,{type:'result',...window.__lastResult,t:new Date().toISOString(),initData:tg?.initDataUnsafe||null});
+async function submit() {
+  const answers = {}; let s = 0;
+  qGroups.forEach((f,i) => {
+    const c = f.querySelector('input:checked'); const v = Number(c ? c.value : 0);
+    answers['q'+(i+1)] = v; if (v===1) s++;
+  });
+
+  let verdict, advice, icon;
+  if (s >= 8) { icon='⭐️'; verdict='Зрелая инфраструктура'; advice='Точечный аудит TCO и оптимизация «длинного хвоста».'; }
+  else if (s >= 5) { icon='⚠️'; verdict='Контроль частичный'; advice='Пересмотр бюджета, унификация KPI (TCO, SLA).'; }
+  else { icon='❗️'; verdict='Высокая уязвимость'; advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
+
+  // Трассировка клика (увидишь в листе Logs)
+  await postToGAS(GAS_HOOK, { type:'trace', stage:'submit-click', t:new Date().toISOString() });
+
+  window.__lastResult = { score:s, verdict, advice, answers };
+  await postToGAS(GAS_HOOK, {
+    type:'result', ...window.__lastResult, t:new Date().toISOString(),
+    initData: tg?.initDataUnsafe || null
+  });
 
   // Показ результата + автоскролл
-  document.getElementById('resTitle').textContent=`Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
-  document.getElementById('resText').textContent=advice;
-  resBox.style.display='block';
-  setTimeout(()=>resBox.scrollIntoView({behavior:'smooth',block:'start'}),50);
+  document.getElementById('resTitle').textContent = `Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
+  document.getElementById('resText').textContent  = advice;
+  resBox.style.display = 'block';
+  setTimeout(() => resBox.scrollIntoView({ behavior:'smooth', block:'start' }), 50);
 
-  // Блокируем MainButton, чтобы не мешал форме лида
-  MB_LOCK=true; hideMB();
+  // Визуальный отклик внутри Telegram
+  try { tg?.showAlert?.('Результат отправлен'); } catch {}
+
+  MB_LOCK = true; hideMB();
 }
 if (tg) tg.onEvent('mainButtonClicked', submit);
-submitBtn?.addEventListener('click', (e)=>{ e.preventDefault(); submit(); });
+submitBtn?.addEventListener('click', (e) => { e.preventDefault(); submit(); });
 
+// Открытие формы лида
 function openLeadForm(){
-  MB_LOCK=true; hideMB();
-  leadForm.style.display='block';
-  setTimeout(()=>leadForm.scrollIntoView({behavior:'smooth',block:'start'}),30);
+  MB_LOCK = true; hideMB();
+  leadForm.style.display = 'block';
+  setTimeout(() => leadForm.scrollIntoView({ behavior:'smooth', block:'start' }), 30);
 }
-ctaContact?.addEventListener('click',(e)=>{ e.preventDefault(); openLeadForm(); });
-document.addEventListener('click',(e)=>{ const a=e.target.closest?.('#ctaContact'); if(a){ e.preventDefault(); openLeadForm(); }});
+ctaContact?.addEventListener('click', (e) => { e.preventDefault(); openLeadForm(); });
+document.addEventListener('click', (e) => {
+  const a = e.target.closest?.('#ctaContact'); if (a) { e.preventDefault(); openLeadForm(); }
+});
 
-document.getElementById('sendLead')?.addEventListener('click', async ()=>{
-  const name=document.getElementById('name').value.trim();
-  const company=document.getElementById('company').value.trim();
-  const phone=document.getElementById('phone').value.trim();
-  const comment=document.getElementById('comment').value.trim();
-  if(!name && !phone){ alert('Укажите хотя бы имя или телефон/email'); return; }
-  const lead={ type:'lead', name, company, phone, comment, consent:true,
+// Отправка лида
+document.getElementById('sendLead')?.addEventListener('click', async () => {
+  const name = document.getElementById('name').value.trim();
+  const company = document.getElementById('company').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const comment = document.getElementById('comment').value.trim();
+  if (!name && !phone) { alert('Укажите хотя бы имя или телефон/email'); return; }
+
+  const lead = {
+    type:'lead', name, company, phone, comment, consent:true,
     policyUrl:'https://lekom.ru/politika-konfidencialnosti/',
-    result: window.__lastResult || null, t:new Date().toISOString(), initData: tg?.initDataUnsafe || null };
+    result: window.__lastResult || null,
+    t: new Date().toISOString(),
+    initData: tg?.initDataUnsafe || null
+  };
   await postToGAS(GAS_HOOK, lead);
-  const msg=document.getElementById('leadMsg'); const btn=document.getElementById('sendLead');
-  if(msg&&btn){ msg.style.display='block'; btn.disabled=true; }
+  try { tg?.showAlert?.('Контакты отправлены'); } catch {}
+  const msg = document.getElementById('leadMsg'); const btn = document.getElementById('sendLead');
+  if (msg && btn) { msg.style.display='block'; btn.disabled = true; }
 });
 </script>
+
+  
 </body>
 </html>
