@@ -16,6 +16,7 @@ const start   = document.getElementById('start');
 const audit   = document.getElementById('audit');
 const webinar = document.getElementById('webinar');
 const titleEl = document.querySelector('h1');
+const subEl   = document.querySelector('.sub');
 
 // === Навигация ===
 document.getElementById('goAudit').onclick = () => {
@@ -23,6 +24,7 @@ document.getElementById('goAudit').onclick = () => {
   audit.style.display = 'block';
   webinar.style.display = 'none';
   if (titleEl) titleEl.textContent = 'Аудит печатной инфраструктуры';
+  if (subEl) subEl.style.display = 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
@@ -31,6 +33,7 @@ document.getElementById('goWebinar').onclick = () => {
   webinar.style.display = 'block';
   audit.style.display = 'none';
   if (titleEl) titleEl.textContent = 'Выбор темы вебинара';
+  if (subEl) subEl.style.display = 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
@@ -55,7 +58,6 @@ if (f){
 // === Non-blocking send (beacon -> GET fallback)
 function send(obj){
   const json = JSON.stringify(obj);
-  // 1) POST with body via sendBeacon
   try{
     if(navigator.sendBeacon){
       const blob = new Blob([json], { type:'text/plain;charset=UTF-8' });
@@ -63,7 +65,6 @@ function send(obj){
       if (ok) return;
     }
   }catch(_){}
-  // 2) GET fallback
   try{
     const b64 = btoa(unescape(encodeURIComponent(json)))
       .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -90,7 +91,7 @@ if (submitBtn){
                          : s>=5 ? 'Пересмотр бюджета и KPI (TCO, SLA).'
                                 : 'Экспресс-аудит, инвентаризация, быстрые меры экономии.';
     const payload = withTelegramData({ type:'result', score:s, verdict, advice, answers:ans, t:new Date().toISOString() });
-    send(payload); // fire-and-forget
+    send(payload);
     if (sendMsg){ sendMsg.style.display='block'; sendMsg.textContent='✅ Результаты отправлены!'; setTimeout(()=>sendMsg.style.display='none',3000); }
     document.getElementById('resTitle').textContent = `Ваш результат: ${s}/${total} — ${verdict}`;
     document.getElementById('resText').textContent  = advice;
@@ -180,6 +181,7 @@ function goHome(){
   webinar.style.display='none';
   start.style.display='block';
   if (titleEl) titleEl.textContent = 'ЛЕКОМ · Интерактив';
+  if (subEl) subEl.style.display = 'block';
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -187,5 +189,8 @@ function goHome(){
 ['backHomeFromAudit','backHomeFromAuditTop','backHomeFromWebinar','backHomeFromWebinarTop']
   .forEach(id=>{
     const el = document.getElementById(id);
-    if (el) el.addEventListener('click', (e)=>{ e.preventDefault(); goHome(); });
+    if (el) {
+      el.textContent = '↩️ Вернуться';
+      el.addEventListener('click', (e)=>{ e.preventDefault(); goHome(); });
+    }
   });
