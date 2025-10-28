@@ -156,39 +156,134 @@
 
 <script>
 const tg = window.Telegram?.WebApp;
-if(tg){tg.ready();tg.expand();try{tg.MainButton.enable();}catch{}}
+if (tg) { tg.ready(); tg.expand(); try { tg.MainButton.enable(); } catch {} }
 
-const params=new URLSearchParams(location.search);
-const GAS_HOOK=params.get('hook')||'https://script.google.com/macros/s/AKfycbxG1xY6gVvRY04Y8_yuLds3J51QMdOdYTVuY8c0iFRQ5fPEmpRZIjgOmkqhzoFwCRoM/exec';
-document.getElementById('diag').textContent='hook: '+(new URL(GAS_HOOK).host);
+const params = new URLSearchParams(location.search);
+const GAS_HOOK = params.get('hook') || 'https://script.google.com/macros/s/AKfycbxG1xY6gVvRY04Y8_yuLds3J51QMdOdYTVuY8c0iFRQ5fPEmpRZIjgOmkqhzoFwCRoM/exec';
 
-// Ping
-(async()=>{try{await fetch(GAS_HOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({type:'result',score:-1,verdict:'PING',t:new Date().toISOString()})});}catch{}})();
+// Ping для проверки связи (незаметно)
+(async () => {
+  try {
+    await fetch(GAS_HOOK, {
+      method: 'POST', mode: 'no-cors',
+      body: JSON.stringify({ type: 'result', score: -1, verdict: 'PING', t: new Date().toISOString() })
+    });
+  } catch {}
+})();
 
-const qGroups=[...document.querySelectorAll('form fieldset.q')];
-const total=qGroups.length;const bar=document.getElementById('bar'),pc=document.getElementById('pc');
-function answered(){return qGroups.reduce((n,fs)=>n+(fs.querySelector('input:checked')?1:0),0);}
-function updateUI(){const d=answered();bar.style.width=Math.round(d/Math.max(1,total)*100)+'%';pc.textContent=d+'/'+total;if(tg){try{d===total?(tg.MainButton.setText('Отправить результат'),tg.MainButton.show()):tg.MainButton.hide();}catch{}}}
-document.addEventListener('change',e=>{if(e.target.matches('input[type="radio"]'))updateUI();});
-document.addEventListener('DOMContentLoaded',updateUI);
+const qGroups = [...document.querySelectorAll('form fieldset.q')];
+const total   = qGroups.length;
+const bar     = document.getElementById('bar');
+const pc      = document.getElementById('pc');
+const resBox  = document.getElementById('res');
+const leadForm= document.getElementById('leadForm');
+const ctaContact = document.getElementById('ctaContact');
 
-async function postToGAS(url,obj){const b=JSON.stringify(obj);try{if(navigator.sendBeacon){if(navigator.sendBeacon(url,new Blob([b],{type:'text/plain'})))return;}}catch{}try{await fetch(url,{method:'POST',mode:'no-cors',body:b});}catch{}try{new Image().src=url+'?q='+encodeURIComponent(b).slice(0,1800);}catch{}}
-
-async function submit(){
- const a={},fs=[...document.querySelectorAll('form fieldset.q')];let s=0;
- fs.forEach((f,i)=>{const c=f.querySelector('input:checked');const v=Number(c?c.value:0);a['q'+(i+1)]=v;if(v===1)s++;});
- let verdict,advice,icon;
- if(s>=8){icon='⭐️';verdict='Зрелая инфраструктура';advice='Точечный аудит TCO и оптимизация «длинного хвоста».';}
- else if(s>=5){icon='⚠️';verdict='Контроль частичный';advice='Пересмотр бюджета, унификация политики и KPI (TCO, SLA).';}
- else{icon='❗️';verdict='Высокая уязвимость';advice='Экспресс-аудит, инвентаризация, быстрые меры экономии.';}
- window.__lastResult={score:s,verdict,advice,answers:a};
- await postToGAS(GAS_HOOK,{type:'result',...window.__lastResult,t:new Date().toISOString(),initData:tg?.initDataUnsafe||null});
- document.getElementById('resTitle').textContent=`Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
- document.getElementById('resText').textContent=advice;
- document.getElementById('res').style.display='block';
- if(tg){try{tg.MainButton.setText('Закрыть');tg.offEvent&&tg.offEvent('mainButtonClicked',submit);tg.onEvent&&tg.onEvent('mainButtonClicked',()=>tg.close());tg.MainButton.show();}catch{}}
+function answered() {
+  return qGroups.reduce((n, fs) => n + (fs.querySelector('input:checked') ? 1 : 0), 0);
 }
-if(tg) tg.onEvent('mainButtonClicked', submit);
+
+function updateUI() {
+  const d = answered();
+  bar.style.width = Math.round(d / Math.max(1, total) * 100) + '%';
+  pc.textContent = d + '/' + total;
+  if (tg) {
+    try {
+      d === total
+        ? (tg.MainButton.setText('Отправить результат'), tg.MainButton.show())
+        : tg.MainButton.hide();
+    } catch {}
+  }
+}
+document.addEventListener('change', e => {
+  if (e.target.matches('input[type="radio"]')) updateUI();
+});
+document.addEventListener('DOMContentLoaded', updateUI);
+
+async function postToGAS(url, obj) {
+  const b = JSON.stringify(obj);
+  try {
+    if (navigator.sendBeacon) {
+      if (navigator.sendBeacon(url, new Blob([b], { type: 'text/plain' }))) return;
+    }
+  } catch {}
+  try { await fetch(url, { method: 'POST', mode: 'no-cors', body: b }); return; } catch {}
+  try { new Image().src = url + '?q=' + encodeURIComponent(b).slice(0, 1800); } catch {}
+}
+
+async function submit() {
+  const answers = {};
+  const fs = [...document.querySelectorAll('form fieldset.q')];
+  let s = 0;
+  fs.forEach((f, i) => {
+    const c = f.querySelector('input:checked');
+    const v = Number(c ? c.value : 0);
+    answers['q' + (i + 1)] = v;
+    if (v === 1) s++;
+  });
+
+  let verdict, advice, icon;
+  if (s >= 8) { icon = '⭐️'; verdict = 'Зрелая инфраструктура';   advice = 'Точечный аудит TCO и оптимизация «длинного хвоста».'; }
+  else if (s >= 5) { icon = '⚠️'; verdict = 'Контроль частичный'; advice = 'Пересмотр бюджета, унификация политики и KPI (TCO, SLA).'; }
+  else { icon = '❗️'; verdict = 'Высокая уязвимость';             advice = 'Экспресс-аудит, инвентаризация, быстрые меры экономии.'; }
+
+  window.__lastResult = { score: s, verdict, advice, answers };
+  await postToGAS(GAS_HOOK, { type: 'result', ...window.__lastResult, t: new Date().toISOString(), initData: tg?.initDataUnsafe || null });
+
+  // Показ результата
+  document.getElementById('resTitle').textContent = `Ваш результат: ${icon} ${s}/${total} — ${verdict}`;
+  document.getElementById('resText').textContent = advice;
+  resBox.style.display = 'block';
+
+  // Скроллим к результату
+  setTimeout(() => resBox.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+
+  // Меняем кнопку на «Закрыть»
+  if (tg) {
+    try {
+      tg.MainButton.setText('Закрыть');
+      tg.offEvent && tg.offEvent('mainButtonClicked', submit);
+      tg.onEvent && tg.onEvent('mainButtonClicked', () => tg.close());
+      tg.MainButton.show();
+    } catch {}
+  }
+}
+
+// Telegram MainButton
+if (tg) tg.onEvent('mainButtonClicked', submit);
+
+// Кнопка «Оставить контакты»
+if (ctaContact) {
+  ctaContact.addEventListener('click', (e) => {
+    e.preventDefault();
+    leadForm.style.display = 'block';
+    setTimeout(() => leadForm.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
+  });
+}
+
+// Отправка лида
+document.getElementById('sendLead')?.addEventListener('click', async () => {
+  const name = document.getElementById('name').value.trim();
+  const company = document.getElementById('company').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const comment = document.getElementById('comment').value.trim();
+  if (!name && !phone) { alert('Укажите хотя бы имя или телефон/email'); return; }
+
+  const lead = {
+    type: 'lead',
+    name, company, phone, comment,
+    consent: true,
+    policyUrl: 'https://lekom.ru/politika-konfidencialnosti/',
+    result: window.__lastResult || null,
+    t: new Date().toISOString(),
+    initData: tg?.initDataUnsafe || null
+  };
+  await postToGAS(GAS_HOOK, lead);
+
+  const msg = document.getElementById('leadMsg');
+  const btn = document.getElementById('sendLead');
+  if (msg && btn) { msg.style.display = 'block'; btn.disabled = true; }
+});
 </script>
 </body>
 </html>
