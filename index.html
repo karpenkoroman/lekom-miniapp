@@ -82,7 +82,7 @@
 </div>
 
 <script>
-const HOOK = 'YOUR_GOOGLE_HOOK_HERE';  // <-- вставь финальный googleusercontent-хук
+const HOOK = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiLATpYYrUUKFZ3DFC6_vzH5XSp8xuDK0LAbqLwYsq-3DCcJW75p8rjv2v53tby5rL2vHUGbMF-7LI6gL1b00FlxySinBWINSptE1_nffYfRWushlOY7rFod3JKnp3PRRyVJuECCX5loak1iHLHaPteR6yY961eXnZ6Xc0onD75YdhWen8USRn1aihOCDmiTNj1n2RPRbLcnuVwx4wyW0YjUEc6rltrt0Hw9xa2Bbafxg5Xo40qrViLraD49A3W53pzpb2LwgPs9_4Dyg-C2hkj2em9-g&lib=Mwwt52smGuohEdsmoK0zKBxnQJJj_G6cf';  // googleusercontent-хук
 const flds = [...document.querySelectorAll('fieldset.q')];
 const total = flds.length, bar = document.getElementById('bar'), pc = document.getElementById('pc');
 function answered(){return flds.reduce((n,f)=>n+(f.querySelector('input:checked')?1:0),0);}
