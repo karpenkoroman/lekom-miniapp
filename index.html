@@ -6,52 +6,91 @@
   <title>ЛЕКОМ · Интерактив</title>
   <meta name="color-scheme" content="dark light" />
 
-  
   <style>
-   /* --- Единый стиль кнопок --- */
-.btn, .btn-primary, .btn-ghost, .cta-btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-weight: 700; font-size: 16px; line-height: 1;
-  padding: 14px 18px; border-radius: 14px; border: 0; cursor: pointer;
-  -webkit-tap-highlight-color: transparent; transition: transform .12s, filter .12s, box-shadow .12s;
+/* 1) Шрифт */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700&display=swap');
+
+/* 2) Базовые переменные цветов */
+:root{
+  --bg: #0f1116;
+  --bg-elev: #151924;
+  --stroke: #273046;
+  --text: #e9eef9;
+  --text-dim: #9fb0d3;
+  --brand: #2a7de1;      /* синий */
+  --brand-2: #19b8a7;    /* бирюза для акцента */
+  --ok: #23c08b; 
+  --warn: #e9b534;
+  --err: #ff6b6b;
 }
 
-/* градиент ЛЕКОМ единый для всех основных CTA */
-.btn-primary, .cta-btn {
-  color:#fff;
-  background: linear-gradient(135deg, var(--lekom-blue) 0%, var(--lekom-blue-2) 35%, var(--lekom-teal) 100%);
-  box-shadow: 0 10px 24px rgba(15,184,173,.25), inset 0 1px 0 rgba(255,255,255,.15);
-}
-.btn-primary:hover, .cta-btn:hover { transform: translateY(-1px); filter: brightness(1.03); }
-.btn-primary:active, .cta-btn:active { transform: translateY(1px); filter: brightness(.98); }
+/* 3) База */
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Roboto,system-ui,Segoe UI,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.45}
+*{box-sizing:border-box}
+a{color:var(--brand);text-decoration:none}
+a:hover{text-decoration:underline}
 
-.btn-ghost {
-  color: var(--text);
-  background: rgba(255,255,255,.06);
-  border: 1px solid var(--stroke);
-}
-.btn-ghost:hover { background: rgba(255,255,255,.08); }
+/* Контейнер приложения */
+.app{max-width:720px;margin:0 auto;padding:20px}
+.stack>*+*{margin-top:12px}
 
-/* --- Плашки-ответы (без радиокнопок) --- */
-.pill {
-  width: 100%; text-align: left;
-  padding: 14px 16px; border-radius: 14px;
-  background: rgba(255,255,255,.05); border: 1px solid var(--stroke);
-  color: var(--text); cursor: pointer;
-}
-.pill + .pill { margin-top: 10px; }
-.pill:hover { background: rgba(255,255,255,.08); }
-.pill.selected {
-  background: rgba(11,58,141,.18);
-  border-color: rgba(15,184,173,.55);
-  box-shadow: 0 0 0 2px rgba(15,184,173,.35) inset;
-}
+/* Заголовки */
+h1{font-size:28px;font-weight:700;margin:0 0 8px}
+h2{font-size:22px;font-weight:700;margin:0 0 6px}
+h3{font-size:18px;font-weight:700;margin:0 0 6px}
+h4{font-size:16px;font-weight:700;margin:12px 0 6px}
+.muted{color:var(--text-dim)}
 
-/* Блок результата */
-#resultBlock { margin-top: 20px; }
-#resultText { padding: 12px 14px; border:1px solid var(--stroke); border-radius: 12px; background: rgba(255,255,255,.04); } 
-  </style>
+/* Карточки/блоки */
+.card{
+  background:var(--bg-elev);
+  border:1px solid var(--stroke);
+  border-radius:16px;
+  padding:16px;
+}
+.card-title{font-weight:700;margin-bottom:8px}
 
+/* Кнопки — единый стиль, без тяжёлых теней */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-weight:700;font-size:16px;line-height:1;
+  padding:12px 16px;border-radius:12px;border:1px solid transparent;cursor:pointer;
+  background:var(--brand);color:#fff;transition:filter .12s,transform .12s
+}
+.btn:hover{filter:brightness(1.05)}
+.btn:active{transform:translateY(1px)}
+.btn.secondary{
+  background:transparent;color:var(--text);
+  border-color:var(--stroke)
+}
+.btn.full{width:100%}
+
+/* Плашки ответов */
+.pill{
+  width:100%; text-align:left; padding:14px 16px;
+  border-radius:12px; border:1px solid var(--stroke);
+  background:#0f1420; color:var(--text); cursor:pointer
+}
+.pill:hover{background:#121a2a}
+.pill.selected{border-color:var(--brand-2); box-shadow:0 0 0 2px rgba(25,184,167,.25) inset}
+
+/* Формы */
+input[type=text]{width:100%;background:#0f1420;border:1px solid var(--stroke);border-radius:10px;color:var(--text);padding:10px 12px}
+.row{display:flex;gap:10px}
+.half{flex:1}
+
+/* Итоги голосования — информативные полосы */
+.summary-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:8px 0 6px}
+.summary-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.summary-stat{color:var(--text-dim);font-weight:600}
+.bar{grid-column:1 / -1;height:8px;background:#0f1420;border:1px solid var(--stroke);border-radius:999px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand-2))}
+
+/* Навигация назад */
+.back{background:transparent;border:0;color:var(--text-dim);cursor:pointer;padding:0;margin-bottom:8px}
+.back:hover{color:var(--text)}
+</style>
+  
   
 </head>
 <body>
