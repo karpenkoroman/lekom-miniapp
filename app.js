@@ -4,6 +4,22 @@
   // ========= CONFIG =========
   const HOOK = (window && window.LEKOM_HOOK) || '';
 
+  // ========= TELEGRAM USER (если мини-апп открыт в Telegram) =========
+  let TG_USER = null;
+  try {
+    if (window.Telegram && Telegram.WebApp) {
+      Telegram.WebApp.expand();
+      const d = Telegram.WebApp.initDataUnsafe;
+      if (d && d.user) {
+        TG_USER = {
+          id: d.user.id,
+          username: d.user.username || '',
+          first_name: d.user.first_name || ''
+        };
+      }
+    }
+  } catch (_) {}
+
   // ========= SAFE DOM GETTERS =========
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -39,13 +55,13 @@
   const resultAdvice    = $('#resultAdvice');
 
   // CTA in result
-  const btnExpert  = $('#ctaExpert');
-  const btnLeadTgl = $('#toggleLead');
-  const leadForm   = $('#leadForm');
-  const leadName   = $('#leadName');
-  const leadCompany= $('#leadCompany');
-  const leadPhone  = $('#leadPhone');
-  const btnSendLead= $('#sendLead');
+  const btnExpert   = $('#ctaExpert');
+  const btnLeadTgl  = $('#toggleLead');
+  const leadForm    = $('#leadForm');
+  const leadName    = $('#leadName');
+  const leadCompany = $('#leadCompany');
+  const leadPhone   = $('#leadPhone');
+  const btnSendLead = $('#sendLead');
 
   // Poll
   const pollOptions   = $$('#screen-poll .poll-opt');
@@ -62,7 +78,6 @@
     if (name === 'start'){ show(scrStart); loadSummaryToStart(); }
     if (name === 'audit'){ show(scrAudit); updateAuditProgress(); }
     if (name === 'poll'){  show(scrPoll); }
-    // к началу
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
@@ -74,7 +89,6 @@
     return 'баллов';
   }
 
-  // Тост / модалка-подсказка
   function toast(html, withOk = true, onOk = null){
     const wrap = document.createElement('div');
     wrap.className = 'toast-overlay';
@@ -116,52 +130,52 @@
   });
 
   // ========= SUMMARY (start) =========
-async function loadSummaryToStart() {
-  if (!summaryBox) return;
-  summaryBox.innerHTML = '<div class="muted">Загрузка…</div>';
+  async function loadSummaryToStart() {
+    if (!summaryBox) return;
+    summaryBox.innerHTML = '<div class="muted">Загрузка…</div>';
 
-  try {
-    const res  = await fetch(HOOK + '?summary=webinar', { cache: 'no-store' });
-    const data = await res.json();
-    const wrap = document.createElement('div');
-    const total = data.total || 0;
+    try {
+      const res  = await fetch(HOOK + '?summary=webinar', { cache: 'no-store' });
+      const data = await res.json(); // { total, items:[{topic,count}] }
+      const wrap = document.createElement('div');
+      const total = data.total || 0;
 
-    wrap.innerHTML = `<div class="muted" style="margin-bottom:6px">Всего голосов: ${total}</div>`;
+      wrap.innerHTML = `<div class="muted" style="margin-bottom:6px">Всего голосов: ${total}</div>`;
 
-    // 🔽 ДОБАВЛЕНО: сортировка от большего count к меньшему
-    const items = (data.items || []).sort((a, b) => b.count - a.count);
+      const items = (data.items || []).slice().sort((a, b) => (b.count - a.count));
 
-    items.forEach(it => {
-      const pct = total ? Math.round((it.count / total) * 100) : 0;
-      const row = document.createElement('div');
-      row.className = 'summary-row';
-      row.innerHTML = `
-        <div class="summary-head">
-          <div>${it.topic}</div>
-          <div class="muted">${it.count} (${pct}%)</div>
-        </div>
-        <div class="summary-bar">
-          <div class="summary-fill" style="width:${pct}%"></div>
-        </div>
-      `;
-      wrap.appendChild(row);
-    });
+      items.forEach(it => {
+        const pct = total ? Math.round((it.count / total) * 100) : 0;
+        const row = document.createElement('div');
+        row.className = 'summary-row';
+        row.innerHTML = `
+          <div class="summary-head">
+            <div>${it.topic}</div>
+            <div class="muted">${it.count} (${pct}%)</div>
+          </div>
+          <div class="summary-bar">
+            <div class="summary-fill" style="width:${pct}%"></div>
+          </div>
+        `;
+        wrap.appendChild(row);
+      });
 
-    if (!items.length) {
-      const empty = document.createElement('div');
-      empty.className = 'muted';
-      empty.textContent = 'Пока нет голосов.';
-      wrap.appendChild(empty);
+      if (!items.length) {
+        const empty = document.createElement('div');
+        empty.className = 'muted';
+        empty.textContent = 'Пока нет голосов.';
+        wrap.appendChild(empty);
+      }
+
+      summaryBox.innerHTML = '';
+      summaryBox.appendChild(wrap);
+
+    } catch (e) {
+      console.error('Ошибка сводки:', e);
+      summaryBox.innerHTML = '<span class="muted">Не удалось загрузить сводку.</span>';
     }
-
-    summaryBox.innerHTML = '';
-    summaryBox.appendChild(wrap);
-
-  } catch (e) {
-    console.error('Ошибка сводки:', e);
-    summaryBox.innerHTML = '<span class="muted">Не удалось загрузить сводку.</span>';
   }
-}
+
   // ========= POLL (multi-select) =========
   pollOptions.forEach(p=>{
     p.addEventListener('click', ()=>{
@@ -179,17 +193,23 @@ async function loadSummaryToStart() {
     const otherText = selected.includes('Другая тема') ? (pollOtherText?.value || '').trim() : '';
 
     try{
-      // шлем каждую выбранную тему
       for (const topic of selected){
-        const payload = { type:'poll', poll:'webinar_topic', topic, other: topic==='Другая тема' ? otherText : '' };
-        await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' });
+        const payload = {
+          type:'poll', poll:'webinar_topic', topic,
+          other: topic==='Другая тема' ? otherText : '',
+          initData: TG_USER ? { user: TG_USER } : null,
+          user_id: TG_USER?.id || '',
+          username: TG_USER?.username || '',
+          first_name: TG_USER?.first_name || ''
+        };
+        await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), {
+          method:'GET', cache:'no-store'
+        });
       }
       toast('Голос учтён! Спасибо 🙌');
-      // очистка выбора
       $$('#screen-poll .poll-opt.selected').forEach(x=>x.classList.remove('selected'));
       if (pollOtherText) pollOtherText.value = '';
       if (pollOtherBox)  pollOtherBox.style.display = 'none';
-      // сводку обновим когда вернётся на старт
     }catch(e){
       toast('Не удалось отправить голос. Попробуйте ещё раз.');
     }
@@ -214,7 +234,6 @@ async function loadSummaryToStart() {
     if (btnAuditSub)     btnAuditSub.textContent     = `(ответов ${answered} из ${TOTAL_Q})`;
   }
 
-  // одиночный выбор в рамках одного вопроса
   $$('#auditForm .pill').forEach(p=>{
     p.addEventListener('click', ()=>{
       const q = p.dataset.q;
@@ -233,8 +252,8 @@ async function loadSummaryToStart() {
     // Вердикт и рекомендация
     let verdict = 'Нужен аудит';
     let advice  = 'Требуется пересмотр парка и бюджета.';
-    if (score >= 9){ verdict='Зрелая практика';      advice='У вас всё под контролем, продолжайте.'; }
-    else if (score >= 6){ verdict='Частичный контроль'; advice='Рекомендуем уточнить бюджет и процессы.'; }
+    if (score >= 9){ verdict='Зрелая практика';        advice='У вас всё под контролем, продолжайте.'; }
+    else if (score >= 6){ verdict='Частичный контроль';  advice='Рекомендуем уточнить бюджет и процессы.'; }
 
     lastAuditResult = {
       score, verdict, advice,
@@ -242,15 +261,24 @@ async function loadSummaryToStart() {
     };
 
     // Показ результата
-    if (resultText)   resultText.innerHTML   = `${score} ${pluralBall(score)} из ${TOTAL_Q}`;
+    if (resultText)     resultText.innerHTML   = `${score} ${pluralBall(score)} из ${TOTAL_Q}`;
     if (resultVerdict){ resultVerdict.textContent = verdict; resultVerdict.style.display=''; }
     if (resultAdvice){  resultAdvice.textContent  = advice;  resultAdvice.style.display=''; }
 
-    // Отправка результата (без всплывающих уведомлений)
+    // Отправка результата (без тостов)
     try{
-      await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
-        type:'result', score, verdict, advice, answers: lastAuditResult.answers
-      })), { method:'GET', cache:'no-store' });
+      const payload = {
+        type:'result',
+        score, verdict, advice,
+        answers: lastAuditResult.answers,
+        initData: TG_USER ? { user: TG_USER } : null,
+        user_id: TG_USER?.id || '',
+        username: TG_USER?.username || '',
+        first_name: TG_USER?.first_name || ''
+      };
+      await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), {
+        method:'GET', cache:'no-store'
+      });
     }catch(_){}
   });
 
@@ -284,13 +312,20 @@ async function loadSummaryToStart() {
     if (!name || !phone){ toast('Укажите имя и контакт (телефон или email).'); return; }
 
     try{
-      await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
+      const payload = {
         type:'lead',
         name, company, phone,
         result: lastAuditResult,
         consent: true,
-        policyUrl: 'https://lekom.ru/politika-konfidencialnosti/'
-      })), { method:'GET', cache:'no-store' });
+        policyUrl: 'https://lekom.ru/politika-konfidencialnosti/',
+        initData: TG_USER ? { user: TG_USER } : null,
+        user_id: TG_USER?.id || '',
+        username: TG_USER?.username || '',
+        first_name: TG_USER?.first_name || ''
+      };
+      await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), {
+        method:'GET', cache:'no-store'
+      });
 
       toast('Спасибо! Мы свяжемся с вами.');
       if (leadName)    leadName.value = '';
@@ -303,13 +338,12 @@ async function loadSummaryToStart() {
   });
 
   // ========= NAV =========
-  btnGoAudit?.addEventListener('click', ()=> showScreen('audit'));
-  btnGoPoll ?.addEventListener('click', ()=> showScreen('poll'));
-  backFromAudit?.addEventListener('click', ()=> showScreen('start'));
-  backFromPoll ?.addEventListener('click', ()=> showScreen('start'));
+  btnGoAudit    ?.addEventListener('click', ()=> showScreen('audit'));
+  btnGoPoll     ?.addEventListener('click', ()=> showScreen('poll'));
+  backFromAudit ?.addEventListener('click', ()=> showScreen('start'));
+  backFromPoll  ?.addEventListener('click', ()=> showScreen('start'));
 
   // ========= INIT =========
-  // Применяем сохранённую тему ещё раз (на случай, если DOM перерисовали)
   (function ensureTheme(){
     try{
       const saved = localStorage.getItem('theme');
@@ -317,6 +351,5 @@ async function loadSummaryToStart() {
     }catch(_){}
   })();
 
-  // Начальный экран
   showScreen('start');
 })();
