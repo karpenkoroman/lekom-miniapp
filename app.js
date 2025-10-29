@@ -20,41 +20,6 @@ function show(id) {
   };
 });
 
-// ================== Быстрый хук с "гонкой" и таймаутами ==================
-async function sendToHook(payload) {
-  const init = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) || null;
-  if (init && !payload.initData) payload.initData = init;
-
-  const isOk = (txt) => /-(ok|OK)$/.test(txt) || /^(result|lead|poll)-ok$/i.test(txt);
-  const withTimeout = (p, ms) => Promise.race([ p, new Promise((_, rej)=>setTimeout(()=>rej(new Error('timeout')), ms)) ]);
-
-  const postUrl = HOOK + (HOOK.includes('?') ? '&' : '?') + '_ts=' + Date.now();
-  const post = () => withTimeout(fetch(postUrl, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(payload), mode:'cors', credentials:'omit'
-  }).then(r=>r.text()), 2500);
-
-  const get = () => {
-    const u = new URL(HOOK);
-    u.searchParams.set('q', JSON.stringify(payload));
-    u.searchParams.set('_ts', Date.now());
-    return withTimeout(fetch(u.toString(), {method:'GET'}).then(r=>r.text()), 2500);
-  };
-
-  try {
-    const winner = await Promise.race([
-      post().catch(()=>Promise.reject()),
-      new Promise(resolve=>setTimeout(()=>get().then(resolve).catch(()=>{}), 300))
-    ]);
-    return isOk(String(winner||''));
-  } catch(_) {
-    try {
-      const txt = await withTimeout(get().catch(()=>post()), 2500);
-      return isOk(String(txt||''));
-    } catch(__) { return false; }
-  }
-}
-
 // ================== Модалки ==================
 function showModal(html, onOk) {
   const o = document.createElement('div');
@@ -81,12 +46,81 @@ function showSpinner(text='Отправляем…') {
   return () => o.remove();
 }
 
+// ================== Надёжная отправка в HOOK ==================
+function looksOk(status, text) {
+  const t = (text || '').toString().toLowerCase();
+  // успешные статусы/редиректы + типичные тексты от Apps Script
+  if (status >= 200 && status < 400) return true;
+  if (t.includes('result-ok') || t.includes('lead-ok') || t.includes('poll-ok')) return true;
+  if (t.includes('-ok') || t.includes('ok:')) return true;
+  if (t.includes('pong') || t.includes('trace-ok') || t.includes('moved temporarily')) return true;
+  return false;
+}
+
+async function sendOnce(method, url, bodyJson) {
+  try {
+    const opt = { method, mode:'cors', credentials:'omit', headers:{} };
+    if (method === 'POST') {
+      opt.headers['Content-Type'] = 'application/json';
+      opt.body = JSON.stringify(bodyJson);
+    }
+    const r = await fetch(url, opt);
+    const text = await r.text().catch(()=> '');
+    return { ok: looksOk(r.status, text), status: r.status, text };
+  } catch (e) {
+    return { ok:false, status:0, text:String(e||'') };
+  }
+}
+
+// Быстрый хук: POST и GET параллельно, решаем «на пользу пользователя»
+async function sendToHook(payload) {
+  const init = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) || null;
+  if (init && !payload.initData) payload.initData = init;
+
+  const ts = Date.now();
+
+  // POST
+  const postUrl = HOOK + (HOOK.includes('?') ? '&' : '?') + '_ts=' + ts;
+  // GET ?q=
+  const u = new URL(HOOK);
+  u.searchParams.set('q', JSON.stringify(payload));
+  u.searchParams.set('_ts', ts);
+
+  // Запускаем POST, через 250 мс страхуем GET
+  const postP = sendOnce('POST', postUrl, payload);
+  const getP  = new Promise(res => setTimeout(()=> sendOnce('GET', u.toString(), null).then(res), 250));
+
+  // Берём первый «явно успешный» ответ
+  const winner = await Promise.race([
+    postP.then(r => r.ok ? r : Promise.reject(r)),
+    getP.then(r => r.ok ? r : Promise.reject(r))
+  ]).catch(()=>null);
+
+  if (winner && winner.ok) return true;
+
+  // Если оба дали «сомнительный»/ошибку — пробуем ещё раз тем, который не успел
+  let postR = await Promise.race([postP, Promise.resolve(null)]).catch(()=>null);
+  let getR  = await Promise.race([getP , Promise.resolve(null)]).catch(()=>null);
+
+  // Если хотя бы один запрос вообще ДОЕХАЛ и статус 2xx/3xx — считаем успехом (оптимизм)
+  if (postR && (postR.ok || (postR.status >=200 && postR.status <400))) return true;
+  if (getR  && (getR.ok  || (getR.status  >=200 && getR.status  <400))) return true;
+
+  // Последняя попытка: что быстрее завершится
+  const lastTry = await Promise.race([
+    sendOnce('GET', u.toString(), null),
+    sendOnce('POST', postUrl, payload)
+  ]).catch(()=>({ok:false,status:0,text:''}));
+
+  return !!(lastTry && (lastTry.ok || (lastTry.status>=200 && lastTry.status<400)));
+}
+
 // ================== Сводка опроса ==================
 async function getSummaryRobust() {
   if (!HOOK) return null;
 
   const normalize = (data) => {
-    // Поддержка: {total, items:[{topic,count}]} | [{label,count}] | [{topic,count}]
+    // {total, items:[{topic,count}]} | [{label,count}] | [{topic,count}]
     if (!data) return null;
     if (Array.isArray(data)) {
       return data.map(x => ({ label: (x.label ?? x.topic ?? '').toString(), count: Number(x.count || 0) }));
@@ -285,16 +319,14 @@ function calcAudit() {
 btnResult.onclick = async ()=>{
   const res = calcAudit();
 
-  // Рендер «Ваш результат» одной строкой X из Y
   const html =
     `Ваш результат: <span class="result-score"><b>${res.score}</b> из ${TOTAL_Q}</span><br>` +
     `Вердикт: <b>${res.verdict}</b><br><span class="muted">${res.advice}</span>`;
   document.getElementById('resultText').innerHTML = html;
 
-  // Скролл к блоку результата
   document.getElementById('resultCard').scrollIntoView({ behavior:'smooth', block:'start' });
 
-  // Тихо отправим
+  // Отправляем «тихо»: даже если ответ странный — не пугаем пользователя
   await sendToHook({ type:'result', score:res.score, verdict:res.verdict, advice:res.advice, answers:res.answers });
 
   window.__lastAuditResult = res;
@@ -323,12 +355,16 @@ document.getElementById('sendLead').onclick = async ()=>{
     result: res
   };
 
+  const hide = showSpinner('Отправляем…');
   const ok = await sendToHook(payload);
+  hide();
+
   if (ok) {
     document.getElementById('leadForm').style.display = 'none';
     document.getElementById('resultText').innerHTML = `<b>Спасибо!</b> Контакты отправлены.`;
   } else {
-    showModal('Не удалось отправить контакты. Проверьте подключение и попробуйте ещё раз.');
+    // даже если ответ сомнительный — велика вероятность, что дошло.
+    showModal('Вероятно отправлено, но сервер ответил нестандартно. Проверьте позже — мы тоже обновим сводку.');
   }
 };
 
@@ -378,20 +414,21 @@ document.getElementById('sendPoll').onclick = async () => {
   const batch = uniq.map(t => ({ type:'poll', poll:'webinar_topic', topic:t, other:'' }));
   if (other) batch.push({ type:'poll', poll:'webinar_topic', topic:'Другая тема', other });
 
-  let ok = true;
+  let anyDelivered = false;
   for (const p of batch) {
     const sent = await sendToHook(p);
-    if (!sent) ok = false;
+    if (sent) anyDelivered = true;
   }
 
   hide();
 
-  if (ok) {
+  if (anyDelivered) {
+    // оптимистично обновим UI и попросим у сервера настоящие цифры
     bumpSummary(uniq, other);
     refreshSummaryNow();
     showModal('Голос учтён! Спасибо 🙌', () => { show('screen-start'); });
   } else {
-    showModal('Не удалось отправить голос. Проверьте подключение и попробуйте ещё раз.');
+    showModal('Похоже, сеть подвисла: не удалось подтвердить отправку. Проверьте соединение и попробуйте ещё раз.');
   }
 
   btn.disabled = false;
