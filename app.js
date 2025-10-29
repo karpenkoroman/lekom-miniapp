@@ -193,7 +193,7 @@ function calcAudit(){
   let verdict, advice;
   if (score >= 9){ verdict='Зрелая инфраструктура'; advice='Можно оптимизировать закупки и мониторинг.'; }
   else if (score >= 5){ verdict='Частичный контроль'; advice='Рекомендуем TCO-аудит и политику печати.'; }
-  else { verdict='Нужен аудит'; advice='Нужен пересмотр парка и бюджета.'; }
+  else { verdict='Нужен аудит'; advice='Требуется пересмотр парка и бюджета.'; }
   return { score, verdict, advice, answers };
 }
 
