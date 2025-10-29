@@ -1,13 +1,12 @@
 /* =========================
    L E K O M   mini-app
-   Full app.js
+   Full app.js (with back-icon, header note, pluralized score)
    ========================= */
 
-// ====== Config from HTML ======
-const HOOK = window.LEKOM_HOOK; // задан в index.html
+const HOOK = window.LEKOM_HOOK;
 const TOTAL_Q = 11;
 
-// ====== Navigation ======
+// --------- Navigation ----------
 function show(id){
   ['screen-start','screen-audit','screen-poll'].forEach(x=>{
     const el = document.getElementById(x);
@@ -24,7 +23,7 @@ function show(id){
   };
 });
 
-// ====== UI helpers ======
+// --------- UI helpers ----------
 function showModal(html, onOk){
   const o = document.createElement('div');
   o.className = 'toast-overlay';
@@ -38,7 +37,6 @@ function showModal(html, onOk){
   const close = ()=>{ o.remove(); if (typeof onOk==='function') onOk(); };
   o.addEventListener('click', (e)=>{ if (e.target.id==='__ok' || e.target===o) close(); });
 }
-
 function showSpinner(text='Отправляем…'){
   const o = document.createElement('div');
   o.className = 'toast-overlay';
@@ -51,17 +49,13 @@ function showSpinner(text='Отправляем…'){
   return ()=>o.remove();
 }
 
-// ====== Robust transport to Apps Script ======
-// Любой ответ, который ДОЕХАЛ (без сетевой ошибки), считаем успешным.
-// Это устраняет ложные "ошибки" из-за редиректов/пустых body у Apps Script.
+// --------- Transport to Apps Script ----------
 async function sendToHook(payload){
   try{
     const init = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) || null;
     if (init && !payload.initData) payload.initData = init;
 
     const ts = Date.now();
-
-    // POST
     const postUrl = HOOK + (HOOK.includes('?') ? '&' : '?') + '_ts=' + ts;
     const postP = fetch(postUrl, {
       method:'POST',
@@ -71,90 +65,63 @@ async function sendToHook(payload){
       credentials:'omit'
     });
 
-    // GET ?q= (чуть позже)
     const u = new URL(HOOK);
     u.searchParams.set('q', JSON.stringify(payload));
     u.searchParams.set('_ts', ts);
-    const getP = new Promise(res => setTimeout(
-      ()=>res(fetch(u.toString(), { method:'GET' })), 200
-    ));
+    const getP = new Promise(res => setTimeout(()=>res(fetch(u.toString(), {method:'GET'})), 200));
 
-    // Берём любой завершившийся — и считаем успехом
     await Promise.race([postP, getP]);
     return true;
-  }catch(_){
-    // Только реальная сетевая ошибка даёт false
-    return false;
-  }
+  }catch(_){ return false; }
 }
 
-// ====== Summary (webinar poll) ======
+// --------- Summary (webinar poll) ----------
 async function getSummaryRobust(){
   if (!HOOK) return null;
 
   const tryParse = (txt)=>{
     try{ return JSON.parse(txt); }catch(_){}
     const m = txt && txt.match(/\{.*\}|\[.*\]/s);
-    if (m){ try{ return JSON.parse(m[0]); }catch(_){ } }
+    if (m){ try{ return JSON.parse(m[0]); }catch(_){} }
     return null;
   };
   const normalize = (data)=>{
     if (!data) return null;
-    if (Array.isArray(data)){
-      return data.map(x=>({ label:(x.label ?? x.topic ?? '').toString(), count:Number(x.count||0) }));
-    }
-    if (data.items && Array.isArray(data.items)){
-      return data.items.map(x=>({ label:(x.label ?? x.topic ?? '').toString(), count:Number(x.count||0) }));
-    }
+    if (Array.isArray(data)) return data.map(x=>({label:(x.label??x.topic??'').toString(),count:Number(x.count||0)}));
+    if (data.items && Array.isArray(data.items)) return data.items.map(x=>({label:(x.label??x.topic??'').toString(),count:Number(x.count||0)}));
     return null;
   };
 
   try{
-    // A: ?summary=webinar
     let a = new URL(HOOK); a.searchParams.set('summary','webinar'); a.searchParams.set('_', Date.now());
-    let r = await fetch(a.toString()); let t = await r.text(); let d = normalize(tryParse(t));
-    if (d && d.length) return d;
+    let r = await fetch(a.toString()); let t = await r.text(); let d = normalize(tryParse(t)); if (d && d.length) return d;
 
-    // B: ?summary=webinar&format=json
     let b = new URL(HOOK); b.searchParams.set('summary','webinar'); b.searchParams.set('format','json'); b.searchParams.set('_', Date.now());
-    r = await fetch(b.toString()); t = await r.text(); d = normalize(tryParse(t));
-    if (d && d.length) return d;
+    r = await fetch(b.toString()); t = await r.text(); d = normalize(tryParse(t)); if (d && d.length) return d;
 
-    // C: JSONP fallback
     const cb = '__LEKOM_SUMMARY_CB_' + Math.random().toString(36).slice(2);
     d = await new Promise((resolve,reject)=>{
       window[cb] = (x)=>resolve(x);
       const s = document.createElement('script');
       const u = new URL(HOOK);
-      u.searchParams.set('summary','webinar');
-      u.searchParams.set('callback', cb);
-      u.searchParams.set('_', Date.now());
-      s.src = u.toString();
-      s.onerror = ()=>reject(new Error('jsonp-error'));
+      u.searchParams.set('summary','webinar'); u.searchParams.set('callback',cb); u.searchParams.set('_', Date.now());
+      s.src = u.toString(); s.onerror=()=>reject(new Error('jsonp-error'));
       document.head.appendChild(s);
-      setTimeout(()=>reject(new Error('jsonp-timeout')), 6000);
+      setTimeout(()=>reject(new Error('jsonp-timeout')),6000);
     });
-    d = normalize(d);
-    if (d && d.length) return d;
+    d = normalize(d); if (d && d.length) return d;
   }catch(_){}
-
   return null;
 }
 
 function renderSummary(data){
   const box = document.getElementById('summaryContent');
   if (!box) return;
-  if (!data || !data.length){
-    box.innerHTML = '<div class="muted">Нет данных.</div>';
-    return;
-  }
-  const arr = [...data].sort((a,b)=>(b.count||0)-(a.count||0));
-  const tot = arr.reduce((a,x)=>a+(Number(x.count)||0),0);
-
+  if (!data || !data.length){ box.innerHTML='<div class="muted">Нет данных.</div>'; return; }
+  const arr=[...data].sort((a,b)=>(b.count||0)-(a.count||0));
+  const tot=arr.reduce((a,x)=>a+(Number(x.count)||0),0);
   box.innerHTML = `<div class="muted">Всего голосов: <b>${tot}</b></div>` + arr.map(x=>{
-    const c = Number(x.count)||0;
-    const pct = tot ? Math.round(c*100/tot) : 0;
-    const label = x.label || '';
+    const c=Number(x.count)||0; const pct=tot?Math.round(c*100/tot):0; const label=x.label||'';
     return `
       <div class="summary-row">
         <div class="summary-head">
@@ -165,8 +132,6 @@ function renderSummary(data){
       </div>`;
   }).join('');
 }
-
-// стартовая «болванка» + автозагрузка + периодический рефреш
 (function bootSummary(){
   try{
     renderSummary([
@@ -177,15 +142,15 @@ function renderSummary(data){
       {label:'Другая тема', count:0}
     ]);
     (async ()=>{
-      const s1 = await getSummaryRobust(); if (s1 && s1.length) renderSummary(s1);
-      setTimeout(async()=>{ const s2=await getSummaryRobust(); if(s2&&s2.length) renderSummary(s2); }, 1500);
-      setTimeout(async()=>{ const s3=await getSummaryRobust(); if(s3&&s3.length) renderSummary(s3); }, 6000);
+      const s1=await getSummaryRobust(); if(s1&&s1.length) renderSummary(s1);
+      setTimeout(async()=>{ const s2=await getSummaryRobust(); if(s2&&s2.length) renderSummary(s2); },1500);
+      setTimeout(async()=>{ const s3=await getSummaryRobust(); if(s3&&s3.length) renderSummary(s3); },6000);
     })();
-    setInterval(async()=>{ const s=await getSummaryRobust(); if(s&&s.length) renderSummary(s); }, 20000);
+    setInterval(async()=>{ const s=await getSummaryRobust(); if(s&&s.length) renderSummary(s); },20000);
   }catch(_){}
 })();
 
-// ====== Audit ======
+// --------- Аудит ---------
 const auditForm   = document.getElementById('auditForm');
 const prog        = document.getElementById('auditProgress');
 const btnResult   = document.getElementById('btnAuditResult');
@@ -207,6 +172,16 @@ if (auditForm){
   updateAuditCounters();
 }
 
+// русское склонение для «балл»
+function ruPluralBall(n){
+  const abs = Math.abs(n);
+  const last = abs % 10;
+  const last2 = abs % 100;
+  if (last === 1 && last2 !== 11) return 'балл';
+  if (last >= 2 && last <= 4 && !(last2 >= 12 && last2 <= 14)) return 'балла';
+  return 'баллов';
+}
+
 function calcAudit(){
   let score = 0;
   const answers = {};
@@ -225,23 +200,21 @@ function calcAudit(){
 if (btnResult){
   btnResult.onclick = async ()=>{
     const res = calcAudit();
+    const phrase = ruPluralBall(res.score);
     const html =
-      `<span class="result-score"><b>${res.score}</b> из ${TOTAL_Q}</span><br>` +
+      `<div style="text-align:center"><span class="result-score"><b>${res.score}</b> ${phrase} из ${TOTAL_Q}</span></div>` +
       `Вердикт: <b>${res.verdict}</b><br><span class="muted">${res.advice}</span>`;
     document.getElementById('resultText').innerHTML = html;
 
-    // плавный скролл к результату
     const rc = document.getElementById('resultCard');
     if (rc) rc.scrollIntoView({ behavior:'smooth', block:'start' });
 
-    // тихая отправка результата (без ошибок в UI)
     await sendToHook({ type:'result', score:res.score, verdict:res.verdict, advice:res.advice, answers:res.answers });
-
     window.__lastAuditResult = res;
   };
 }
 
-// ====== Leads ======
+// --------- Leads ---------
 const toggleLead = document.getElementById('toggleLead');
 const sendLead   = document.getElementById('sendLead');
 
@@ -269,14 +242,14 @@ if (sendLead){
       result: res
     };
     const hide = showSpinner('Отправляем…');
-    await sendToHook(payload); // успех по умолчанию
+    await sendToHook(payload);
     hide();
     const lf = document.getElementById('leadForm'); if (lf) lf.style.display='none';
-    document.getElementById('resultText').innerHTML = `<b>Спасибо!</b> Контакты отправлены.`;
+    document.getElementById('resultText').innerHTML = `<div style="text-align:center"><b>Спасибо!</b> Контакты отправлены.</div>`;
   };
 }
 
-// ====== Contact expert (Igor Chelebaev) ======
+// --------- Contact expert (Igor Chelebaev) ---------
 const ctaExpert = document.getElementById('ctaExpert');
 if (ctaExpert){
   ctaExpert.onclick = async ()=>{
@@ -294,7 +267,7 @@ if (ctaExpert){
   };
 }
 
-// ====== Webinar poll (multi-select) ======
+// --------- Webinar poll (multi-select) ---------
 const pollForm = document.getElementById('pollForm');
 const sendPoll = document.getElementById('sendPoll');
 let SENDING_POLL = false;
@@ -323,7 +296,6 @@ if (sendPoll){
 
     const hide = showSpinner('Отправляем голос…');
 
-    // пачкой, без строгих проверок тела ответа
     const uniq = [...new Set(selected)];
     const batch = uniq.map(t => ({ type:'poll', poll:'webinar_topic', topic:t, other:'' }));
     if (other) batch.push({ type:'poll', poll:'webinar_topic', topic:'Другая тема', other });
@@ -332,54 +304,17 @@ if (sendPoll){
 
     hide();
 
-    // оптимистично и затем рефрешим
-    bumpSummary(uniq, other);
-    refreshSummaryNow();
-
+    // Мягкое подтверждение
     showModal('Голос учтён! Спасибо 🙌', ()=>{ show('screen-start'); });
 
     sendPoll.disabled = false; SENDING_POLL = false;
+
+    // Обновим сводку
+    refreshSummaryNow();
   };
 }
 
-// ====== Summary bump & refresh utils ======
-function bumpSummary(selectedTopics, otherText){
-  const box = document.getElementById('summaryContent');
-  if (!box) return;
-
-  const rows = [...box.querySelectorAll('.summary-row')];
-  if (!rows.length) return;
-
-  const labels = rows.map(r=>r.querySelector('.summary-head div').textContent.trim());
-  const counts = rows.map(r=>{
-    const t = r.querySelector('.summary-head .muted').textContent;
-    const n = parseInt(t,10); return isNaN(n)?0:n;
-  });
-
-  const L_OBZOR='Обзор рынка и тренды 2025';
-  const L_IMPORT='Импортозамещение (техника, софт, расходники)';
-  const L_ZAKUP='Закупки по 44-ФЗ / 223-ФЗ';
-  const L_CART='Рынок картриджей — есть ли жизнь после OEM?';
-  const L_OTHER='Другая тема';
-
-  const mapTopicToLabel = (t)=>{
-    const s=(t||'').toLowerCase();
-    if (s.includes('тренд')||s.includes('обзор')) return L_OBZOR;
-    if (s.includes('импорт')) return L_IMPORT;
-    if (s.includes('44-фз')||s.includes('223-фз')||s.includes('закуп')) return L_ZAKUP;
-    if (s.includes('картридж')||s.includes('oem')) return L_CART;
-    return L_OTHER;
-  };
-  const idxOf = (lbl)=> labels.findIndex(l=>l.toLowerCase()===lbl.toLowerCase());
-  const inc = (lbl)=>{ const i=idxOf(lbl); if(i>=0) counts[i]=(counts[i]||0)+1; };
-
-  (selectedTopics||[]).forEach(t=>inc(mapTopicToLabel(t)));
-  if (otherText) inc(L_OTHER);
-
-  const data = labels.map((l,i)=>({ label:l, count:counts[i]||0 }));
-  renderSummary(data);
-}
-
+// --------- Summary refresher ----------
 async function refreshSummaryNow(){
   const s1 = await getSummaryRobust(); if (s1 && s1.length){ renderSummary(s1); return; }
   setTimeout(async()=>{ const s2=await getSummaryRobust(); if(s2&&s2.length) renderSummary(s2); }, 700);
