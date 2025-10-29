@@ -6,10 +6,8 @@
   <title>ЛЕКОМ · Мини-апп</title>
 
   <style>
-  /* Шрифт */
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-  /* Палитра и общие */
   :root{
     --bg:#0e1015; --bg2:#171b25; --stroke:#293044;
     --text:#eaf0fa; --text-dim:#96a2c2;
@@ -21,126 +19,80 @@
     font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   }
-  /* 🔧 защита от горизонтального скролла */
-  body, .app, .card { overflow-x:hidden; }
-  /* контейнер */
-  .app{
-    max-width:720px; margin:0 auto; padding:20px 16px 28px;
-    box-sizing:border-box;
-  }
+  body,.app,.card{overflow-x:hidden;}
+  .app{max-width:720px;margin:0 auto;padding:20px 16px 28px;box-sizing:border-box;}
   .card{
-    background:var(--bg2); border:1px solid var(--stroke); border-radius:var(--radius);
-    padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25);
-    box-sizing:border-box; width:100%;
+    background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);
+    padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25);box-sizing:border-box;width:100%;
   }
-  h1{ font-size:26px; margin:0 0 12px; }
-  h2{ font-size:22px; margin:0 0 10px; }
-  h3{ font-size:18px; margin:0 0 8px; }
-  .muted{ color:var(--text-dim); }
+  h1{font-size:26px;margin:0 0 12px;} h2{font-size:22px;margin:0 0 10px;} h3{font-size:18px;margin:0 0 8px;}
+  .muted{color:var(--text-dim);}
 
-  /* Кнопки — единый стиль */
   .btn{
-    display:inline-flex; align-items:center; justify-content:center; gap:6px;
-    width:100%; min-height:46px; padding:12px 16px;
-    font-size:16px; font-weight:700; line-height:1.15; letter-spacing:.2px;
-    border-radius:12px; border:1px solid transparent; cursor:pointer;
-    transition:filter .12s, transform .06s ease;
-    user-select:none; -webkit-tap-highlight-color:transparent;
-    text-align:center;
-    flex-direction:column;            /* перенос на новую строку */
-    box-sizing:border-box;            /* ❗ */
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    width:100%;min-height:46px;padding:12px 16px;
+    font-size:16px;font-weight:700;line-height:1.15;letter-spacing:.2px;
+    border-radius:12px;border:1px solid transparent;cursor:pointer;
+    transition:filter .12s,transform .06s ease;user-select:none;-webkit-tap-highlight-color:transparent;
+    text-align:center;flex-direction:column;box-sizing:border-box;
   }
-  .btn:active{ transform:translateY(1px); }
-  .btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
-  .btn + .btn{ margin-top:10px; }
-  .btn-primary{
-    color:#fff;
-    background:linear-gradient(135deg,var(--brand),var(--brand2));
-    box-shadow:0 10px 28px rgba(42,125,225,.18);
-  }
-  .btn-primary:hover{ filter:brightness(1.06); }
-  .btn-secondary{
-    color:var(--text); background:#101625; border:1px solid var(--stroke);
-  }
-  .btn-secondary:hover{ background:#141b2b; }
-  .btn-sub{ font-weight:500; font-size:13px; color:var(--text-dim); }
+  .btn:active{transform:translateY(1px);}
+  .btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+  .btn + .btn{margin-top:10px;}
+  .btn-primary{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 10px 28px rgba(42,125,225,.18);}
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-secondary{color:var(--text);background:#101625;border:1px solid var(--stroke);}
+  .btn-secondary:hover{background:#141b2b;}
+  .btn-sub{font-weight:600;font-size:13px;color:#ffffff;opacity:.9;margin-top:2px;} /* читабельность ↑ */
 
-  /* Ряды кнопок */
-  .btn-row{ display:flex; gap:12px; flex-wrap:wrap; }
-  .btn-row .btn{ flex:1 1 220px; }
+  .btn-row{display:flex;gap:12px;flex-wrap:wrap;}
+  .btn-row .btn{flex:1 1 220px;}
 
-  /* Вопросы/ответы («пилюли») */
-  .q{ margin-top:18px; }
-  .q b{ display:block; margin-bottom:10px; font-size:17px; }
+  .q{margin-top:18px;}
+  .q b{display:block;margin-bottom:10px;font-size:17px;}
   .pill{
-    display:block; width:100%; text-align:left;
-    font-size:16px; line-height:1.45;
-    padding:14px 16px; margin-top:8px;
-    border-radius:12px; border:1px solid var(--stroke);
-    background:#101625; color:var(--text); cursor:pointer;
-    box-sizing:border-box;                 /* ❗ */
-    word-break:break-word;                 /* ❗ переносим длинные слова */
-    overflow-wrap:anywhere;                /* ❗ */
+    display:block;width:100%;text-align:left;font-size:16px;line-height:1.45;
+    padding:14px 16px;margin-top:8px;border-radius:12px;border:1px solid var(--stroke);
+    background:#101625;color:var(--text);cursor:pointer;box-sizing:border-box;
+    word-break:break-word;overflow-wrap:anywhere;
   }
-  .pill:hover{ background:#141b2b; }
-  .pill.selected{
-    background:rgba(29,184,170,.22);
-    border-color:var(--brand2);
-    outline:2px solid rgba(29,184,170,.5);
-  }
+  .pill:hover{background:#141b2b;}
+  .pill.selected{background:rgba(29,184,170,.22);border-color:var(--brand2);outline:2px solid rgba(29,184,170,.5);}
 
-  /* Поля ввода */
-  input[type=text]{
-    width:100%; padding:12px 12px; border-radius:10px;
-    border:1px solid var(--stroke); background:#111620; color:var(--text);
-    box-sizing:border-box;                 /* ❗ */
-  }
-  input[type=text]::placeholder{ color:#7e8aa8; }
+  input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);background:#111620;color:var(--text);box-sizing:border-box;}
+  input[type=text]::placeholder{color:#7e8aa8;}
 
-  /* Прогресс и сводка */
-  #auditProgress{ margin:6px 0 12px; font-size:14px; color:var(--text-dim); }
+  #auditProgress{margin:6px 0 12px;font-size:14px;color:var(--text-dim);}
 
-  .summary-row{ margin:8px 0; }
-  .summary-head{ display:flex; justify-content:space-between; gap:8px; }
-  .summary-bar{
-    height:8px; background:#101625; border:1px solid var(--stroke);
-    border-radius:999px; overflow:hidden;
-  }
-  .summary-fill{ height:100%; background:linear-gradient(90deg,var(--brand),var(--brand2)); }
+  .summary-row{margin:8px 0;}
+  .summary-head{display:flex;justify-content:space-between;gap:8px;}
+  .summary-bar{height:8px;background:#101625;border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
+  .summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
 
-  /* Результат */
-  #resultBox { margin-top:16px; }
+  #resultBox{margin-top:16px;}
   .result-card{
-    background:#0f1623; border:1px solid #22314d; border-radius:16px; padding:16px;
+    background:#0f1623;border:1px solid #22314d;border-radius:16px;padding:16px;
     box-shadow:0 12px 36px rgba(0,0,0,.35);
   }
-  .result-title{ font-size:20px; font-weight:700; margin:0 0 10px; }
-  .result-score{ font-size:22px; font-weight:800; }
-  .result-hint{ margin-top:6px; color:var(--text-dim); }
-  #resultBox .cta-row{ display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
-  #resultBox .btn{ flex:1 1 220px; }
+  .result-score{font-size:22px;font-weight:800;}
+  .result-hint{margin-top:6px;color:var(--text-dim);}
+  #resultBox .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
+  #resultBox .btn{flex:1 1 220px;}
 
-  /* Модалка (центральное уведомление) */
-  .toast-overlay{
-    position:fixed; inset:0; background:rgba(0,0,0,.45);
-    display:flex; align-items:center; justify-content:center; z-index:9999;
-  }
+  .toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;}
   .toast-box{
-    background:var(--bg2); border:1px solid var(--stroke);
-    padding:20px 20px; border-radius:14px;
-    max-width:320px; width:calc(100vw - 48px); text-align:center; line-height:1.5;
-    box-shadow:0 12px 36px rgba(0,0,0,.35);
+    background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;
+    max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:0 12px 36px rgba(0,0,0,.35);
   }
-  .toast-box .btn{ width:100%; box-sizing:border-box; margin-top:10px; }
+  .toast-box .btn{width:100%;box-sizing:border-box;margin-top:10px;}
 
-  /* Разделители */
-  .section + .section{ margin-top:16px; }
-  hr{ border:0; height:1px; background:var(--stroke); opacity:.5; margin:14px 0; }
+  .section + .section{margin-top:16px;}
+  hr{border:0;height:1px;background:var(--stroke);opacity:.5;margin:14px 0;}
   </style>
 
-  <!-- ПОДСТАВЬ актуальный EXEC-хук -->
+  <!-- Твой актуальный EXEC-хук -->
   <script>
-    window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
+    window.LEKOM_HOOK='https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
   </script>
 </head>
 <body>
@@ -157,9 +109,7 @@
       <hr>
 
       <h3>Сводка голосования по темам</h3>
-      <div id="summaryContent" class="section">
-        <div class="muted">Загрузка…</div>
-      </div>
+      <div id="summaryContent" class="section"><div class="muted">Загрузка…</div></div>
     </div>
 
     <!-- Аудит -->
@@ -168,7 +118,6 @@
       <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
 
       <form id="auditForm">
-        <!-- 11 вопросов -->
         <div class="q">
           <b>1) Учитываете ли вы TCO (полную стоимость печати) при планировании бюджета?</b>
           <div class="pill" data-q="q1" data-score="1">Да, считаем TCO регулярно и корректируем</div>
@@ -246,7 +195,7 @@
 
       <div id="resultBox" class="section" style="display:block">
         <div class="result-card" id="resultCard">
-          <div class="result-title">Ваш результат</div>
+          <!-- Заголовок «Ваш результат» удалён -->
           <div class="result-score" id="resultText">Ответьте на вопросы и нажмите кнопку выше.</div>
           <div class="result-hint">Это быстрая оценка. Для детального аудита — оставьте контакт или обсудите с экспертом.</div>
           <div class="cta-row">
@@ -291,6 +240,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=2025-10-29-8"></script>
+  <script src="app.js?v=2025-10-29-9"></script>
 </body>
 </html>
