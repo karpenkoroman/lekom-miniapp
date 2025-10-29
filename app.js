@@ -116,41 +116,52 @@
   });
 
   // ========= SUMMARY (start) =========
-  async function loadSummaryToStart(){
-    if (!summaryBox) return;
-    summaryBox.innerHTML = '<div class="muted">Загрузка…</div>';
-    try{
-      const res  = await fetch(HOOK + '?summary=webinar', { cache: 'no-store' });
-      const data = await res.json();
-      const wrap = document.createElement('div');
-      const total = data.total || 0;
-      wrap.innerHTML = `<div class="muted" style="margin-bottom:6px">Всего голосов: ${total}</div>`;
-      (data.items || []).forEach(it=>{
-        const pct = total ? Math.round((it.count/total)*100) : 0;
-        const row = document.createElement('div');
-        row.className = 'summary-row';
-        row.innerHTML = `
-          <div class="summary-head">
-            <div>${it.topic}</div>
-            <div class="muted">${it.count} (${pct}%)</div>
-          </div>
-          <div class="summary-bar"><div class="summary-fill" style="width:${pct}%"></div></div>
-        `;
-        wrap.appendChild(row);
-      });
-      if (!(data.items || []).length){
-        const empty = document.createElement('div');
-        empty.className = 'muted';
-        empty.textContent = 'Пока нет голосов.';
-        wrap.appendChild(empty);
-      }
-      summaryBox.innerHTML = '';
-      summaryBox.appendChild(wrap);
-    }catch(e){
-      summaryBox.innerHTML = '<span class="muted">Не удалось загрузить сводку.</span>';
-    }
-  }
+async function loadSummaryToStart() {
+  if (!summaryBox) return;
+  summaryBox.innerHTML = '<div class="muted">Загрузка…</div>';
 
+  try {
+    const res  = await fetch(HOOK + '?summary=webinar', { cache: 'no-store' });
+    const data = await res.json();
+    const wrap = document.createElement('div');
+    const total = data.total || 0;
+
+    wrap.innerHTML = `<div class="muted" style="margin-bottom:6px">Всего голосов: ${total}</div>`;
+
+    // 🔽 ДОБАВЛЕНО: сортировка от большего count к меньшему
+    const items = (data.items || []).sort((a, b) => b.count - a.count);
+
+    items.forEach(it => {
+      const pct = total ? Math.round((it.count / total) * 100) : 0;
+      const row = document.createElement('div');
+      row.className = 'summary-row';
+      row.innerHTML = `
+        <div class="summary-head">
+          <div>${it.topic}</div>
+          <div class="muted">${it.count} (${pct}%)</div>
+        </div>
+        <div class="summary-bar">
+          <div class="summary-fill" style="width:${pct}%"></div>
+        </div>
+      `;
+      wrap.appendChild(row);
+    });
+
+    if (!items.length) {
+      const empty = document.createElement('div');
+      empty.className = 'muted';
+      empty.textContent = 'Пока нет голосов.';
+      wrap.appendChild(empty);
+    }
+
+    summaryBox.innerHTML = '';
+    summaryBox.appendChild(wrap);
+
+  } catch (e) {
+    console.error('Ошибка сводки:', e);
+    summaryBox.innerHTML = '<span class="muted">Не удалось загрузить сводку.</span>';
+  }
+}
   // ========= POLL (multi-select) =========
   pollOptions.forEach(p=>{
     p.addEventListener('click', ()=>{
