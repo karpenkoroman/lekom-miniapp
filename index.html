@@ -1,292 +1,296 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ЛЕКОМ · Интерактив</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ЛЕКОМ · Мини-апп</title>
 
-<style>
-/* Шрифт */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+  <!-- КРИТИЧНЫЕ СТИЛИ -->
+  <style>
+  /* Шрифт */
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-/* Палитра и общие */
-:root{
-  --bg:#0e1015; --bg2:#171b25; --stroke:#293044;
-  --text:#eaf0fa; --text-dim:#96a2c2;
-  --brand:#2a7de1; --brand2:#1db8aa;
-  --radius:16px;
-}
-html,body{
-  margin:0; padding:0; background:var(--bg); color:var(--text);
-  font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;
-  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-}
-.app{ max-width:720px; margin:0 auto; padding:20px 16px 28px; }
-.card{
-  background:var(--bg2); border:1px solid var(--stroke); border-radius:var(--radius);
-  padding:16px 16px; box-shadow:0 10px 30px rgba(0,0,0,.25);
-}
-h1{ font-size:26px; margin:0 0 12px; }
-h2{ font-size:22px; margin:0 0 10px; }
-h3{ font-size:18px; margin:0 0 8px; }
-.muted{ color:var(--text-dim); }
+  /* Палитра и общие */
+  :root{
+    --bg:#0e1015; --bg2:#171b25; --stroke:#293044;
+    --text:#eaf0fa; --text-dim:#96a2c2;
+    --brand:#2a7de1; --brand2:#1db8aa;
+    --radius:16px;
+  }
+  html,body{
+    margin:0; padding:0; background:var(--bg); color:var(--text);
+    font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .app{ max-width:720px; margin:0 auto; padding:20px 16px 28px; }
+  .card{
+    background:var(--bg2); border:1px solid var(--stroke); border-radius:var(--radius);
+    padding:16px 16px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+  h1{ font-size:26px; margin:0 0 12px; }
+  h2{ font-size:22px; margin:0 0 10px; }
+  h3{ font-size:18px; margin:0 0 8px; }
+  .muted{ color:var(--text-dim); }
 
-/* Кнопки — единый стиль */
-.btn{
-  display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  width:100%; min-height:46px; padding:12px 16px;
-  font-size:16px; font-weight:700; line-height:1; letter-spacing:.2px;
-  border-radius:12px; border:1px solid transparent; cursor:pointer;
-  transition:filter .12s, transform .06s ease;
-  user-select:none; -webkit-tap-highlight-color:transparent;
-}
-.btn:active{ transform:translateY(1px); }
-.btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
-.btn + .btn{ margin-top:10px; }
+  /* Кнопки — единый стиль */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    width:100%; min-height:46px; padding:12px 16px;
+    font-size:16px; font-weight:700; line-height:1.15; letter-spacing:.2px;
+    border-radius:12px; border:1px solid transparent; cursor:pointer;
+    transition:filter .12s, transform .06s ease;
+    user-select:none; -webkit-tap-highlight-color:transparent;
+    text-align:center;
+    flex-direction:column; /* позволяем перенос строки в тексте */
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+  .btn + .btn{ margin-top:10px; }
+  .btn-primary{
+    color:#fff;
+    background:linear-gradient(135deg,var(--brand),var(--brand2));
+    box-shadow:0 10px 28px rgba(42,125,225,.18);
+  }
+  .btn-primary:hover{ filter:brightness(1.06); }
+  .btn-secondary{
+    color:var(--text); background:#101625; border:1px solid var(--stroke);
+  }
+  .btn-secondary:hover{ background:#141b2b; }
+  .btn-sub{ font-weight:500; font-size:13px; color:var(--text-dim); }
 
-.btn-primary{
-  color:#fff;
-  background:linear-gradient(135deg,var(--brand),var(--brand2));
-  box-shadow:0 10px 28px rgba(42,125,225,.18);
-}
-.btn-primary:hover{ filter:brightness(1.06); }
-.btn-secondary{
-  color:var(--text); background:#101625; border:1px solid var(--stroke);
-}
-.btn-secondary:hover{ background:#141b2b; }
+  /* Ряды кнопок */
+  .btn-row{ display:flex; gap:12px; flex-wrap:wrap; }
+  .btn-row .btn{ flex:1 1 220px; }
 
-/* Ряды кнопок */
-.btn-row{ display:flex; gap:12px; flex-wrap:wrap; }
-.btn-row .btn{ flex:1 1 220px; }
+  /* Вопросы/ответы («пилюли») */
+  .q{ margin-top:18px; }
+  .q b{ display:block; margin-bottom:10px; font-size:17px; }
+  .pill{
+    width:100%; text-align:left;
+    font-size:16px; line-height:1.45;
+    padding:14px 16px; margin-top:8px;
+    border-radius:12px; border:1px solid var(--stroke);
+    background:#101625; color:var(--text); cursor:pointer;
+  }
+  .pill:hover{ background:#141b2b; }
+  .pill.selected{
+    background:rgba(29,184,170,.22);
+    border-color:var(--brand2);
+    outline:2px solid rgba(29,184,170,.5);
+  }
 
-/* Вопросы/ответы («пилюли») */
-.q{ margin-top:18px; }
-.q b{ display:block; margin-bottom:10px; font-size:17px; }
-.pill{
-  width:100%; text-align:left;
-  font-size:16px; line-height:1.45;
-  padding:14px 16px; margin-top:8px;
-  border-radius:12px; border:1px solid var(--stroke);
-  background:#101625; color:var(--text); cursor:pointer;
-}
-.pill:hover{ background:#141b2b; }
-.pill.selected{
-  background:rgba(29,184,170,.22);
-  border-color:var(--brand2);
-  outline:2px solid rgba(29,184,170,.5);
-}
+  /* Поля ввода */
+  input[type=text]{
+    width:100%; padding:12px 12px; border-radius:10px;
+    border:1px solid var(--stroke); background:#111620; color:var(--text);
+  }
+  input[type=text]::placeholder{ color:#7e8aa8; }
 
-/* Поля ввода */
-input[type=text]{
-  width:100%; padding:12px 12px; border-radius:10px;
-  border:1px solid var(--stroke); background:#111620; color:var(--text);
-}
-input[type=text]::placeholder{ color:#7e8aa8; }
+  /* Прогресс и сводка */
+  #auditProgress{ margin:6px 0 12px; font-size:14px; color:var(--text-dim); }
 
-/* Прогресс и сводка */
-#auditProgress{ margin:6px 0 12px; font-size:14px; color:var(--text-dim); }
+  .summary-row{ margin:8px 0; }
+  .summary-head{ display:flex; justify-content:space-between; gap:8px; }
+  .summary-bar{
+    height:8px; background:#101625; border:1px solid var(--stroke);
+    border-radius:999px; overflow:hidden;
+  }
+  .summary-fill{ height:100%; background:linear-gradient(90deg,var(--brand),var(--brand2)); }
 
-.summary-row{ margin:8px 0; }
-.summary-head{ display:flex; justify-content:space-between; gap:8px; }
-.summary-bar{
-  height:8px; background:#101625; border:1px solid var(--stroke);
-  border-radius:999px; overflow:hidden;
-}
-.summary-fill{ height:100%; background:linear-gradient(90deg,var(--brand),var(--brand2)); }
+  /* Результат */
+  #resultBox { margin-top:16px; }
+  .result-card{
+    background:#0f1623; border:1px solid #22314d; border-radius:16px; padding:16px;
+    box-shadow:0 12px 36px rgba(0,0,0,.35);
+  }
+  .result-title{ font-size:20px; font-weight:700; margin:0 0 10px; }
+  .result-score{ font-size:22px; font-weight:800; }
+  .result-hint{ margin-top:6px; color:var(--text-dim); }
+  #resultBox .cta-row{ display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
+  #resultBox .btn{ flex:1 1 220px; }
 
-/* Результат */
-#resultBox .cta-row{ display:flex; gap:12px; flex-wrap:wrap; }
-#resultBox .btn{ flex:1 1 220px; }
+  /* Модалка (центральное уведомление) */
+  .toast-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.45);
+    display:flex; align-items:center; justify-content:center; z-index:9999;
+  }
+  .toast-box{
+    background:var(--bg2); border:1px solid var(--stroke);
+    padding:20px 20px; border-radius:14px;
+    max-width:320px; width:calc(100vw - 48px); text-align:center; line-height:1.5;
+    box-shadow:0 12px 36px rgba(0,0,0,.35);
+  }
+  .toast-box .btn{ width:100%; box-sizing:border-box; margin-top:10px; }
 
-/* Модалка (центральное уведомление) */
-.toast-overlay{
-  position:fixed; inset:0; background:rgba(0,0,0,.45);
-  display:flex; align-items:center; justify-content:center; z-index:9999;
-}
-.toast-box{
-  background:var(--bg2); border:1px solid var(--stroke);
-  padding:20px 20px; border-radius:14px;
-  max-width:320px; width:calc(100vw - 48px); text-align:center; line-height:1.5;
-  box-shadow:0 12px 36px rgba(0,0,0,.35);
-}
-.toast-box .btn{ width:100%; box-sizing:border-box; margin-top:10px; }
+  /* Разделители */
+  .section + .section{ margin-top:16px; }
+  hr{ border:0; height:1px; background:var(--stroke); opacity:.5; margin:14px 0; }
+  </style>
 
-/* Мелкие улучшения */
-.section + .section{ margin-top:16px; }
-hr{ border:0; height:1px; background:var(--stroke); opacity:.5; margin:14px 0; }
-</style>
+  <!-- ВАЖНО: задай твой Google Apps Script EXEC -->
+  <script>
+    // ПОДСТАВЬ свой актуальный EXEC-хук:
+    window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
+  </script>
 </head>
-
 <body>
-<!-- === Старт === -->
-<div id="screen-start" class="app" style="display:block;">
-  <div class="card">
-    <h1>ЛЕКОМ · Интерактив</h1>
-    <div class="muted">Выберите, что хотите пройти</div>
+  <div class="app">
+    <!-- Стартовый экран -->
+    <div id="screen-start" class="card section">
+      <h1>ЛЕКОМ · Мини-апп</h1>
+      <div class="muted" style="margin-bottom:10px">Выберите, что хотите пройти:</div>
+      <div class="btn-row">
+        <button id="goAudit" class="btn btn-primary">Аудит печати</button>
+        <button id="goPoll"  class="btn btn-secondary">Выбор темы вебинара</button>
+      </div>
 
-    <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;">
-      <button id="goAudit" class="btn btn-primary">🧾 Пройти аудит печати</button>
-      <button id="goPoll" class="btn btn-secondary">🎓 Выбрать темы вебинара</button>
+      <hr>
+
+      <h3>Сводка голосования по темам</h3>
+      <div id="summaryContent" class="section">
+        <div class="muted">Загрузка…</div>
+      </div>
     </div>
 
-    <div id="summaryBox" class="card" style="margin-top:18px;">
-      <h3>📈 Итоги голосования</h3>
-      <div id="summaryContent" class="muted">Загружаем…</div>
-    </div>
-  </div>
-</div>
+    <!-- Аудит -->
+    <div id="screen-audit" class="card section" style="display:none">
+      <h1>Аудит печатной инфраструктуры</h1>
+      <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
 
-<!-- === Аудит === -->
-<div id="screen-audit" class="app" style="display:none;">
-  <button id="backStart1" class="btn btn-secondary" style="margin-bottom:10px;width:auto;">↩ Вернуться</button>
-  <div class="card">
-    <h2>Аудит печати</h2>
-    <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
-
-    <form id="auditForm" style="margin-top:10px;">
-      <!-- 1 -->
-      <div class="q" data-q="q1">
-        <b>1. Как вы оцениваете прозрачность учёта расходов на печать?</b>
-        <button type="button" class="pill" data-q="q1" data-score="1">Ведём точный и полный учёт всех расходов</button>
-        <button type="button" class="pill" data-q="q1">Учитываем только расходники</button>
-        <button type="button" class="pill" data-q="q1">Частичный учёт</button>
-        <button type="button" class="pill" data-q="q1">«На глаз»</button>
-      </div>
-      <!-- 2 -->
-      <div class="q" data-q="q2">
-        <b>2. Включены ли капитальные затраты (амортизация, обновление парка)?</b>
-        <button type="button" class="pill" data-q="q2" data-score="1">Да, считаем полную стоимость владения (TCO)</button>
-        <button type="button" class="pill" data-q="q2">Частично</button>
-        <button type="button" class="pill" data-q="q2">Нет, только текущие</button>
-        <button type="button" class="pill" data-q="q2">Не знаю</button>
-      </div>
-      <!-- 3 -->
-      <div class="q" data-q="q3">
-        <b>3. На чём основан бюджет обновления техники?</b>
-        <button type="button" class="pill" data-q="q3" data-score="1">Актуальные рыночные данные</button>
-        <button type="button" class="pill" data-q="q3">Цифры прошлых лет</button>
-        <button type="button" class="pill" data-q="q3">Оценка «на глаз»</button>
-        <button type="button" class="pill" data-q="q3">Бюджет не выделяется</button>
-      </div>
-      <!-- 4 -->
-      <div class="q" data-q="q4">
-        <b>4. Проверялись ли цены в последние 12 месяцев?</b>
-        <button type="button" class="pill" data-q="q4" data-score="1">Да, регулярно</button>
-        <button type="button" class="pill" data-q="q4">Раньше проверяли, сейчас нет</button>
-        <button type="button" class="pill" data-q="q4">Нет</button>
-        <button type="button" class="pill" data-q="q4">Не знаю</button>
-      </div>
-      <!-- 5 -->
-      <div class="q" data-q="q5">
-        <b>5. Учтены ли требования закупать оборудование из реестра?</b>
-        <button type="button" class="pill" data-q="q5" data-score="1">Да, учитываем полностью</button>
-        <button type="button" class="pill" data-q="q5">Частично</button>
-        <button type="button" class="pill" data-q="q5">Нет</button>
-        <button type="button" class="pill" data-q="q5">Не применимо</button>
-      </div>
-      <!-- 6 -->
-      <div class="q" data-q="q6">
-        <b>6. Готов ли бюджет к росту цен в 3–5 раз из-за регуляторных требований?</b>
-        <button type="button" class="pill" data-q="q6" data-score="1">Да, предусмотрен резерв</button>
-        <button type="button" class="pill" data-q="q6">Нет, станет проблемой</button>
-        <button type="button" class="pill" data-q="q6">Не анализировали</button>
-        <button type="button" class="pill" data-q="q6">Не знаю</button>
-      </div>
-      <!-- 7 -->
-      <div class="q" data-q="q7">
-        <b>7. Кто принимает решения по печати?</b>
-        <button type="button" class="pill" data-q="q7" data-score="1">IT-директор / руководитель департамента</button>
-        <button type="button" class="pill" data-q="q7">Системный администратор</button>
-        <button type="button" class="pill" data-q="q7">Закупочный отдел</button>
-        <button type="button" class="pill" data-q="q7">Несколько лиц без чёткой ответственности</button>
-      </div>
-      <!-- 8 -->
-      <div class="q" data-q="q8">
-        <b>8. На чём основаны решения по обслуживанию?</b>
-        <button type="button" class="pill" data-q="q8" data-score="1">На данных и метриках</button>
-        <button type="button" class="pill" data-q="q8">На личном опыте</button>
-        <button type="button" class="pill" data-q="q8">На рекомендациях поставщиков</button>
-        <button type="button" class="pill" data-q="q8">На попытке сэкономить «здесь и сейчас»</button>
-      </div>
-      <!-- 9 -->
-      <div class="q" data-q="q9">
-        <b>9. Используете ли совместимые картриджи?</b>
-        <button type="button" class="pill" data-q="q9" data-score="1">Нет, только оригинальные</button>
-        <button type="button" class="pill" data-q="q9">Да, массово</button>
-        <button type="button" class="pill" data-q="q9">Да, частично</button>
-        <button type="button" class="pill" data-q="q9">Не контролирую процесс</button>
-      </div>
-      <!-- 10 -->
-      <div class="q" data-q="q10">
-        <b>10. Каков уровень зрелости управления печатью?</b>
-        <button type="button" class="pill" data-q="q10" data-score="1">Стратегический — есть политика и метрики</button>
-        <button type="button" class="pill" data-q="q10">Тактический — решаем по мере задач</button>
-        <button type="button" class="pill" data-q="q10">Реактивный — действуем при сбоях</button>
-        <button type="button" class="pill" data-q="q10">Стихийный процесс, без системы</button>
-      </div>
-      <!-- 11 -->
-      <div class="q" data-q="q11">
-        <b>11. Насколько вы уверены в корректности бюджета печати?</b>
-        <button type="button" class="pill" data-q="q11" data-score="1">Полностью уверен</button>
-        <button type="button" class="pill" data-q="q11">Скорее уверен</button>
-        <button type="button" class="pill" data-q="q11">Есть сомнения</button>
-        <button type="button" class="pill" data-q="q11">Требуется пересмотр</button>
-      </div>
-
-      <button id="btnAuditResult" type="button" class="btn btn-primary" style="margin-top:20px;">Посмотреть результат</button>
-    </form>
-
-    <div id="resultBlock" class="card" style="margin-top:20px;">
-      <h3>Ваш результат</h3>
-      <div id="resultText" class="muted">После нажатия «Посмотреть результат» здесь появится сводка.</div>
-
-      <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
-        <button id="ctaExpert" class="btn btn-primary">💬 Обсудить с экспертом</button>
-        <button id="toggleLead" class="btn btn-secondary">✉️ Оставить контакты</button>
-      </div>
-
-      <div id="leadForm" style="display:none;margin-top:14px;">
-        <input id="leadName" type="text" placeholder="Ваше имя">
-        <input id="leadCompany" type="text" placeholder="Компания" style="margin-top:8px;">
-        <input id="leadPhone" type="text" placeholder="Телефон или email" style="margin-top:8px;">
-        <div class="muted" style="font-size:12px;margin-top:6px;">
-          Отправляя данные, вы соглашаетесь с
-          <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.
+      <form id="auditForm">
+        <!-- Q1 -->
+        <div class="q">
+          <b>1) Учитываете ли вы TCO (полную стоимость печати) при планировании бюджета?</b>
+          <div class="pill" data-q="q1" data-score="1">Да, считаем TCO регулярно и корректируем</div>
+          <div class="pill" data-q="q1" data-score="0">Частично/эпизодически</div>
+          <div class="pill" data-q="q1" data-score="0">Нет, смотрим только прямые расходы</div>
         </div>
-        <button id="sendLead" class="btn btn-primary" style="margin-top:8px;">🚀 Отправить контакты</button>
+        <!-- Q2 -->
+        <div class="q">
+          <b>2) Есть ли утверждённая политика печати (правила, роли, ограничения)?</b>
+          <div class="pill" data-q="q2" data-score="1">Да, действует и обновляется</div>
+          <div class="pill" data-q="q2" data-score="0">В разработке/неполная</div>
+          <div class="pill" data-q="q2" data-score="0">Нет</div>
+        </div>
+        <!-- Q3 -->
+        <div class="q">
+          <b>3) Контролируете ли вы доступ/аутентификацию к устройствам (PIN/карты/SSO)?</b>
+          <div class="pill" data-q="q3" data-score="1">Да, для всех МФУ/принтеров</div>
+          <div class="pill" data-q="q3" data-score="0">Только частично</div>
+          <div class="pill" data-q="q3" data-score="0">Нет</div>
+        </div>
+        <!-- Q4 -->
+        <div class="q">
+          <b>4) Используется ли безопасная печать (удержание/релиз задания пользователем)?</b>
+          <div class="pill" data-q="q4" data-score="1">Да, настроено повсеместно</div>
+          <div class="pill" data-q="q4" data-score="0">Только на критичных узлах</div>
+          <div class="pill" data-q="q4" data-score="0">Нет</div>
+        </div>
+        <!-- Q5 -->
+        <div class="q">
+          <b>5) Есть ли централизованный мониторинг парка (счётчики, расходники, инциденты)?</b>
+          <div class="pill" data-q="q5" data-score="1">Да, в единой системе/дашборде</div>
+          <div class="pill" data-q="q5" data-score="0">Частично/вручную</div>
+          <div class="pill" data-q="q5" data-score="0">Нет</div>
+        </div>
+        <!-- Q6 -->
+        <div class="q">
+          <b>6) Оптимизирован ли парк по типам/локациям (А3/А4, ЦП/дестрибуция, удалёнка)?</b>
+          <div class="pill" data-q="q6" data-score="1">Да, есть схема и ревью</div>
+          <div class="pill" data-q="q6" data-score="0">Частично</div>
+          <div class="pill" data-q="q6" data-score="0">Нет</div>
+        </div>
+        <!-- Q7 -->
+        <div class="q">
+          <b>7) Контролируете ли качество расходников (OEM/проверенный аналог, брак/возвраты)?</b>
+          <div class="pill" data-q="q7" data-score="1">Да, с KPI по браку/срокам</div>
+          <div class="pill" data-q="q7" data-score="0">Есть базовые проверки</div>
+          <div class="pill" data-q="q7" data-score="0">Нет, «как получится»</div>
+        </div>
+        <!-- Q8 -->
+        <div class="q">
+          <b>8) Закрыты ли вопросы ИБ/ПДн (журналы, доступ, уничтожение носителей)?</b>
+          <div class="pill" data-q="q8" data-score="1">Да, регламенты+контроль</div>
+          <div class="pill" data-q="q8" data-score="0">Частично</div>
+          <div class="pill" data-q="q8" data-score="0">Нет</div>
+        </div>
+        <!-- Q9 -->
+        <div class="q">
+          <b>9) Как решены сервис и SLA (время реакции/восстановления, запасы ЗИП/тонера)?</b>
+          <div class="pill" data-q="q9" data-score="1">Есть SLA и фактический контроль</div>
+          <div class="pill" data-q="q9" data-score="0">Частично</div>
+          <div class="pill" data-q="q9" data-score="0">Нет</div>
+        </div>
+        <!-- Q10 -->
+        <div class="q">
+          <b>10) Анализируете ли вы объёмы и аномалии печати по подразделениям/пользователям?</b>
+          <div class="pill" data-q="q10" data-score="1">Да, в отчётах/дашбордах</div>
+          <div class="pill" data-q="q10" data-score="0">Иногда/по запросу</div>
+          <div class="pill" data-q="q10" data-score="0">Нет</div>
+        </div>
+        <!-- Q11 -->
+        <div class="q">
+          <b>11) Есть ли план развития (импортозамещение, MPS, унификация, бюджет-2026)?</b>
+          <div class="pill" data-q="q11" data-score="1">Да, утверждённый план</div>
+          <div class="pill" data-q="q11" data-score="0">Черновик/в обсуждении</div>
+          <div class="pill" data-q="q11" data-score="0">Нет</div>
+        </div>
+      </form>
+
+      <div class="section">
+        <button id="btnAuditResult" class="btn btn-primary">
+          <span>Посмотреть результат</span>
+          <span class="btn-sub" id="btnAuditSub">(ответов 0 из 11)</span>
+        </button>
+      </div>
+
+      <div id="resultBox" class="section" style="display:block">
+        <div class="result-card" id="resultCard">
+          <div class="result-title">Ваш результат</div>
+          <div class="result-score" id="resultText">Ответьте на вопросы и нажмите кнопку выше.</div>
+          <div class="result-hint">Это быстрая оценка. Для детального аудита — оставьте контакт или обсудите с экспертом.</div>
+          <div class="cta-row">
+            <button id="ctaExpert" class="btn btn-secondary">💬 Обсудить с экспертом</button>
+            <button id="toggleLead" class="btn btn-secondary">📩 Оставить контакты</button>
+          </div>
+          <div id="leadForm" style="display:none; margin-top:10px">
+            <input id="leadName"    type="text" placeholder="Ваше имя" style="margin-top:8px" />
+            <input id="leadCompany" type="text" placeholder="Компания" style="margin-top:8px" />
+            <input id="leadPhone"   type="text" placeholder="Телефон или email" style="margin-top:8px" />
+            <button id="sendLead" class="btn btn-primary" style="margin-top:10px">Отправить</button>
+            <div class="muted" style="margin-top:8px">Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <button id="backStart1" class="btn btn-secondary">Вернуться</button>
+      </div>
+    </div>
+
+    <!-- Голосование по вебинару -->
+    <div id="screen-poll" class="card section" style="display:none">
+      <h1>Выбор темы вебинара</h1>
+      <form id="pollForm" class="section">
+        <div class="pill" data-topic="Обзор рынка и тренды 2025">Обзор рынка и тренды 2025</div>
+        <div class="pill" data-topic="Закупки по 44-ФЗ / 223-ФЗ">Закупки по 44-ФЗ / 223-ФЗ</div>
+        <div class="pill" data-topic="Импортозамещение (техника, софт, расходники)">Импортозамещение (техника, софт, расходники)</div>
+        <div class="pill" data-topic="Рынок картриджей — есть ли жизнь после OEM?">Рынок картриджей — есть ли жизнь после OEM?</div>
+        <div class="q" style="margin-top:14px">
+          <b>Другая тема</b>
+          <input id="pollOther" type="text" placeholder="Напишите свою тему" />
+        </div>
+      </form>
+      <div class="section">
+        <button id="sendPoll" class="btn btn-primary">Отправить выбор</button>
+      </div>
+
+      <div class="section">
+        <button id="backStart2" class="btn btn-secondary">Вернуться</button>
       </div>
     </div>
   </div>
-</div>
 
-<!-- === Вебинары === -->
-<div id="screen-poll" class="app" style="display:none;">
-  <button id="backStart2" class="btn btn-secondary" style="margin-bottom:10px;width:auto;">↩ Вернуться</button>
-  <div class="card">
-    <h2>Темы ближайших вебинаров</h2>
-    <div class="muted">Можно выбрать несколько тем</div>
-
-    <div id="pollForm" style="margin-top:12px;">
-      <button type="button" class="pill" data-topic="Обзор рынка и тренды 2025">Обзор рынка и тренды 2025</button>
-      <button type="button" class="pill" data-topic="Импортозамещение (техника, софт, расходники)">Импортозамещение (техника, софт, расходники)</button>
-      <button type="button" class="pill" data-topic="Закупки по 44-ФЗ / 223-ФЗ">Закупки по 44-ФЗ / 223-ФЗ</button>
-      <button type="button" class="pill" data-topic="Рынок картриджей — есть ли жизнь после OEM?">Рынок картриджей — есть ли жизнь после OEM?</button>
-      <button type="button" class="pill" data-topic="Другая тема">Другая тема (указать в комментарии)</button>
-    </div>
-
-    <div style="margin-top:10px;">
-      <input id="pollOther" type="text" placeholder="Если «Другая тема», укажите название">
-    </div>
-
-    <button id="sendPoll" class="btn btn-primary" style="margin-top:14px;">Отправить выбор</button>
-  </div>
-</div>
-
-
-<script>
-  /* АКТУАЛЬНЫЙ HOOK */
-window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
-</script>
-<script src="app.js"></script>
+  <script src="app.js?v=2025-10-29-7"></script>
 </body>
 </html>
