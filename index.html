@@ -5,15 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ЛЕКОМ · Мини-апп</title>
 
+  <!-- 0) РАННЯЯ УСТАНОВКА ТЕМЫ (без мигания) -->
+  <script>
+    (function(){
+      const saved = localStorage.getItem('theme');
+      const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      const theme = saved || (prefersLight ? 'light' : 'dark');
+      if (theme === 'light') document.documentElement.classList.add('theme-light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+
   <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
+  /* === ТЁМНАЯ ТЕМА ПО УМОЛЧАНИЮ === */
   :root{
     --bg:#0e1015; --bg2:#171b25; --stroke:#293044;
     --text:#eaf0fa; --text-dim:#96a2c2;
     --brand:#2a7de1; --brand2:#1db8aa;
     --radius:16px;
+    --pill:#101625; --pill-hover:#141b2b; --pill-selected:rgba(29,184,170,.22); --pill-outline:rgba(29,184,170,.5);
+    --shadow:0 10px 30px rgba(0,0,0,.25);
+    --result-bg:#0f1623; --result-stroke:#22314d; --bar-bg:#101625;
   }
+  /* === СВЕТЛАЯ ТЕМА (перекрытия) === */
+  html.theme-light{
+    --bg:#f6f8fb; --bg2:#ffffff; --stroke:#e2e8f0;
+    --text:#0f172a; --text-dim:#4b5563;
+    --brand:#2a7de1; --brand2:#10b3a3;
+    --pill:#ffffff; --pill-hover:#f3f7fb; --pill-selected:rgba(16,179,163,.14); --pill-outline:rgba(16,179,163,.45);
+    --shadow:0 8px 24px rgba(15,23,42,.08);
+    --result-bg:#ffffff; --result-stroke:#d7e0ef; --bar-bg:#edf2f7;
+  }
+
   html,body{
     margin:0; padding:0; background:var(--bg); color:var(--text);
     font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;
@@ -21,9 +46,22 @@
   }
   body,.app,.card{overflow-x:hidden;}
   .app{max-width:720px;margin:0 auto;padding:20px 16px 28px;box-sizing:border-box;}
+
+  /* ШАПКА */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;
+  }
+  .topbar h1{font-size:26px;margin:0;}
+  .theme-toggle{
+    display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;
+    background:var(--bg2);border:1px solid var(--stroke);cursor:pointer;user-select:none;
+  }
+  .theme-toggle svg{width:18px;height:18px}
+  .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
+
   .card{
     background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);
-    padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25);box-sizing:border-box;width:100%;
+    padding:16px;box-shadow:var(--shadow);box-sizing:border-box;width:100%;
   }
   h1{font-size:26px;margin:0 0 12px;} h2{font-size:22px;margin:0 0 10px;} h3{font-size:18px;margin:0 0 8px;}
   .muted{color:var(--text-dim);}
@@ -42,9 +80,9 @@
   .btn + .btn{margin-top:10px;}
   .btn-primary{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 10px 28px rgba(42,125,225,.18);}
   .btn-primary:hover{filter:brightness(1.06);}
-  .btn-secondary{color:var(--text);background:#101625;border:1px solid var(--stroke);}
-  .btn-secondary:hover{background:#141b2b;}
-  .btn-sub{display:block;font-weight:600;font-size:13px;color:#ffffff;opacity:.9;margin-top:2px;}
+  .btn-secondary{color:var(--text);background:var(--bg2);border:1px solid var(--stroke);}
+  .btn-secondary:hover{filter:brightness(1.03);}
+  .btn-sub{display:block;font-weight:600;font-size:13px;opacity:.9;margin-top:2px;color:inherit;}
 
   .btn-row{display:flex;gap:12px;flex-wrap:wrap;}
   .btn-row .btn{flex:1 1 220px;}
@@ -54,26 +92,26 @@
   .pill{
     display:block;width:100%;text-align:left;font-size:16px;line-height:1.45;
     padding:14px 16px;margin-top:8px;border-radius:12px;border:1px solid var(--stroke);
-    background:#101625;color:var(--text);cursor:pointer;box-sizing:border-box;
+    background:var(--pill);color:var(--text);cursor:pointer;box-sizing:border-box;
     word-break:break-word;overflow-wrap:anywhere;
   }
-  .pill:hover{background:#141b2b;}
-  .pill.selected{background:rgba(29,184,170,.22);border-color:var(--brand2);outline:2px solid rgba(29,184,170,.5);}
+  .pill:hover{background:var(--pill-hover);}
+  .pill.selected{background:var(--pill-selected);border-color:var(--brand2);outline:2px solid var(--pill-outline);}
 
-  input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);background:#111620;color:var(--text);box-sizing:border-box;}
-  input[type=text]::placeholder{color:#7e8aa8;}
+  input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);background:var(--bg2);color:var(--text);box-sizing:border-box;}
+  input[type=text]::placeholder{color:var(--text-dim);}
 
   #auditProgress{margin:6px 0 12px;font-size:14px;color:var(--text-dim);}
 
   .summary-row{margin:8px 0;}
   .summary-head{display:flex;justify-content:space-between;gap:8px;}
-  .summary-bar{height:8px;background:#101625;border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
+  .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
   .summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
 
   #resultBox{margin-top:16px;}
   .result-card{
-    background:#0f1623;border:1px solid #22314d;border-radius:16px;padding:16px;
-    box-shadow:0 12px 36px rgba(0,0,0,.35);
+    background:var(--result-bg);border:1px solid var(--result-stroke);border-radius:16px;padding:16px;
+    box-shadow:var(--shadow);
   }
   .result-score{font-size:22px;font-weight:800;text-align:center;margin-bottom:6px;}
   .result-hint{margin-top:6px;color:var(--text-dim);text-align:center;}
@@ -83,12 +121,12 @@
   .toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;}
   .toast-box{
     background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;
-    max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:0 12px 36px rgba(0,0,0,.35);
+    max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:var(--shadow);
   }
   .toast-box .btn{width:100%;box-sizing:border-box;margin-top:10px;}
 
   .section + .section{margin-top:16px;}
-  hr{border:0;height:1px;background:var(--stroke);opacity:.5;margin:14px 0;}
+  hr{border:0;height:1px;background:var(--stroke);opacity:.6;margin:14px 0;}
 
   /* футер */
   .footer{
@@ -111,9 +149,19 @@
 </head>
 <body>
   <div class="app">
+
+    <!-- Топбар с переключателем темы -->
+    <div class="topbar">
+      <h1>ЛЕКОМ · Мини-апп</h1>
+      <button id="themeToggle" class="theme-toggle" type="button" aria-label="Сменить тему">
+        <svg id="iconMoon" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg id="iconSun" viewBox="0 0 24 24" fill="none" style="display:none"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/><path d="M12 1v3m0 16v3M4.22 4.22 6.34 6.34m11.32 11.32 2.12 2.12M1 12h3m16 0h3M4.22 19.78 6.34 17.66m11.32-11.32 2.12-2.12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="theme-label" id="themeLabel">Тёмная</span>
+      </button>
+    </div>
+
     <!-- стартовый экран -->
     <div id="screen-start" class="card section">
-      <h1>ЛЕКОМ · Мини-апп</h1>
       <div class="btn-row">
         <button id="goAudit" class="btn btn-primary">
           Пройти аудит печати
@@ -134,12 +182,10 @@
           <a href="https://lekomIT.t.me" target="_blank" title="Telegram">
             <svg viewBox="0 0 24 24" fill="none"><path fill="var(--brand2)" d="M21.6 5.6a1 1 0 0 0-1.1-.1L3.5 12.9a.9.9 0 0 0 .1 1.7l4.4 1.4 1.7 5a1 1 0 0 0 1.7.4l2.3-2.3 4.5 3.2a1 1 0 0 0 1.6-.6l2.8-14.5a1 1 0 0 0-.4-1zM9.6 15l8.6-7-10.6 6 2 1z"/></svg>
           </a>
-          <!-- YouTube -->
+          <!-- YouTube (оригинальная форма, в цвете приложения) -->
           <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
             <svg viewBox="0 0 24 24">
-              <!-- YouTube -->
               <path class="yt-shape" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
-              <!-- play -->
               <path class="yt-play" d="M10 15V9l5 3-5 3z"/>
             </svg>
           </a>
@@ -148,7 +194,7 @@
       </div>
     </div>
 
-    <!-- аудит -->
+    <!-- Аудит -->
     <div id="screen-audit" class="card section" style="display:none">
       <h1>
         Аудит печатной инфраструктуры
@@ -159,7 +205,7 @@
       <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
 
       <form id="auditForm">
-        <!-- Блок 1. Иллюзия контроля -->
+        <!-- Блоки и вопросы — как в твоей утверждённой версии (оставлены без изменений) -->
         <h3 style="margin-top:12px">Блок 1. Иллюзия контроля</h3>
         <div class="q">
           <b>1. Как вы оцениваете прозрачность учета расходов на печать в вашей организации?</b>
@@ -176,7 +222,6 @@
           <div class="pill" data-q="q2" data-score="0">Не знаю / этим занимается другой отдел.</div>
         </div>
 
-        <!-- Блок 2. Ловушка старых цен -->
         <h3 style="margin-top:12px">Блок 2. Ловушка старых цен</h3>
         <div class="q">
           <b>3. При планировании бюджета на обновление техники вы опираетесь на:</b>
@@ -193,7 +238,6 @@
           <div class="pill" data-q="q4" data-score="0">Не знаю.</div>
         </div>
 
-        <!-- Блок 3. “Патриотическая” наценка -->
         <h3 style="margin-top:12px">Блок 3. “Патриотическая” наценка</h3>
         <div class="q">
           <b>5. Учтено ли в вашем бюджете требование закупать оборудование из реестра отечественного ПО (ПП №185, ПП №878 и др.)?</b>
@@ -210,7 +254,6 @@
           <div class="pill" data-q="q6" data-score="0">Не знаю.</div>
         </div>
 
-        <!-- Блок 4. Опасность делегирования -->
         <h3 style="margin-top:12px">Блок 4. Опасность делегирования</h3>
         <div class="q">
           <b>7. Кто в вашей компании фактически принимает решения по закупке и обслуживанию печатной техники?</b>
@@ -234,7 +277,6 @@
           <div class="pill" data-q="q9" data-score="0">Не знаю / не контролирую этот процесс.</div>
         </div>
 
-        <!-- Блок 5. Итоговая самооценка -->
         <h3 style="margin-top:12px">Блок 5. Итоговая самооценка</h3>
         <div class="q">
           <b>10. Как вы оцениваете уровень зрелости управления печатью в вашей организации?</b>
@@ -285,7 +327,7 @@
       </div>
     </div>
 
-    <!-- экран вебинара без изменений -->
+    <!-- экран вебинара -->
     <div id="screen-poll" class="card section" style="display:none">
       <h1>Выбор темы вебинара</h1>
       <form id="pollForm" class="section">
@@ -311,6 +353,34 @@
     </div>
   </div>
 
-  <script src="app.js?v=2025-10-29-13"></script>
+  <!-- 1) Обработчик переключения темы (без правок app.js) -->
+  <script>
+    (function(){
+      const btn = document.getElementById('themeToggle');
+      const iconMoon = document.getElementById('iconMoon');
+      const iconSun  = document.getElementById('iconSun');
+      const label = document.getElementById('themeLabel');
+
+      function apply(theme){
+        const isLight = theme === 'light';
+        document.documentElement.classList.toggle('theme-light', isLight);
+        document.documentElement.setAttribute('data-theme', theme);
+        iconMoon.style.display = isLight ? 'none' : '';
+        iconSun.style.display  = isLight ? '' : 'none';
+        label.textContent = isLight ? 'Светлая' : 'Тёмная';
+      }
+      btn?.addEventListener('click', ()=>{
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('theme', next);
+        apply(next);
+      });
+      // синхронизируем состояние кнопки
+      apply(document.documentElement.getAttribute('data-theme') || 'dark');
+    })();
+  </script>
+
+  <!-- твой основной функционал -->
+  <script src="app.js?v=light-toggle-1"></script>
 </body>
 </html>
