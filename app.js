@@ -22,13 +22,13 @@ function show(id) {
 
 // ================== Отправка в хук (надёжная) ==================
 async function sendToHook(payload) {
-  // Вклеим initData из Telegram Mini App, если доступно
+  // initData из Telegram Mini App, если доступно
   const init = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) || null;
   if (init && !payload.initData) payload.initData = init;
 
-  // 1) Пытаемся POST
+  // 1) POST
   try {
-    const rp = await fetch(HOOK, {
+    const rp = await fetch(HOOK + (HOOK.includes('?') ? '&' : '?') + '_ts=' + Date.now(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -37,16 +37,17 @@ async function sendToHook(payload) {
     });
     const txt = await rp.text();
     if (rp.ok && (/-(ok|OK)$/.test(txt) || /^(result|lead|poll)-ok$/i.test(txt))) return true;
-  } catch (_) { /* молча */ }
+  } catch (_) {}
 
-  // 2) Fallback: GET ?q=...
+  // 2) Fallback: GET ?q=
   try {
     const u = new URL(HOOK);
     u.searchParams.set('q', JSON.stringify(payload));
+    u.searchParams.set('_ts', Date.now());
     const rg = await fetch(u.toString(), { method:'GET' });
     const t2 = await rg.text();
     if (rg.ok && (/-(ok|OK)$/.test(t2) || /^(result|lead|poll)-ok$/i.test(t2))) return true;
-  } catch (_) { /* молча */ }
+  } catch (_) {}
 
   return false;
 }
@@ -62,28 +63,30 @@ async function getSummaryRobust() {
     return null;
   };
 
-  // ?summary=webinar
+  // GET ?summary=webinar
   try {
     const u = new URL(HOOK);
     u.searchParams.set('summary','webinar');
+    u.searchParams.set('_', Date.now());
     const r = await fetch(u.toString());
     const t = await r.text();
     const d = tryParse(t);
     if (Array.isArray(d)) return d;
   } catch(_){}
 
-  // ?summary=webinar&format=json
+  // GET ?summary=webinar&format=json
   try {
     const u = new URL(HOOK);
     u.searchParams.set('summary','webinar');
     u.searchParams.set('format','json');
+    u.searchParams.set('_', Date.now());
     const r = await fetch(u.toString());
     const t = await r.text();
     const d = tryParse(t);
     if (Array.isArray(d)) return d;
   } catch(_){}
 
-  // JSONP
+  // JSONP (?callback=…)
   try {
     const cb = '__LEKOM_SUMMARY_CB_' + Math.random().toString(36).slice(2);
     const data = await new Promise((resolve,reject)=>{
@@ -92,10 +95,11 @@ async function getSummaryRobust() {
       const u = new URL(HOOK);
       u.searchParams.set('summary','webinar');
       u.searchParams.set('callback',cb);
+      u.searchParams.set('_', Date.now());
       s.src = u.toString();
       s.onerror = () => reject(new Error('jsonp-error'));
       document.head.appendChild(s);
-      setTimeout(()=>reject(new Error('jsonp-timeout')),5000);
+      setTimeout(()=>reject(new Error('jsonp-timeout')),6000);
     });
     if (Array.isArray(data)) return data;
   } catch(_){}
@@ -106,7 +110,11 @@ async function getSummaryRobust() {
 function renderSummary(data) {
   const box = document.getElementById('summaryContent');
   if (!box) return;
-  if (!data || !data.length) { box.textContent = 'Нет данных.'; return; }
+
+  if (!data || !data.length) {
+    box.innerHTML = '<div class="muted">Нет данных.</div>';
+    return;
+  }
 
   box.innerHTML = '';
   const tot = data.reduce((a,x)=>a+(Number(x.count)||0),0);
@@ -126,7 +134,7 @@ function renderSummary(data) {
   });
 }
 
-// быстрый placeholder + ретраи
+// Placeholder + ретраи + периодическое обновление
 try {
   renderSummary([
     {label:'Обзор рынка и тренды 2025', count:0},
@@ -134,22 +142,27 @@ try {
     {label:'Закупки 44-ФЗ/223-ФЗ', count:0},
     {label:'Рынок картриджей', count:0},
   ]);
-  (async function refreshSummary(){
-    const s1 = await getSummaryRobust(); if (s1 && s1.length) return renderSummary(s1);
+
+  (async function bootSummary(){
+    const s1 = await getSummaryRobust(); if (s1 && s1.length) renderSummary(s1);
     setTimeout(async()=>{ const s2=await getSummaryRobust(); if(s2 && s2.length) renderSummary(s2); }, 2000);
-    setTimeout(async()=>{ const s3=await getSummaryRobust(); if(s3 && s3.length) renderSummary(s3); }, 8000);
+    setTimeout(async()=>{ const s3=await getSummaryRobust(); if(s3 && s3.length) renderSummary(s3); }, 7000);
   })();
-} catch(_) { /* не блокируем UI */ }
+
+  // авто-обновление каждые 20 секунд
+  setInterval(async ()=>{
+    const s = await getSummaryRobust();
+    if (s && s.length) renderSummary(s);
+  }, 20000);
+} catch(_) {}
 
 // ================== Аудит ==================
 const auditForm   = document.getElementById('auditForm');
 const prog        = document.getElementById('auditProgress');
 const btnResult   = document.getElementById('btnAuditResult');
 
-// инициализируем счётчик на кнопке
 updateAuditCounters();
 
-// выбор ответов-«пилюль»
 auditForm.addEventListener('click', (e)=>{
   const b = e.target.closest('.pill'); if(!b) return;
   const q = b.dataset.q;
@@ -158,14 +171,15 @@ auditForm.addEventListener('click', (e)=>{
   updateAuditCounters();
 });
 
-// обновление счётчиков: прогресс и текст на кнопке
 function updateAuditCounters() {
-  const answered = new Set([...auditForm.querySelectorAll('.pill.selected')].map(x=>x.dataset.q)).size;
+  const answered = new Set(
+    [...auditForm.querySelectorAll('.pill.selected')].map(x => x.dataset.q)
+  ).size;
+
   if (prog) prog.textContent = `Ответы: ${answered} / ${TOTAL_Q}`;
-  if (btnResult) btnResult.textContent = `Посмотреть результат (${answered} / ${TOTAL_Q})`;
+  if (btnResult) btnResult.textContent = `Посмотреть результат (ответов ${answered} из ${TOTAL_Q})`;
 }
 
-// подсчёт результата
 function calcAudit() {
   let score = 0;
   const answers = {};
@@ -181,12 +195,12 @@ function calcAudit() {
   return { score, verdict, advice, answers };
 }
 
-// показать результат (тихо отправляем, без алертов)
 btnResult.onclick = async ()=>{
   const res = calcAudit();
   document.getElementById('resultText').innerHTML =
     `Итоговый счёт: <b>${res.score}/11</b><br>Вердикт: <b>${res.verdict}</b><br><span class="muted">${res.advice}</span>`;
 
+  // тихая отправка (без всплывашек)
   await sendToHook({
     type: 'result',
     score: res.score,
@@ -194,7 +208,8 @@ btnResult.onclick = async ()=>{
     advice: res.advice,
     answers: res.answers
   });
-  window.__lastAuditResult = res; // для «Обсудить с экспертом» и лидов
+
+  window.__lastAuditResult = res;
 };
 
 // ================== Лиды ==================
@@ -252,7 +267,11 @@ pollForm.addEventListener('click', (e)=>{
 });
 
 document.getElementById('sendPoll').onclick = async () => {
-  if (SENDING_POLL) return; // защита от двойного тапа
+  // запускаем модалку только когда на экране голосования
+  const pollScreen = document.getElementById('screen-poll');
+  if (!pollScreen || pollScreen.style.display !== 'block') return;
+
+  if (SENDING_POLL) return;
   SENDING_POLL = true;
   const btn = document.getElementById('sendPoll');
   btn.disabled = true;
@@ -266,7 +285,6 @@ document.getElementById('sendPoll').onclick = async () => {
     return;
   }
 
-  // убираем случайные дубли в выбранных темах
   const uniq = [...new Set(selected)];
   const batch = uniq.map(t => ({ type:'poll', poll:'webinar_topic', topic:t, other:'' }));
   if (other) batch.push({ type:'poll', poll:'webinar_topic', topic:'Другая тема', other });
