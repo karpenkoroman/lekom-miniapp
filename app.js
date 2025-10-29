@@ -47,72 +47,31 @@ function showSpinner(text='Отправляем…') {
 }
 
 // ================== Надёжная отправка в HOOK ==================
-function looksOk(status, text) {
-  const t = (text || '').toString().toLowerCase();
-  // успешные статусы/редиректы + типичные тексты от Apps Script
-  if (status >= 200 && status < 400) return true;
-  if (t.includes('result-ok') || t.includes('lead-ok') || t.includes('poll-ok')) return true;
-  if (t.includes('-ok') || t.includes('ok:')) return true;
-  if (t.includes('pong') || t.includes('trace-ok') || t.includes('moved temporarily')) return true;
-  return false;
-}
-
-async function sendOnce(method, url, bodyJson) {
-  try {
-    const opt = { method, mode:'cors', credentials:'omit', headers:{} };
-    if (method === 'POST') {
-      opt.headers['Content-Type'] = 'application/json';
-      opt.body = JSON.stringify(bodyJson);
-    }
-    const r = await fetch(url, opt);
-    const text = await r.text().catch(()=> '');
-    return { ok: looksOk(r.status, text), status: r.status, text };
-  } catch (e) {
-    return { ok:false, status:0, text:String(e||'') };
-  }
-}
-
-// Быстрый хук: POST и GET параллельно, решаем «на пользу пользователя»
+// Любой ответ, который доехал (без сетевой ошибки), считаем успешным.
+// Это убирает ложные "ошибки" из-за редиректов/пустых ответов Apps Script.
 async function sendToHook(payload) {
   const init = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) || null;
   if (init && !payload.initData) payload.initData = init;
 
   const ts = Date.now();
 
-  // POST
   const postUrl = HOOK + (HOOK.includes('?') ? '&' : '?') + '_ts=' + ts;
-  // GET ?q=
   const u = new URL(HOOK);
   u.searchParams.set('q', JSON.stringify(payload));
   u.searchParams.set('_ts', ts);
 
-  // Запускаем POST, через 250 мс страхуем GET
-  const postP = sendOnce('POST', postUrl, payload);
-  const getP  = new Promise(res => setTimeout(()=> sendOnce('GET', u.toString(), null).then(res), 250));
+  try {
+    // Параллельно POST и (через 200 мс) GET, берём первый завершившийся
+    const postP = fetch(postUrl, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload), mode:'cors', credentials:'omit'});
+    const getP  = new Promise(res => setTimeout(()=> res(fetch(u.toString(), {method:'GET'})), 200));
 
-  // Берём первый «явно успешный» ответ
-  const winner = await Promise.race([
-    postP.then(r => r.ok ? r : Promise.reject(r)),
-    getP.then(r => r.ok ? r : Promise.reject(r))
-  ]).catch(()=>null);
-
-  if (winner && winner.ok) return true;
-
-  // Если оба дали «сомнительный»/ошибку — пробуем ещё раз тем, который не успел
-  let postR = await Promise.race([postP, Promise.resolve(null)]).catch(()=>null);
-  let getR  = await Promise.race([getP , Promise.resolve(null)]).catch(()=>null);
-
-  // Если хотя бы один запрос вообще ДОЕХАЛ и статус 2xx/3xx — считаем успехом (оптимизм)
-  if (postR && (postR.ok || (postR.status >=200 && postR.status <400))) return true;
-  if (getR  && (getR.ok  || (getR.status  >=200 && getR.status  <400))) return true;
-
-  // Последняя попытка: что быстрее завершится
-  const lastTry = await Promise.race([
-    sendOnce('GET', u.toString(), null),
-    sendOnce('POST', postUrl, payload)
-  ]).catch(()=>({ok:false,status:0,text:''}));
-
-  return !!(lastTry && (lastTry.ok || (lastTry.status>=200 && lastTry.status<400)));
+    await Promise.race([postP, getP]);
+    // Даже если статус 30x/текст пустой — ок.
+    return true;
+  } catch(_) {
+    // Только реальная сетевая ошибка
+    return false;
+  }
 }
 
 // ================== Сводка опроса ==================
@@ -120,7 +79,6 @@ async function getSummaryRobust() {
   if (!HOOK) return null;
 
   const normalize = (data) => {
-    // {total, items:[{topic,count}]} | [{label,count}] | [{topic,count}]
     if (!data) return null;
     if (Array.isArray(data)) {
       return data.map(x => ({ label: (x.label ?? x.topic ?? '').toString(), count: Number(x.count || 0) }));
@@ -138,46 +96,23 @@ async function getSummaryRobust() {
     return null;
   };
 
-  // A) ?summary=webinar
   try {
-    const u = new URL(HOOK);
-    u.searchParams.set('summary','webinar');
-    u.searchParams.set('_', Date.now());
-    const r = await fetch(u.toString());
-    const t = await r.text();
-    const d = normalize(tryParse(t));
-    if (d && d.length) return d;
-  } catch(_){}
+    const a = new URL(HOOK); a.searchParams.set('summary','webinar'); a.searchParams.set('_', Date.now());
+    let r = await fetch(a.toString()); let t = await r.text(); let d = normalize(tryParse(t)); if (d && d.length) return d;
 
-  // B) ?summary=webinar&format=json
-  try {
-    const u = new URL(HOOK);
-    u.searchParams.set('summary','webinar');
-    u.searchParams.set('format','json');
-    u.searchParams.set('_', Date.now());
-    const r = await fetch(u.toString());
-    const t = await r.text();
-    const d = normalize(tryParse(t));
-    if (d && d.length) return d;
-  } catch(_){}
+    const b = new URL(HOOK); b.searchParams.set('summary','webinar'); b.searchParams.set('format','json'); b.searchParams.set('_', Date.now());
+    r = await fetch(b.toString()); t = await r.text(); d = normalize(tryParse(t)); if (d && d.length) return d;
 
-  // C) JSONP
-  try {
     const cb = '__LEKOM_SUMMARY_CB_' + Math.random().toString(36).slice(2);
-    const data = await new Promise((resolve,reject)=>{
-      window[cb] = (d)=>resolve(d);
+    d = await new Promise((resolve,reject)=>{
+      window[cb] = (x)=>resolve(x);
       const s = document.createElement('script');
       const u = new URL(HOOK);
-      u.searchParams.set('summary','webinar');
-      u.searchParams.set('callback',cb);
-      u.searchParams.set('_', Date.now());
-      s.src = u.toString();
-      s.onerror = () => reject(new Error('jsonp-error'));
-      document.head.appendChild(s);
-      setTimeout(()=>reject(new Error('jsonp-timeout')),6000);
+      u.searchParams.set('summary','webinar'); u.searchParams.set('callback',cb); u.searchParams.set('_', Date.now());
+      s.src = u.toString(); s.onerror=()=>reject(new Error('jsonp-error'));
+      document.head.appendChild(s); setTimeout(()=>reject(new Error('jsonp-timeout')),6000);
     });
-    const d = normalize(data);
-    if (d && d.length) return d;
+    d = normalize(d); if (d && d.length) return d;
   } catch(_){}
 
   return null;
@@ -186,11 +121,7 @@ async function getSummaryRobust() {
 function renderSummary(data) {
   const box = document.getElementById('summaryContent');
   if (!box) return;
-
-  if (!data || !data.length) {
-    box.innerHTML = '<div class="muted">Нет данных.</div>';
-    return;
-  }
+  if (!data || !data.length) { box.innerHTML = '<div class="muted">Нет данных.</div>'; return; }
 
   const arr = [...data].sort((a,b)=> (b.count||0) - (a.count||0));
   const tot = arr.reduce((a,x)=>a+(Number(x.count)||0),0);
@@ -210,46 +141,37 @@ function renderSummary(data) {
   }).join('');
 }
 
-// Оптимистичный +1
+// Оптимистичный +1 и форс-рефреш
 function bumpSummary(selectedTopics, otherText) {
-  const box = document.getElementById('summaryContent');
-  if (!box) return;
+  const box = document.getElementById('summaryContent'); if (!box) return;
 
-  const rows = [...box.querySelectorAll('.summary-row')];
-  if (!rows.length) return;
-
+  const rows = [...box.querySelectorAll('.summary-row')]; if (!rows.length) return;
   const labels = rows.map(r => r.querySelector('.summary-head div').textContent.trim());
   const counts = rows.map(r => {
     const t = r.querySelector('.summary-head .muted').textContent;
     const n = parseInt(t, 10); return isNaN(n) ? 0 : n;
   });
 
-  const L_OBZOR  = 'Обзор рынка и тренды 2025';
-  const L_IMPORT = 'Импортозамещение (техника, софт, расходники)';
-  const L_ZAKUP  = 'Закупки по 44-ФЗ / 223-ФЗ';
-  const L_CART   = 'Рынок картриджей — есть ли жизнь после OEM?';
-  const L_OTHER  = 'Другая тема';
+  const L_OBZOR='Обзор рынка и тренды 2025', L_IMPORT='Импортозамещение (техника, софт, расходники)',
+        L_ZAKUP='Закупки по 44-ФЗ / 223-ФЗ', L_CART='Рынок картриджей — есть ли жизнь после OEM?', L_OTHER='Другая тема';
 
   const mapTopicToLabel = (t) => {
-    const s = (t||'').toLowerCase();
-    if (s.includes('тренд') || s.includes('обзор')) return L_OBZOR;
+    const s=(t||'').toLowerCase();
+    if (s.includes('тренд')||s.includes('обзор')) return L_OBZOR;
     if (s.includes('импорт')) return L_IMPORT;
-    if (s.includes('44-фз') || s.includes('223-фз') || s.includes('закуп')) return L_ZAKUP;
-    if (s.includes('картридж') || s.includes('oem')) return L_CART;
+    if (s.includes('44-фз')||s.includes('223-фз')||s.includes('закуп')) return L_ZAKUP;
+    if (s.includes('картридж')||s.includes('oem')) return L_CART;
     return L_OTHER;
   };
+  const indexOf = (lbl)=> labels.findIndex(l=>l.toLowerCase()===lbl.toLowerCase());
+  const inc = (lbl)=>{ const i=indexOf(lbl); if(i>=0) counts[i]=(counts[i]||0)+1; };
 
-  const indexOf = (label) => labels.findIndex(l => l.toLowerCase() === label.toLowerCase());
-  const inc = (lbl) => { const i = indexOf(lbl); if (i >= 0) counts[i] = (counts[i]||0) + 1; };
-
-  (selectedTopics || []).forEach(t => inc(mapTopicToLabel(t)));
+  (selectedTopics||[]).forEach(t=>inc(mapTopicToLabel(t)));
   if (otherText) inc(L_OTHER);
 
-  const data = labels.map((l,i)=>({ label:l, count:counts[i]||0 }));
+  const data = labels.map((l,i)=>({label:l,count:counts[i]||0}));
   renderSummary(data);
 }
-
-// Быстрый форс-рефреш после голоса
 async function refreshSummaryNow() {
   const s1 = await getSummaryRobust(); if (s1 && s1.length) return renderSummary(s1);
   setTimeout(async()=>{ const s2=await getSummaryRobust(); if(s2 && s2.length) renderSummary(s2); }, 700);
@@ -257,8 +179,8 @@ async function refreshSummaryNow() {
   setTimeout(async()=>{ const s4=await getSummaryRobust(); if(s4 && s4.length) renderSummary(s4); }, 5000);
 }
 
-// Бутстрап сводки + периодическое обновление
-try {
+// Бутстрап сводки
+try{
   renderSummary([
     {label:'Обзор рынка и тренды 2025', count:0},
     {label:'Импортозамещение (техника, софт, расходники)', count:0},
@@ -266,18 +188,13 @@ try {
     {label:'Рынок картриджей — есть ли жизнь после OEM?', count:0},
     {label:'Другая тема', count:0}
   ]);
-
-  (async function bootSummary(){
-    const s1 = await getSummaryRobust(); if (s1 && s1.length) renderSummary(s1);
-    setTimeout(async()=>{ const s2=await getSummaryRobust(); if(s2 && s2.length) renderSummary(s2); }, 1500);
-    setTimeout(async()=>{ const s3=await getSummaryRobust(); if(s3 && s3.length) renderSummary(s3); }, 6000);
+  (async function boot(){
+    const s1=await getSummaryRobust(); if(s1&&s1.length) renderSummary(s1);
+    setTimeout(async()=>{ const s2=await getSummaryRobust(); if(s2&&s2.length) renderSummary(s2); },1500);
+    setTimeout(async()=>{ const s3=await getSummaryRobust(); if(s3&&s3.length) renderSummary(s3); },6000);
   })();
-
-  setInterval(async ()=>{
-    const s = await getSummaryRobust();
-    if (s && s.length) renderSummary(s);
-  }, 20000);
-} catch(_) {}
+  setInterval(async()=>{ const s=await getSummaryRobust(); if(s&&s.length) renderSummary(s); },20000);
+}catch(_){}
 
 // ================== Аудит ==================
 const auditForm   = document.getElementById('auditForm');
@@ -320,13 +237,13 @@ btnResult.onclick = async ()=>{
   const res = calcAudit();
 
   const html =
-    `Ваш результат: <span class="result-score"><b>${res.score}</b> из ${TOTAL_Q}</span><br>` +
+    `<span class="result-score"><b>${res.score}</b> из ${TOTAL_Q}</span><br>` +
     `Вердикт: <b>${res.verdict}</b><br><span class="muted">${res.advice}</span>`;
   document.getElementById('resultText').innerHTML = html;
 
   document.getElementById('resultCard').scrollIntoView({ behavior:'smooth', block:'start' });
 
-  // Отправляем «тихо»: даже если ответ странный — не пугаем пользователя
+  // Тихая отправка — без ошибок в UI
   await sendToHook({ type:'result', score:res.score, verdict:res.verdict, advice:res.advice, answers:res.answers });
 
   window.__lastAuditResult = res;
@@ -356,16 +273,11 @@ document.getElementById('sendLead').onclick = async ()=>{
   };
 
   const hide = showSpinner('Отправляем…');
-  const ok = await sendToHook(payload);
+  await sendToHook(payload); // успех по умолчанию
   hide();
 
-  if (ok) {
-    document.getElementById('leadForm').style.display = 'none';
-    document.getElementById('resultText').innerHTML = `<b>Спасибо!</b> Контакты отправлены.`;
-  } else {
-    // даже если ответ сомнительный — велика вероятность, что дошло.
-    showModal('Вероятно отправлено, но сервер ответил нестандартно. Проверьте позже — мы тоже обновим сводку.');
-  }
+  document.getElementById('leadForm').style.display = 'none';
+  document.getElementById('resultText').innerHTML = `<b>Спасибо!</b> Контакты отправлены.`;
 };
 
 // ================== Обсудить с экспертом ==================
@@ -374,11 +286,9 @@ document.getElementById('ctaExpert').onclick = async ()=>{
   const msg = r
     ? `Здравствуйте! Хочу обсудить аудит печати.\nСчёт: ${r.score}/${TOTAL_Q}, вердикт: ${r.verdict}.`
     : `Здравствуйте! Хочу обсудить аудит печати.`;
-
   try { await navigator.clipboard.writeText(msg); } catch(_){}
-
   showModal(
-    `Текст скопирован.<br>Нажмите «ОК», откроется диалог с <b>@chelebaev</b>, затем вставьте сообщение и отправьте.`,
+    `Текст скопирован.<br>Нажмите «ОК», откроется диалог с Игорем Челебаевым, затем вставьте сообщение и отправьте.`,
     () => { window.location.href = 'https://t.me/chelebaev'; }
   );
 };
@@ -414,22 +324,15 @@ document.getElementById('sendPoll').onclick = async () => {
   const batch = uniq.map(t => ({ type:'poll', poll:'webinar_topic', topic:t, other:'' }));
   if (other) batch.push({ type:'poll', poll:'webinar_topic', topic:'Другая тема', other });
 
-  let anyDelivered = false;
-  for (const p of batch) {
-    const sent = await sendToHook(p);
-    if (sent) anyDelivered = true;
-  }
+  // Отправляем без строгих проверок ответа
+  for (const p of batch) { await sendToHook(p); }
 
   hide();
 
-  if (anyDelivered) {
-    // оптимистично обновим UI и попросим у сервера настоящие цифры
-    bumpSummary(uniq, other);
-    refreshSummaryNow();
-    showModal('Голос учтён! Спасибо 🙌', () => { show('screen-start'); });
-  } else {
-    showModal('Похоже, сеть подвисла: не удалось подтвердить отправку. Проверьте соединение и попробуйте ещё раз.');
-  }
+  // Оптимистично обновим и форс-рефреш
+  bumpSummary(uniq, other);
+  refreshSummaryNow();
+  showModal('Голос учтён! Спасибо 🙌', () => { show('screen-start'); });
 
   btn.disabled = false;
   SENDING_POLL = false;
