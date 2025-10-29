@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ЛЕКОМ · Мини-апп</title>
 
-  <!-- КРИТИЧНЫЕ СТИЛИ -->
   <style>
   /* Шрифт */
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
@@ -22,10 +21,17 @@
     font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   }
-  .app{ max-width:720px; margin:0 auto; padding:20px 16px 28px; }
+  /* 🔧 защита от горизонтального скролла */
+  body, .app, .card { overflow-x:hidden; }
+  /* контейнер */
+  .app{
+    max-width:720px; margin:0 auto; padding:20px 16px 28px;
+    box-sizing:border-box;
+  }
   .card{
     background:var(--bg2); border:1px solid var(--stroke); border-radius:var(--radius);
-    padding:16px 16px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+    padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+    box-sizing:border-box; width:100%;
   }
   h1{ font-size:26px; margin:0 0 12px; }
   h2{ font-size:22px; margin:0 0 10px; }
@@ -41,7 +47,8 @@
     transition:filter .12s, transform .06s ease;
     user-select:none; -webkit-tap-highlight-color:transparent;
     text-align:center;
-    flex-direction:column; /* позволяем перенос строки в тексте */
+    flex-direction:column;            /* перенос на новую строку */
+    box-sizing:border-box;            /* ❗ */
   }
   .btn:active{ transform:translateY(1px); }
   .btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
@@ -66,11 +73,14 @@
   .q{ margin-top:18px; }
   .q b{ display:block; margin-bottom:10px; font-size:17px; }
   .pill{
-    width:100%; text-align:left;
+    display:block; width:100%; text-align:left;
     font-size:16px; line-height:1.45;
     padding:14px 16px; margin-top:8px;
     border-radius:12px; border:1px solid var(--stroke);
     background:#101625; color:var(--text); cursor:pointer;
+    box-sizing:border-box;                 /* ❗ */
+    word-break:break-word;                 /* ❗ переносим длинные слова */
+    overflow-wrap:anywhere;                /* ❗ */
   }
   .pill:hover{ background:#141b2b; }
   .pill.selected{
@@ -83,6 +93,7 @@
   input[type=text]{
     width:100%; padding:12px 12px; border-radius:10px;
     border:1px solid var(--stroke); background:#111620; color:var(--text);
+    box-sizing:border-box;                 /* ❗ */
   }
   input[type=text]::placeholder{ color:#7e8aa8; }
 
@@ -127,9 +138,8 @@
   hr{ border:0; height:1px; background:var(--stroke); opacity:.5; margin:14px 0; }
   </style>
 
-  <!-- ВАЖНО: задай твой Google Apps Script EXEC -->
+  <!-- ПОДСТАВЬ актуальный EXEC-хук -->
   <script>
-    // ПОДСТАВЬ свой актуальный EXEC-хук:
     window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
   </script>
 </head>
@@ -158,77 +168,67 @@
       <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
 
       <form id="auditForm">
-        <!-- Q1 -->
+        <!-- 11 вопросов -->
         <div class="q">
           <b>1) Учитываете ли вы TCO (полную стоимость печати) при планировании бюджета?</b>
           <div class="pill" data-q="q1" data-score="1">Да, считаем TCO регулярно и корректируем</div>
           <div class="pill" data-q="q1" data-score="0">Частично/эпизодически</div>
           <div class="pill" data-q="q1" data-score="0">Нет, смотрим только прямые расходы</div>
         </div>
-        <!-- Q2 -->
         <div class="q">
           <b>2) Есть ли утверждённая политика печати (правила, роли, ограничения)?</b>
           <div class="pill" data-q="q2" data-score="1">Да, действует и обновляется</div>
           <div class="pill" data-q="q2" data-score="0">В разработке/неполная</div>
           <div class="pill" data-q="q2" data-score="0">Нет</div>
         </div>
-        <!-- Q3 -->
         <div class="q">
           <b>3) Контролируете ли вы доступ/аутентификацию к устройствам (PIN/карты/SSO)?</b>
           <div class="pill" data-q="q3" data-score="1">Да, для всех МФУ/принтеров</div>
           <div class="pill" data-q="q3" data-score="0">Только частично</div>
           <div class="pill" data-q="q3" data-score="0">Нет</div>
         </div>
-        <!-- Q4 -->
         <div class="q">
           <b>4) Используется ли безопасная печать (удержание/релиз задания пользователем)?</b>
           <div class="pill" data-q="q4" data-score="1">Да, настроено повсеместно</div>
           <div class="pill" data-q="q4" data-score="0">Только на критичных узлах</div>
           <div class="pill" data-q="q4" data-score="0">Нет</div>
         </div>
-        <!-- Q5 -->
         <div class="q">
           <b>5) Есть ли централизованный мониторинг парка (счётчики, расходники, инциденты)?</b>
           <div class="pill" data-q="q5" data-score="1">Да, в единой системе/дашборде</div>
           <div class="pill" data-q="q5" data-score="0">Частично/вручную</div>
           <div class="pill" data-q="q5" data-score="0">Нет</div>
         </div>
-        <!-- Q6 -->
         <div class="q">
-          <b>6) Оптимизирован ли парк по типам/локациям (А3/А4, ЦП/дестрибуция, удалёнка)?</b>
+          <b>6) Оптимизирован ли парк по типам/локациям (А3/А4, ЦП/дистрибуция, удалёнка)?</b>
           <div class="pill" data-q="q6" data-score="1">Да, есть схема и ревью</div>
           <div class="pill" data-q="q6" data-score="0">Частично</div>
           <div class="pill" data-q="q6" data-score="0">Нет</div>
         </div>
-        <!-- Q7 -->
         <div class="q">
           <b>7) Контролируете ли качество расходников (OEM/проверенный аналог, брак/возвраты)?</b>
           <div class="pill" data-q="q7" data-score="1">Да, с KPI по браку/срокам</div>
           <div class="pill" data-q="q7" data-score="0">Есть базовые проверки</div>
           <div class="pill" data-q="q7" data-score="0">Нет, «как получится»</div>
         </div>
-        <!-- Q8 -->
         <div class="q">
           <b>8) Закрыты ли вопросы ИБ/ПДн (журналы, доступ, уничтожение носителей)?</b>
           <div class="pill" data-q="q8" data-score="1">Да, регламенты+контроль</div>
           <div class="pill" data-q="q8" data-score="0">Частично</div>
           <div class="pill" data-q="q8" data-score="0">Нет</div>
         </div>
-        <!-- Q9 -->
         <div class="q">
           <b>9) Как решены сервис и SLA (время реакции/восстановления, запасы ЗИП/тонера)?</b>
           <div class="pill" data-q="q9" data-score="1">Есть SLA и фактический контроль</div>
           <div class="pill" data-q="q9" data-score="0">Частично</div>
           <div class="pill" data-q="q9" data-score="0">Нет</div>
         </div>
-        <!-- Q10 -->
         <div class="q">
           <b>10) Анализируете ли вы объёмы и аномалии печати по подразделениям/пользователям?</b>
           <div class="pill" data-q="q10" data-score="1">Да, в отчётах/дашбордах</div>
           <div class="pill" data-q="q10" data-score="0">Иногда/по запросу</div>
           <div class="pill" data-q="q10" data-score="0">Нет</div>
         </div>
-        <!-- Q11 -->
         <div class="q">
           <b>11) Есть ли план развития (импортозамещение, MPS, унификация, бюджет-2026)?</b>
           <div class="pill" data-q="q11" data-score="1">Да, утверждённый план</div>
@@ -291,6 +291,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=2025-10-29-7"></script>
+  <script src="app.js?v=2025-10-29-8"></script>
 </body>
 </html>
