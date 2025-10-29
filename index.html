@@ -61,7 +61,7 @@
   .theme-toggle svg{width:18px;height:18px}
   .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
 
-  /* Карточка-экран: flex-колонка, чтоб футер был снизу */
+  /* Карточка-экран: flex-колонка, чтоб кнопка «Вернуться» была снизу */
   .screen.card{
     background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);
     padding:16px;box-shadow:var(--shadow);
@@ -100,7 +100,7 @@
   }
   input::placeholder, textarea::placeholder{color:var(--text-dim);}
 
-  /* Сводка на старте */
+  /* Сводка (на старте) */
   .summary-row{margin:8px 0;}
   .summary-head{display:flex;justify-content:space-between;gap:8px;}
   .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
@@ -121,12 +121,20 @@
   .toast-box{background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:var(--shadow);}
   .toast-box .btn{width:100%;margin-top:10px;}
 
-  /* Футер кнопки «Вернуться» всегда внизу */
+  /* Футер-кнопка всегда внизу экрана */
   .footer-actions{margin-top:auto;text-align:center;}
-  .back-btn{max-width:240px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .back-btn{max-width:240px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .icon-back{width:16px;height:16px;display:block;}
 
-  /* Иконка — маленькая изогнутая стрелка */
-  .icon-curved{width:16px;height:16px;display:block;}
+  /* Глобальный футер (в самом низу страницы, вне карточек) */
+  .global-footer{
+    margin-top:16px;padding-top:12px;border-top:1px solid var(--stroke);
+    text-align:center;font-size:14px;color:var(--text-dim);
+  }
+  .global-footer a{color:var(--brand2);text-decoration:none;font-weight:500;}
+  .global-footer a:hover{text-decoration:underline;}
+  .footer-icons{display:flex;justify-content:center;gap:14px;margin-bottom:6px;}
+  .footer-icons svg{width:22px;height:22px;}
   </style>
 </head>
 <body>
@@ -161,20 +169,8 @@
         <div id="summaryContent"><div class="muted">Загрузка…</div></div>
       </div>
 
-      <div class="footer" style="margin-top:18px;">
-        <div class="footer-icons" style="justify-content:center;gap:14px;margin-bottom:6px;">
-          <a href="https://lekomIT.t.me" target="_blank" title="Telegram">
-            <svg viewBox="0 0 24 24" fill="none" style="width:22px;height:22px"><path fill="var(--brand2)" d="M21.6 5.6a1 1 0 0 0-1.1-.1L3.5 12.9a.9.9 0 0 0 .1 1.7l4.4 1.4 1.7 5a1 1 0 0 0 1.7.4l2.3-2.3 4.5 3.2a1 1 0 0 0 1.6-.6l2.8-14.5a1 1 0 0 0-.4-1zM9.6 15l8.6-7-10.6 6 2 1z"/></svg>
-          </a>
-          <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
-            <svg viewBox="0 0 24 24" style="width:22px;height:22px">
-              <path style="fill:transparent;stroke:var(--brand2);stroke-width:1.2" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
-              <path style="fill:var(--brand2)" d="M10 15V9l5 3-5 3z"/>
-            </svg>
-          </a>
-        </div>
-        Присоединяйтесь к нам: <a href="https://lekomIT.t.me" target="_blank">@LekomIT</a>
-      </div>
+      <!-- кнопка вернуться на этом экране не нужна -->
+      <div class="footer-actions" style="display:none"></div>
     </div>
 
     <!-- Аудит -->
@@ -294,8 +290,16 @@
             <div class="result-score" id="resultText">
               Ответьте на вопросы&nbsp;и нажмите кнопку выше.
             </div>
+
+            <!-- Вердикт и рекомендация будут показаны JS -->
             <div class="result-verdict" id="resultVerdict" style="display:none"></div>
             <div class="result-advice" id="resultAdvice" style="display:none"></div>
+
+            <!-- Предварительный анализ -->
+            <div class="result-advice" id="resultHint">
+              Предварительный анализ. Это быстрая оценка.<br>
+              Для детального аудита — оставьте контакт или&nbsp;обсудите с экспертом.
+            </div>
 
             <div class="cta-row">
               <button id="ctaExpert" class="btn btn-secondary">💬 Обсудить с экспертом</button>
@@ -318,11 +322,11 @@
       <!-- Футер-кнопка всегда внизу -->
       <div class="footer-actions">
         <button id="backFromAudit" class="btn btn-secondary back-btn" type="button">
-          <svg class="icon-curved" viewBox="0 0 24 24" fill="none"
+          <!-- обычная стрелка влево -->
+          <svg class="icon-back" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <!-- маленькая изогнутая стрелка -->
-            <path d="M4 12c0-4.4 3.6-8 8-8 3.6 0 6.7 2.4 7.7 5.7"/>
-            <polyline points="7,9 4,12 7,15"/>
+            <polyline points="15 18 9 12 15 6"></polyline>
+            <line x1="9" y1="12" x2="21" y2="12"></line>
           </svg>
           Вернуться
         </button>
@@ -334,7 +338,7 @@
       <div>
         <h1>Выбор темы вебинара</h1>
 
-       
+        <!-- Итоги УБРАНЫ с этого экрана по ТЗ -->
 
         <p class="muted" style="margin:14px 0 6px">Выберите одну или несколько тем:</p>
         <div class="q" id="pollOptions">
@@ -345,7 +349,7 @@
           <div class="pill poll-opt" data-topic="Другая тема">Другая тема</div>
 
           <div id="pollOtherBox" style="display:none;margin-top:10px">
-            <textarea id="pollOther" rows="3" placeholder="Предложите свою тему — нам важно ваше мнение"></textarea>
+            <textarea id="pollOther" rows="4" placeholder="Предложите свою тему — нам важно ваше мнение"></textarea>
           </div>
         </div>
 
@@ -357,14 +361,32 @@
       <!-- Футер-кнопка всегда внизу -->
       <div class="footer-actions">
         <button id="backFromPoll" class="btn btn-secondary back-btn" type="button">
-          <svg class="icon-curved" viewBox="0 0 24 24" fill="none"
+          <svg class="icon-back" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 12c0-4.4 3.6-8 8-8 3.6 0 6.7 2.4 7.7 5.7"/>
-            <polyline points="7,9 4,12 7,15"/>
+            <polyline points="15 18 9 12 15 6"></polyline>
+            <line x1="9" y1="12" x2="21" y2="12"></line>
           </svg>
           Вернуться
         </button>
       </div>
+    </div>
+
+    <!-- Глобальный футер (вне карточек, в самом низу страницы) -->
+    <div class="global-footer">
+      <div class="footer-icons">
+        <!-- Telegram -->
+        <a href="https://lekomIT.t.me" target="_blank" title="Telegram">
+          <svg viewBox="0 0 24 24" fill="none"><path fill="var(--brand2)" d="M21.6 5.6a1 1 0 0 0-1.1-.1L3.5 12.9a.9.9 0 0 0 .1 1.7l4.4 1.4 1.7 5a1 1 0 0 0 1.7.4l2.3-2.3 4.5 3.2a1 1 0 0 0 1.6-.6l2.8-14.5a1 1 0 0 0-.4-1zM9.6 15l8.6-7-10.6 6 2 1z"/></svg>
+        </a>
+        <!-- YouTube (оригинальная форма) -->
+        <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
+          <svg viewBox="0 0 24 24">
+            <path style="fill:transparent;stroke:var(--brand2);stroke-width:1.2" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
+            <path style="fill:var(--brand2)" d="M10 15V9l5 3-5 3z"/>
+          </svg>
+        </a>
+      </div>
+      Присоединяйтесь к нам: <a href="https://lekomIT.t.me" target="_blank">@LekomIT</a>
     </div>
   </div>
 
