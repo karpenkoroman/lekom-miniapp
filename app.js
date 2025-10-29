@@ -152,14 +152,25 @@ document.getElementById('sendLead').onclick = async ()=>{
   document.getElementById('leadForm').style.display='none';
 };
 
-// Обсудить с экспертом — готовим текст и открываем deeplink
-document.getElementById('ctaExpert').onclick = ()=>{
+// Обсудить с экспертом — сразу в @chelebaev + копия текста в буфер
+document.getElementById('ctaExpert').onclick = async ()=>{
   const r = window.__lastAuditResult;
-  const text = r
-    ? `Здравствуйте! Хочу обсудить аудит печати. Счёт: ${r.score}/11, вердикт: ${r.verdict}.`
+  const msg = r
+    ? `Здравствуйте! Хочу обсудить аудит печати.\nСчёт: ${r.score}/11, вердикт: ${r.verdict}.`
     : `Здравствуйте! Хочу обсудить аудит печати.`;
-  const url = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/chelebaev')}&text=${encodeURIComponent(text)}`;
-  window.open(url,'_blank');
+
+  // пробуем скопировать текст пользователю (на мобильном пригодится)
+  try {
+    await navigator.clipboard.writeText(msg);
+    showToast('Текст сообщения скопирован. Вставьте его в чат @chelebaev и отправьте.', 3500);
+  } catch(_) {
+    // молча игнорируем, если не дали доступ
+  }
+
+  // прямой переход в чат эксперта
+  const direct = 'https://t.me/chelebaev';
+  // на iOS/Android Telegram-линк откроется нативно; в десктопе — в веб/клиент
+  window.location.href = direct;
 };
 
 // ====== Вебинар — мультивыбор тем + отправка ======
