@@ -20,61 +20,102 @@ function show(id) {
   };
 });
 
-// ================== Отправка в хук (надёжная) ==================
+// ================== Быстрый хук с "гонкой" и таймаутами ==================
 async function sendToHook(payload) {
-  // initData из Telegram Mini App, если доступно
   const init = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) || null;
   if (init && !payload.initData) payload.initData = init;
 
-  // 1) POST
-  try {
-    const rp = await fetch(HOOK + (HOOK.includes('?') ? '&' : '?') + '_ts=' + Date.now(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      mode: 'cors',
-      credentials: 'omit'
-    });
-    const txt = await rp.text();
-    if (rp.ok && (/-(ok|OK)$/.test(txt) || /^(result|lead|poll)-ok$/i.test(txt))) return true;
-  } catch (_) {}
+  const isOk = (txt) => /-(ok|OK)$/.test(txt) || /^(result|lead|poll)-ok$/i.test(txt);
+  const withTimeout = (p, ms) => Promise.race([ p, new Promise((_, rej)=>setTimeout(()=>rej(new Error('timeout')), ms)) ]);
 
-  // 2) Fallback: GET ?q=
-  try {
+  const postUrl = HOOK + (HOOK.includes('?') ? '&' : '?') + '_ts=' + Date.now();
+  const post = () => withTimeout(fetch(postUrl, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload), mode:'cors', credentials:'omit'
+  }).then(r=>r.text()), 2500);
+
+  const get = () => {
     const u = new URL(HOOK);
     u.searchParams.set('q', JSON.stringify(payload));
     u.searchParams.set('_ts', Date.now());
-    const rg = await fetch(u.toString(), { method:'GET' });
-    const t2 = await rg.text();
-    if (rg.ok && (/-(ok|OK)$/.test(t2) || /^(result|lead|poll)-ok$/i.test(t2))) return true;
-  } catch (_) {}
+    return withTimeout(fetch(u.toString(), {method:'GET'}).then(r=>r.text()), 2500);
+  };
 
-  return false;
+  try {
+    const winner = await Promise.race([
+      post().catch(()=>Promise.reject()),
+      new Promise(resolve=>setTimeout(()=>get().then(resolve).catch(()=>{}), 300))
+    ]);
+    return isOk(String(winner||''));
+  } catch(_) {
+    try {
+      const txt = await withTimeout(get().catch(()=>post()), 2500);
+      return isOk(String(txt||''));
+    } catch(__) { return false; }
+  }
 }
 
-// ================== Сводка опросов ==================
+// ================== Модалки ==================
+function showModal(html, onOk) {
+  const o = document.createElement('div');
+  o.className = 'toast-overlay';
+  o.innerHTML = `
+    <div class="toast-box">
+      ${html}
+      <br><br>
+      <div class="btn btn-primary" id="__ok">ОК</div>
+    </div>`;
+  document.body.appendChild(o);
+  const close = () => { o.remove(); if (typeof onOk === 'function') onOk(); };
+  o.addEventListener('click', (e)=>{ if (e.target.id==='__ok' || e.target===o) close(); });
+}
+function showSpinner(text='Отправляем…') {
+  const o = document.createElement('div');
+  o.className = 'toast-overlay';
+  o.innerHTML = `
+    <div class="toast-box">
+      <div style="margin-bottom:10px">${text}</div>
+      <div class="muted">Пожалуйста, подождите</div>
+    </div>`;
+  document.body.appendChild(o);
+  return () => o.remove();
+}
+
+// ================== Сводка опроса ==================
 async function getSummaryRobust() {
   if (!HOOK) return null;
 
+  const normalize = (data) => {
+    // Поддержка: {total, items:[{topic,count}]} | [{label,count}] | [{topic,count}]
+    if (!data) return null;
+    if (Array.isArray(data)) {
+      return data.map(x => ({ label: (x.label ?? x.topic ?? '').toString(), count: Number(x.count || 0) }));
+    }
+    if (data.items && Array.isArray(data.items)) {
+      return data.items.map(x => ({ label: (x.label ?? x.topic ?? '').toString(), count: Number(x.count || 0) }));
+    }
+    return null;
+  };
+
   const tryParse = (txt) => {
     try { return JSON.parse(txt); } catch(_){}
-    const m = txt.match(/\[.+\]/s);
+    const m = txt.match(/\{.*\}|\[.*\]/s);
     if (m) { try { return JSON.parse(m[0]); } catch(_){ } }
     return null;
   };
 
-  // GET ?summary=webinar
+  // A) ?summary=webinar
   try {
     const u = new URL(HOOK);
     u.searchParams.set('summary','webinar');
     u.searchParams.set('_', Date.now());
     const r = await fetch(u.toString());
     const t = await r.text();
-    const d = tryParse(t);
-    if (Array.isArray(d)) return d;
+    const d = normalize(tryParse(t));
+    if (d && d.length) return d;
   } catch(_){}
 
-  // GET ?summary=webinar&format=json
+  // B) ?summary=webinar&format=json
   try {
     const u = new URL(HOOK);
     u.searchParams.set('summary','webinar');
@@ -82,11 +123,11 @@ async function getSummaryRobust() {
     u.searchParams.set('_', Date.now());
     const r = await fetch(u.toString());
     const t = await r.text();
-    const d = tryParse(t);
-    if (Array.isArray(d)) return d;
+    const d = normalize(tryParse(t));
+    if (d && d.length) return d;
   } catch(_){}
 
-  // JSONP (?callback=…)
+  // C) JSONP
   try {
     const cb = '__LEKOM_SUMMARY_CB_' + Math.random().toString(36).slice(2);
     const data = await new Promise((resolve,reject)=>{
@@ -101,7 +142,8 @@ async function getSummaryRobust() {
       document.head.appendChild(s);
       setTimeout(()=>reject(new Error('jsonp-timeout')),6000);
     });
-    if (Array.isArray(data)) return data;
+    const d = normalize(data);
+    if (d && d.length) return d;
   } catch(_){}
 
   return null;
@@ -116,40 +158,87 @@ function renderSummary(data) {
     return;
   }
 
-  box.innerHTML = '';
-  const tot = data.reduce((a,x)=>a+(Number(x.count)||0),0);
-  box.insertAdjacentHTML('beforeend', `<div class="muted">Всего голосов: <b>${tot}</b></div>`);
-  data.forEach(x=>{
+  const arr = [...data].sort((a,b)=> (b.count||0) - (a.count||0));
+  const tot = arr.reduce((a,x)=>a+(Number(x.count)||0),0);
+
+  box.innerHTML = `<div class="muted">Всего голосов: <b>${tot}</b></div>` + arr.map(x=>{
     const c = Number(x.count)||0;
     const pct = tot ? Math.round(c*100/tot) : 0;
-    box.insertAdjacentHTML('beforeend', `
+    const label = x.label || '';
+    return `
       <div class="summary-row">
         <div class="summary-head">
-          <div>${x.label}</div>
+          <div>${label}</div>
           <div class="muted">${c} (${pct}%)</div>
         </div>
         <div class="summary-bar"><div class="summary-fill" style="width:${pct}%"></div></div>
-      </div>
-    `);
-  });
+      </div>`;
+  }).join('');
 }
 
-// Placeholder + ретраи + периодическое обновление
+// Оптимистичный +1
+function bumpSummary(selectedTopics, otherText) {
+  const box = document.getElementById('summaryContent');
+  if (!box) return;
+
+  const rows = [...box.querySelectorAll('.summary-row')];
+  if (!rows.length) return;
+
+  const labels = rows.map(r => r.querySelector('.summary-head div').textContent.trim());
+  const counts = rows.map(r => {
+    const t = r.querySelector('.summary-head .muted').textContent;
+    const n = parseInt(t, 10); return isNaN(n) ? 0 : n;
+  });
+
+  const L_OBZOR  = 'Обзор рынка и тренды 2025';
+  const L_IMPORT = 'Импортозамещение (техника, софт, расходники)';
+  const L_ZAKUP  = 'Закупки по 44-ФЗ / 223-ФЗ';
+  const L_CART   = 'Рынок картриджей — есть ли жизнь после OEM?';
+  const L_OTHER  = 'Другая тема';
+
+  const mapTopicToLabel = (t) => {
+    const s = (t||'').toLowerCase();
+    if (s.includes('тренд') || s.includes('обзор')) return L_OBZOR;
+    if (s.includes('импорт')) return L_IMPORT;
+    if (s.includes('44-фз') || s.includes('223-фз') || s.includes('закуп')) return L_ZAKUP;
+    if (s.includes('картридж') || s.includes('oem')) return L_CART;
+    return L_OTHER;
+  };
+
+  const indexOf = (label) => labels.findIndex(l => l.toLowerCase() === label.toLowerCase());
+  const inc = (lbl) => { const i = indexOf(lbl); if (i >= 0) counts[i] = (counts[i]||0) + 1; };
+
+  (selectedTopics || []).forEach(t => inc(mapTopicToLabel(t)));
+  if (otherText) inc(L_OTHER);
+
+  const data = labels.map((l,i)=>({ label:l, count:counts[i]||0 }));
+  renderSummary(data);
+}
+
+// Быстрый форс-рефреш после голоса
+async function refreshSummaryNow() {
+  const s1 = await getSummaryRobust(); if (s1 && s1.length) return renderSummary(s1);
+  setTimeout(async()=>{ const s2=await getSummaryRobust(); if(s2 && s2.length) renderSummary(s2); }, 700);
+  setTimeout(async()=>{ const s3=await getSummaryRobust(); if(s3 && s3.length) renderSummary(s3); }, 2200);
+  setTimeout(async()=>{ const s4=await getSummaryRobust(); if(s4 && s4.length) renderSummary(s4); }, 5000);
+}
+
+// Placeholder + первоначальные попытки + периодическое обновление
 try {
   renderSummary([
     {label:'Обзор рынка и тренды 2025', count:0},
-    {label:'Импортозамещение', count:0},
-    {label:'Закупки 44-ФЗ/223-ФЗ', count:0},
-    {label:'Рынок картриджей', count:0},
+    {label:'Импортозамещение (техника, софт, расходники)', count:0},
+    {label:'Закупки по 44-ФЗ / 223-ФЗ', count:0},
+    {label:'Рынок картриджей — есть ли жизнь после OEM?', count:0},
+    {label:'Другая тема', count:0}
   ]);
 
   (async function bootSummary(){
     const s1 = await getSummaryRobust(); if (s1 && s1.length) renderSummary(s1);
-    setTimeout(async()=>{ const s2=await getSummaryRobust(); if(s2 && s2.length) renderSummary(s2); }, 2000);
-    setTimeout(async()=>{ const s3=await getSummaryRobust(); if(s3 && s3.length) renderSummary(s3); }, 7000);
+    setTimeout(async()=>{ const s2=await getSummaryRobust(); if(s2 && s2.length) renderSummary(s2); }, 1500);
+    setTimeout(async()=>{ const s3=await getSummaryRobust(); if(s3 && s3.length) renderSummary(s3); }, 6000);
   })();
 
-  // авто-обновление каждые 20 секунд
   setInterval(async ()=>{
     const s = await getSummaryRobust();
     if (s && s.length) renderSummary(s);
@@ -160,6 +249,7 @@ try {
 const auditForm   = document.getElementById('auditForm');
 const prog        = document.getElementById('auditProgress');
 const btnResult   = document.getElementById('btnAuditResult');
+const btnAuditSub = document.getElementById('btnAuditSub');
 
 updateAuditCounters();
 
@@ -172,12 +262,9 @@ auditForm.addEventListener('click', (e)=>{
 });
 
 function updateAuditCounters() {
-  const answered = new Set(
-    [...auditForm.querySelectorAll('.pill.selected')].map(x => x.dataset.q)
-  ).size;
-
+  const answered = new Set([...auditForm.querySelectorAll('.pill.selected')].map(x => x.dataset.q)).size;
   if (prog) prog.textContent = `Ответы: ${answered} / ${TOTAL_Q}`;
-  if (btnResult) btnResult.textContent = `Посмотреть результат (ответов ${answered} из ${TOTAL_Q})`;
+  if (btnAuditSub) btnAuditSub.textContent = `(ответов ${answered} из ${TOTAL_Q})`;
 }
 
 function calcAudit() {
@@ -197,10 +284,18 @@ function calcAudit() {
 
 btnResult.onclick = async ()=>{
   const res = calcAudit();
-  document.getElementById('resultText').innerHTML =
-    `Итоговый счёт: <b>${res.score}/11</b><br>Вердикт: <b>${res.verdict}</b><br><span class="muted">${res.advice}</span>`;
 
-  // тихая отправка (без всплывашек)
+  // Рендер «Ваш результат» с одной цифрой X из Y
+  const resultHTML =
+    `Ваш результат: <span class="result-score"><b>${res.score}</b> из ${TOTAL_Q}</span><br>` +
+    `Вердикт: <b>${res.verdict}</b><br><span class="muted">${res.advice}</span>`;
+
+  document.getElementById('resultText').innerHTML = resultHTML;
+
+  // Скролл к блоку результата
+  document.getElementById('resultCard').scrollIntoView({ behavior:'smooth', block:'start' });
+
+  // Тихо отправим
   await sendToHook({
     type: 'result',
     score: res.score,
@@ -248,18 +343,18 @@ document.getElementById('sendLead').onclick = async ()=>{
 document.getElementById('ctaExpert').onclick = async ()=>{
   const r = window.__lastAuditResult;
   const msg = r
-    ? `Здравствуйте! Хочу обсудить аудит печати.\nСчёт: ${r.score}/11, вердикт: ${r.verdict}.`
+    ? `Здравствуйте! Хочу обсудить аудит печати.\nСчёт: ${r.score}/${TOTAL_Q}, вердикт: ${r.verdict}.`
     : `Здравствуйте! Хочу обсудить аудит печати.`;
 
   try { await navigator.clipboard.writeText(msg); } catch(_){}
 
   showModal(
-    `Текст скопирован.<br>Нажмите «ОК», откроется диалог с <b>@chelebaev</b>, вставьте сообщение и отправьте.`,
+    `Текст скопирован.<br>Нажмите «ОК», откроется диалог с Игорем Челебаевым, затем вставьте сообщение и отправьте.`,
     () => { window.location.href = 'https://t.me/chelebaev'; }
   );
 };
 
-// ================== Вебинары (мультивыбор) ==================
+// ================== Голосование (мультивыбор) ==================
 const pollForm = document.getElementById('pollForm');
 pollForm.addEventListener('click', (e)=>{
   const b = e.target.closest('.pill'); if(!b) return;
@@ -267,7 +362,6 @@ pollForm.addEventListener('click', (e)=>{
 });
 
 document.getElementById('sendPoll').onclick = async () => {
-  // запускаем модалку только когда на экране голосования
   const pollScreen = document.getElementById('screen-poll');
   if (!pollScreen || pollScreen.style.display !== 'block') return;
 
@@ -285,6 +379,8 @@ document.getElementById('sendPoll').onclick = async () => {
     return;
   }
 
+  const hide = showSpinner('Отправляем голос…');
+
   const uniq = [...new Set(selected)];
   const batch = uniq.map(t => ({ type:'poll', poll:'webinar_topic', topic:t, other:'' }));
   if (other) batch.push({ type:'poll', poll:'webinar_topic', topic:'Другая тема', other });
@@ -295,12 +391,12 @@ document.getElementById('sendPoll').onclick = async () => {
     if (!sent) ok = false;
   }
 
+  hide();
+
   if (ok) {
-    showModal('Голос учтён! Спасибо 🙌', async () => {
-      const sum = await getSummaryRobust();
-      if (sum && sum.length) renderSummary(sum);
-      show('screen-start');
-    });
+    bumpSummary(uniq, other);
+    refreshSummaryNow();
+    showModal('Голос учтён! Спасибо 🙌', () => { show('screen-start'); });
   } else {
     showModal('Не удалось отправить голос. Проверьте подключение и попробуйте ещё раз.');
   }
@@ -308,18 +404,3 @@ document.getElementById('sendPoll').onclick = async () => {
   btn.disabled = false;
   SENDING_POLL = false;
 };
-
-// ================== Модалка по центру ==================
-function showModal(html, onOk) {
-  const o = document.createElement('div');
-  o.className = 'toast-overlay';
-  o.innerHTML = `
-    <div class="toast-box">
-      ${html}
-      <br><br>
-      <div class="btn btn-primary" id="__ok">ОК</div>
-    </div>`;
-  document.body.appendChild(o);
-  const close = () => { o.remove(); if (typeof onOk === 'function') onOk(); };
-  o.addEventListener('click', (e)=>{ if (e.target.id==='__ok' || e.target===o) close(); });
-}
