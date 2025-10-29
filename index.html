@@ -314,21 +314,46 @@
       </div>
     </div>
 
-    <!-- Экран: Выбор темы вебинара -->
-    <div id="screen-poll" class="card section" style="display:none">
-      <button id="backFromPoll" class="btn btn-secondary btn-back" type="button">
-        <svg class="ico" viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 7l-4 4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Вернуться
-      </button>
+    <!-- ВЫБОР ТЕМЫ ВЕБИНАРА -->
+<div id="screen-poll" class="card section" style="display:none">
+  <h1>Выбор темы вебинара</h1>
 
-      <h1>Выбор темы вебинара</h1>
-      <div id="pollList" class="section">
-        <!-- Кнопки тем создаёт app.js -->
-      </div>
-      <div class="section">
-        <input id="otherTopic" type="text" placeholder="Предложите свою тему" />
-      </div>
+  <div id="pollSummaryCard" class="card" style="margin-top:10px">
+    <h3>Итоги голосования по темам</h3>
+    <div id="pollSummary" class="muted">Загрузка…</div>
+  </div>
+
+  <p class="muted" style="margin:14px 0 6px">Выберите одну или несколько тем:</p>
+
+  <div class="q" id="pollOptions">
+    <button class="pill poll-opt" data-topic="Обзор рынка и тренды 2025">Обзор рынка и тренды 2025</button>
+    <button class="pill poll-opt" data-topic="Закупки по 44-ФЗ / 223-ФЗ">Закупки по 44-ФЗ / 223-ФЗ</button>
+    <button class="pill poll-opt" data-topic="Импортозамещение (техника, софт, расходники)">Импортозамещение (техника, софт, расходники)</button>
+    <button class="pill poll-opt" data-topic="Рынок картриджей — есть ли жизнь после OEM?">Рынок картриджей — есть ли жизнь после OEM?</button>
+    <button class="pill poll-opt" data-topic="Другая тема">Другая тема</button>
+
+    <div id="pollOtherBox" style="display:none;margin-top:8px">
+      <input id="pollOther" type="text" placeholder="Предложите свою тему" />
     </div>
+  </div>
+
+  <div class="section">
+    <button id="sendPoll" class="btn btn-primary">Отправить голос</button>
+  </div>
+
+  <!-- Кнопка «Вернуться» внизу -->
+  <div class="section" style="margin-top:20px;text-align:center;">
+    <button id="backFromPoll" class="btn btn-secondary" type="button"
+            style="max-width:240px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9" />
+        <polyline points="3,12 9,6 9,18" />
+      </svg>
+      Вернуться
+    </button>
+  </div>
+</div>
 
   </div>
 
