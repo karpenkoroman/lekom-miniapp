@@ -4,37 +4,116 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ЛЕКОМ · Интерактив</title>
+
 <style>
+/* Шрифт */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+/* Палитра и общие */
 :root{
-  --bg:#0e1015;--bg2:#171b25;--stroke:#293044;
-  --text:#eaf0fa;--text-dim:#96a2c2;
-  --brand:#2a7de1;--brand2:#1db8aa;
+  --bg:#0e1015; --bg2:#171b25; --stroke:#293044;
+  --text:#eaf0fa; --text-dim:#96a2c2;
+  --brand:#2a7de1; --brand2:#1db8aa;
+  --radius:16px;
 }
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:Roboto,sans-serif;-webkit-font-smoothing:antialiased;}
-.app{max-width:720px;margin:0 auto;padding:20px;}
-.card{background:var(--bg2);border:1px solid var(--stroke);border-radius:16px;padding:16px;}
-h1{font-size:26px;margin:0 0 8px;}h2{font-size:22px;margin:0 0 6px;}h3{font-size:18px;margin:0 0 6px;}
-.muted{color:var(--text-dim);}
-.btn{display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;line-height:1;
-  padding:14px 16px;border-radius:12px;border:1px solid transparent;cursor:pointer;width:100%;transition:filter .12s,transform .12s;}
-.btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;}
-.btn-primary:hover{filter:brightness(1.07);}
-.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--stroke);}
-.btn-secondary:hover{background:rgba(255,255,255,.05);}
-.q{margin-top:18px;}
-.q b{display:block;margin-bottom:8px;font-size:17px;}
-.pill{width:100%;text-align:left;font-size:16px;line-height:1.45;padding:14px 16px;margin-top:6px;
-  border-radius:12px;border:1px solid var(--stroke);background:#101625;color:var(--text);cursor:pointer;}
-.pill:hover{background:#141b2b;}
-.pill.selected{background:rgba(29,184,170,.25);border-color:var(--brand2);}
-input[type=text]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--stroke);background:#111620;color:var(--text);}
-.summary-row{margin:6px 0;}
-.summary-head{display:flex;justify-content:space-between;gap:8px;}
-.summary-bar{height:8px;background:#101625;border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
-.summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
-.toast-overlay{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999;}
-.toast-box{background:var(--bg2);border:1px solid var(--stroke);padding:20px 24px;border-radius:14px;max-width:90%;text-align:center;line-height:1.5;}
+html,body{
+  margin:0; padding:0; background:var(--bg); color:var(--text);
+  font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+.app{ max-width:720px; margin:0 auto; padding:20px 16px 28px; }
+.card{
+  background:var(--bg2); border:1px solid var(--stroke); border-radius:var(--radius);
+  padding:16px 16px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+}
+h1{ font-size:26px; margin:0 0 12px; }
+h2{ font-size:22px; margin:0 0 10px; }
+h3{ font-size:18px; margin:0 0 8px; }
+.muted{ color:var(--text-dim); }
+
+/* Кнопки — единый стиль */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; min-height:46px; padding:12px 16px;
+  font-size:16px; font-weight:700; line-height:1; letter-spacing:.2px;
+  border-radius:12px; border:1px solid transparent; cursor:pointer;
+  transition:filter .12s, transform .06s ease;
+  user-select:none; -webkit-tap-highlight-color:transparent;
+}
+.btn:active{ transform:translateY(1px); }
+.btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+.btn + .btn{ margin-top:10px; }
+
+.btn-primary{
+  color:#fff;
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  box-shadow:0 10px 28px rgba(42,125,225,.18);
+}
+.btn-primary:hover{ filter:brightness(1.06); }
+.btn-secondary{
+  color:var(--text); background:#101625; border:1px solid var(--stroke);
+}
+.btn-secondary:hover{ background:#141b2b; }
+
+/* Ряды кнопок */
+.btn-row{ display:flex; gap:12px; flex-wrap:wrap; }
+.btn-row .btn{ flex:1 1 220px; }
+
+/* Вопросы/ответы («пилюли») */
+.q{ margin-top:18px; }
+.q b{ display:block; margin-bottom:10px; font-size:17px; }
+.pill{
+  width:100%; text-align:left;
+  font-size:16px; line-height:1.45;
+  padding:14px 16px; margin-top:8px;
+  border-radius:12px; border:1px solid var(--stroke);
+  background:#101625; color:var(--text); cursor:pointer;
+}
+.pill:hover{ background:#141b2b; }
+.pill.selected{
+  background:rgba(29,184,170,.22);
+  border-color:var(--brand2);
+  outline:2px solid rgba(29,184,170,.5);
+}
+
+/* Поля ввода */
+input[type=text]{
+  width:100%; padding:12px 12px; border-radius:10px;
+  border:1px solid var(--stroke); background:#111620; color:var(--text);
+}
+input[type=text]::placeholder{ color:#7e8aa8; }
+
+/* Прогресс и сводка */
+#auditProgress{ margin:6px 0 12px; font-size:14px; color:var(--text-dim); }
+
+.summary-row{ margin:8px 0; }
+.summary-head{ display:flex; justify-content:space-between; gap:8px; }
+.summary-bar{
+  height:8px; background:#101625; border:1px solid var(--stroke);
+  border-radius:999px; overflow:hidden;
+}
+.summary-fill{ height:100%; background:linear-gradient(90deg,var(--brand),var(--brand2)); }
+
+/* Результат */
+#resultBox .cta-row{ display:flex; gap:12px; flex-wrap:wrap; }
+#resultBox .btn{ flex:1 1 220px; }
+
+/* Модалка (центральное уведомление) */
+.toast-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.45);
+  display:flex; align-items:center; justify-content:center; z-index:9999;
+}
+.toast-box{
+  background:var(--bg2); border:1px solid var(--stroke);
+  padding:20px 20px; border-radius:14px;
+  max-width:320px; width:calc(100vw - 48px); text-align:center; line-height:1.5;
+  box-shadow:0 12px 36px rgba(0,0,0,.35);
+}
+.toast-box .btn{ width:100%; box-sizing:border-box; margin-top:10px; }
+
+/* Мелкие улучшения */
+.section + .section{ margin-top:16px; }
+hr{ border:0; height:1px; background:var(--stroke); opacity:.5; margin:14px 0; }
 </style>
 </head>
 
