@@ -125,17 +125,19 @@ function renderSummary(data) {
 }
 
 // быстрый placeholder + ретраи
-renderSummary([
-  {label:'Обзор рынка и тренды 2025', count:0},
-  {label:'Импортозамещение', count:0},
-  {label:'Закупки 44-ФЗ/223-ФЗ', count:0},
-  {label:'Рынок картриджей', count:0},
-]);
-(async function refreshSummary(){
-  const s1 = await getSummaryRobust(); if (s1 && s1.length) return renderSummary(s1);
-  setTimeout(async()=>{ const s2=await getSummaryRobust(); if(s2 && s2.length) renderSummary(s2); }, 2000);
-  setTimeout(async()=>{ const s3=await getSummaryRobust(); if(s3 && s3.length) renderSummary(s3); }, 8000);
-})();
+try {
+  renderSummary([
+    {label:'Обзор рынка и тренды 2025', count:0},
+    {label:'Импортозамещение', count:0},
+    {label:'Закупки 44-ФЗ/223-ФЗ', count:0},
+    {label:'Рынок картриджей', count:0},
+  ]);
+  (async function refreshSummary(){
+    const s1 = await getSummaryRobust(); if (s1 && s1.length) return renderSummary(s1);
+    setTimeout(async()=>{ const s2=await getSummaryRobust(); if(s2 && s2.length) renderSummary(s2); }, 2000);
+    setTimeout(async()=>{ const s3=await getSummaryRobust(); if(s3 && s3.length) renderSummary(s3); }, 8000);
+  })();
+} catch(_) { /* не блокируем UI */ }
 
 // ================== Аудит ==================
 const auditForm = document.getElementById('auditForm');
@@ -221,7 +223,7 @@ document.getElementById('sendLead').onclick = async ()=>{
 document.getElementById('ctaExpert').onclick = async ()=>{
   const r = window.__lastAuditResult;
   const msg = r
-    ? `Здравствуйте! Хочу обсудить аудит печати.\nСчёт: ${r.score}/11, вердикт: ${r.verдикт||r.verdict}.`
+    ? `Здравствуйте! Хочу обсудить аудит печати.\nСчёт: ${r.score}/11, вердикт: ${r.verdict}.`
     : `Здравствуйте! Хочу обсудить аудит печати.`;
 
   try { await navigator.clipboard.writeText(msg); } catch(_){}
@@ -252,7 +254,7 @@ document.getElementById('sendPoll').onclick = async () => {
   let ok = true;
   const batch = [];
   selected.forEach(t => batch.push({ type:'poll', poll:'webinar_topic', topic:t, other:'' }));
-  if (other) batch.push({ type:'poll', poll:'webinar_topic', topic:'Другая тема', other }));
+  if (other) batch.push({ type:'poll', poll:'webinar_topic', topic:'Другая тема', other });
 
   for (const p of batch) {
     const sent = await sendToHook(p);
