@@ -96,25 +96,24 @@ input[type=text]{width:100%;background:#0f1420;border:1px solid var(--stroke);bo
 <body>
   <div class="wrap">
 
-    <!-- Стартовый экран -->
-    <div id="start" class="card">
-      <h1 class="app-title">ЛЕКОМ · Интерактив</h1>
-      <p class="sub">Выберите, что хотите пройти</p>
-
-      <div class="cta-stack">
-        <button id="goAudit" class="cta-btn">
-          <span class="cta-ico">🧾</span><span>Пройти аудит печати</span>
-        </button>
-        <button id="goWebinar" class="cta-btn">
-          <span class="cta-ico">🎓</span><span>Выбрать тему вебинара</span>
-        </button>
-      </div>
-
-      <div class="summary-card">
-        <div class="summary-title">📈 Итоги голосования по темам</div>
-        <div id="summaryStart" class="summary-body">Загружаем…</div>
-      </div>
+<div id="screen-start" class="app" style="display:block;">
+  <div class="card stack">
+    <div>
+      <h1 style="margin-bottom:2px;">ЛЕКОМ · Интерактив</h1>
+      <div class="muted">Выберите, что хотите пройти</div>
     </div>
+
+    <div class="stack">
+      <button id="goAudit" class="btn full">🧾 Пройти аудит печати</button>
+      <button id="goPoll"  class="btn secondary full">🎓 Выбрать тему вебинара</button>
+    </div>
+
+    <div id="summaryBox" class="card" style="margin-top:8px">
+      <div class="card-title">📈 Итоги голосования по темам</div>
+      <div id="summaryContent" class="stack"><div class="muted">Загружаем…</div></div>
+    </div>
+  </div>
+</div>
 
     <!-- Экран: выбор темы вебинара -->
     <div id="webinar" class="card" style="display:none;">
@@ -245,35 +244,112 @@ input[type=text]{width:100%;background:#0f1420;border:1px solid var(--stroke);bo
     </div>
   </form>
 
-  <!-- БЛОК РЕЗУЛЬТАТА -->
-  <div id="resultBlock" class="mt-3">
-    <h3 style="margin:0 0 8px;">Ваш результат</h3>
-    <div id="resultText" class="muted">После отправки результата здесь появится сводка.</div>
+ <!-- === РЕЗУЛЬТАТ АУДИТА === -->
+<div id="resultBlock" class="card stack" style="margin-top:16px;">
+  <h3 class="card-title">Ваш результат</h3>
 
-    <div class="mt-3 row" style="gap:10px;">
-      <button id="ctaExpert" class="btn btn-primary" style="flex:1;">Обсудить с экспертом</button>
-      <button id="toggleLead" class="btn btn-ghost" style="flex:1;">Оставить контакты</button>
+  <!-- сюда пишем сводку -->
+  <div id="resultText" class="muted">
+    После нажатия «Посмотреть результат» здесь появится сводка.
+  </div>
+
+  <!-- CTA-кнопки -->
+  <div class="row" style="gap:10px;">
+    <button id="ctaExpert"  class="btn full">💬 Обсудить с экспертом</button>
+    <button id="toggleLead" class="btn secondary full">✉️ Оставить контакты</button>
+  </div>
+
+  <!-- Форма лида (скрыта) -->
+  <div id="leadForm" style="display:none;">
+    <div class="row" style="gap:10px; margin-top:10px;">
+      <input id="leadName"    class="half" type="text"  placeholder="Ваше имя">
+      <input id="leadCompany" class="half" type="text"  placeholder="Компания">
+    </div>
+    <div class="row" style="gap:10px; margin-top:10px;">
+      <input id="leadPhone"   class="half" type="text"  placeholder="Телефон или email">
+      <input id="leadComment" class="half" type="text"  placeholder="Комментарий">
     </div>
 
-    <div id="leadForm" class="mt-2" style="display:none;">
-      <div class="row" style="gap:10px;">
-        <input id="leadName" type="text" class="half" placeholder="Ваше имя">
-        <input id="leadCompany" type="text" class="half" placeholder="Компания">
-      </div>
-      <div class="row mt-2" style="gap:10px;">
-        <input id="leadPhone" type="text" class="half" placeholder="Телефон или email">
-        <input id="leadComment" type="text" class="half" placeholder="Комментарий">
-      </div>
-      <div class="hint mt-1">
-        Отправляя данные, вы соглашаетесь с
-        <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.
-      </div>
-      <div class="mt-2">
-        <button id="sendLead" class="btn btn-primary" style="width:100%;">Отправить контакты</button>
-      </div>
+    <div class="muted" style="font-size:12px; margin-top:8px;">
+      Отправляя данные, вы соглашаетесь с
+      <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.
     </div>
+
+    <button id="sendLead" class="btn full" style="margin-top:10px;">🚀 Отправить контакты</button>
   </div>
 </div>
+
+<script>
+/* ========= ЛОГИКА БЛОКА РЕЗУЛЬТАТА =========
+   Ожидается, что где-то в коде вызывается:
+     LEKOM.onResultShown({score, verdict, advice})
+   или вы напрямую заполняете #resultText.
+*/
+(function(){
+  const resultText = document.getElementById('resultText');
+  const ctaExpert  = document.getElementById('ctaExpert');
+  const toggleLead = document.getElementById('toggleLead');
+  const leadForm   = document.getElementById('leadForm');
+  const sendLead   = document.getElementById('sendLead');
+
+  // Храним последний результат, чтобы передать эксперту и в лид
+  let lastResult = null;
+
+  // Публичный хук: вызывайте ПОСЛЕ расчёта результата
+  window.LEKOM = window.LEKOM || {};
+  window.LEKOM.onResultShown = function(res){
+    lastResult = res; // {score, verdict, advice}
+    if (resultText) {
+      resultText.innerHTML =
+        `Итоговый счёт: <b>${res.score}/11</b><br>` +
+        `Вердикт: <b>${res.verdict}</b><br>` +
+        `<span class="muted">${res.advice || ''}</span>`;
+    }
+  };
+
+  // Кнопка "Обсудить с экспертом"
+  ctaExpert?.addEventListener('click', () => {
+    const msg =
+      `Здравствуйте! Хочу обсудить аудит печати.\n` +
+      (lastResult ? `Счёт: ${lastResult.score}/11, вердикт: ${lastResult.verdict}.` : `Результат ещё не отправлен.`);
+    // Мобильный Telegram deeplink к @chelebaev с автотекстом
+    const url = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/chelebaev')}&text=${encodeURIComponent(msg)}`;
+    // в Mini App откроется выбор – пользователь нажмёт «Открыть в Telegram»
+    window.open(url, '_blank');
+  });
+
+  // Показ/скрытие формы лида
+  toggleLead?.addEventListener('click', () => {
+    const vis = leadForm.style.display !== 'none';
+    leadForm.style.display = vis ? 'none' : 'block';
+  });
+
+  // Отправка лида
+  sendLead?.addEventListener('click', () => {
+    const payload = {
+      type:   'lead',
+      name:   document.getElementById('leadName')?.value?.trim()    || '',
+      company:document.getElementById('leadCompany')?.value?.trim() || '',
+      phone:  document.getElementById('leadPhone')?.value?.trim()   || '',
+      comment:document.getElementById('leadComment')?.value?.trim() || '',
+      result: lastResult || {}
+    };
+
+    // Если в проекте уже есть отправщик — используем его
+    if (window.LEKOM?.sendLead) {
+      LEKOM.sendLead(payload);
+    } else if (window.LEKOM?.postHook) {
+      // запасной, если есть общий постер в LEKOM.postHook(url, payload)
+      LEKOM.postHook(payload);
+    }
+
+    // простая визуальная квитанция
+    leadForm.style.display = 'none';
+    resultText.innerHTML = `<b>Спасибо!</b> Контакты отправлены. Мы свяжемся с вами в ближайшее время.` +
+      (lastResult ? `<div class="muted" style="margin-top:6px;">(Сохранён итог: ${lastResult.score}/11 — ${lastResult.verdict})</div>` : '');
+  });
+})();
+</script>
    
 
   </div> <!-- /wrap -->
