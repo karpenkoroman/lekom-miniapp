@@ -23,21 +23,61 @@ async function postHook(payload){
     });
   }catch(e){ /* молча, чтобы не мешать UX */ }
 }
-async function getSummary(){
+
+// ——— Надёжная подгрузка сводки голосования
+async function getSummaryRobust(){
   if(!HOOK) return null;
-  // Пробуем универсальный формат: ?summary=webinar
+
+  // helper: попытаться распарсить JSON из текста
+  const tryParse = (txt)=>{
+    try { return JSON.parse(txt); } catch(_) {}
+    // иногда GAS отдаёт префиксы, попробуем выдрать {...} массив
+    const m = txt.match(/\[.+\]/s);
+    if(m){ try { return JSON.parse(m[0]); } catch(_){} }
+    return null;
+  };
+
+  // 1) Попробуем ?summary=webinar (чистый JSON)
   try{
-    const u = new URL(HOOK);
+    let u = new URL(HOOK);
     u.searchParams.set('summary','webinar');
-    const res = await fetch(u.toString(), {method:'GET',mode:'cors',credentials:'omit'});
-    if(!res.ok) return null;
-    const txt = await res.text();
-    // Если сервер вернёт JSON — распарсим, иначе вернём null
-    try{ return JSON.parse(txt); }catch(_){ return null; }
-  }catch(_){ return null; }
+    let res = await fetch(u.toString(), { method:'GET', mode:'cors', credentials:'omit' });
+    let txt = await res.text();
+    let data = tryParse(txt);
+    if (Array.isArray(data)) return data;
+  }catch(_){}
+
+  // 2) Попробуем ?summary=webinar&format=json
+  try{
+    let u = new URL(HOOK);
+    u.searchParams.set('summary','webinar'); u.searchParams.set('format','json');
+    let res = await fetch(u.toString(), { method:'GET', mode:'cors', credentials:'omit' });
+    let txt = await res.text();
+    let data = tryParse(txt);
+    if (Array.isArray(data)) return data;
+  }catch(_){}
+
+  // 3) JSONP: ?summary=webinar&callback=__LEKOM_SUMMARY_CB
+  try{
+    const cb = '__LEKOM_SUMMARY_CB_' + Math.random().toString(36).slice(2);
+    const data = await new Promise((resolve,reject)=>{
+      window[cb] = (d)=>resolve(d);
+      const s = document.createElement('script');
+      const u = new URL(HOOK);
+      u.searchParams.set('summary','webinar');
+      u.searchParams.set('callback', cb);
+      s.src = u.toString();
+      s.onerror = ()=>reject(new Error('jsonp-error'));
+      document.head.appendChild(s);
+      setTimeout(()=>reject(new Error('jsonp-timeout')), 5000);
+    });
+    if (Array.isArray(data)) return data;
+  }catch(_){}
+
+  return null;
 }
 
-// ====== Рендер сводки голосования на старте ======
+// Рендер сводки
 function renderSummary(data){
   const box = document.getElementById('summaryContent');
   if(!box) return;
@@ -67,19 +107,30 @@ function renderSummary(data){
     box.appendChild(row);
   });
 }
-// быстрый старт: покажем заглушку сразу
+
+// Мгновенная заглушка + асинхронные ретраи
 renderSummary([
-  {label:'Безопасность данных и ФЗ-152', count:0},
   {label:'Импортозамещение', count:0},
   {label:'Закупки 44-ФЗ/223-ФЗ', count:0},
   {label:'Обзор рынка и тренды 2025', count:0},
   {label:'Рынок картриджей', count:0},
 ]);
-// затем попробуем подтянуть реальную сводку
-getSummary().then(sum=>{
-  if(sum && Array.isArray(sum) && sum.length) renderSummary(sum);
-});
 
+(async function refreshSummary(){
+  const s1 = await getSummaryRobust();
+  if (s1 && s1.length) return renderSummary(s1);
+  // ретрай через 2 секунды
+  setTimeout(async ()=>{
+    const s2 = await getSummaryRobust();
+    if (s2 && s2.length) return renderSummary(s2);
+    // финальный ретрай через 8 секунд
+    setTimeout(async ()=>{
+      const s3 = await getSummaryRobust();
+      if (s3 && s3.length) return renderSummary(s3);
+      // оставим заглушку
+    }, 8000);
+  }, 2000);
+})();
 // ====== Аудит печати ======
 const auditForm = document.getElementById('auditForm');
 const auditProgress = document.getElementById('auditProgress');
