@@ -1,5 +1,7 @@
 // ================== Глобальные ==================
 const HOOK = window.LEKOM_HOOK;
+const TOTAL_Q = 11;
+let SENDING_POLL = false;
 
 // Показ экранов
 function show(id) {
@@ -140,9 +142,12 @@ try {
 } catch(_) { /* не блокируем UI */ }
 
 // ================== Аудит ==================
-const auditForm = document.getElementById('auditForm');
-const prog = document.getElementById('auditProgress');
-const TOTAL_Q = 11;
+const auditForm   = document.getElementById('auditForm');
+const prog        = document.getElementById('auditProgress');
+const btnResult   = document.getElementById('btnAuditResult');
+
+// инициализируем счётчик на кнопке
+updateAuditCounters();
 
 // выбор ответов-«пилюль»
 auditForm.addEventListener('click', (e)=>{
@@ -150,10 +155,15 @@ auditForm.addEventListener('click', (e)=>{
   const q = b.dataset.q;
   auditForm.querySelectorAll(`.pill[data-q="${q}"]`).forEach(x=>x.classList.remove('selected'));
   b.classList.add('selected');
-
-  const answered = new Set([...auditForm.querySelectorAll('.pill.selected')].map(x=>x.dataset.q)).size;
-  prog.textContent = `Ответы: ${answered} / ${TOTAL_Q}`;
+  updateAuditCounters();
 });
+
+// обновление счётчиков: прогресс и текст на кнопке
+function updateAuditCounters() {
+  const answered = new Set([...auditForm.querySelectorAll('.pill.selected')].map(x=>x.dataset.q)).size;
+  if (prog) prog.textContent = `Ответы: ${answered} / ${TOTAL_Q}`;
+  if (btnResult) btnResult.textContent = `Посмотреть результат (${answered} / ${TOTAL_Q})`;
+}
 
 // подсчёт результата
 function calcAudit() {
@@ -172,7 +182,7 @@ function calcAudit() {
 }
 
 // показать результат (тихо отправляем, без алертов)
-document.getElementById('btnAuditResult').onclick = async ()=>{
+btnResult.onclick = async ()=>{
   const res = calcAudit();
   document.getElementById('resultText').innerHTML =
     `Итоговый счёт: <b>${res.score}/11</b><br>Вердикт: <b>${res.verdict}</b><br><span class="muted">${res.advice}</span>`;
@@ -242,20 +252,26 @@ pollForm.addEventListener('click', (e)=>{
 });
 
 document.getElementById('sendPoll').onclick = async () => {
+  if (SENDING_POLL) return; // защита от двойного тапа
+  SENDING_POLL = true;
+  const btn = document.getElementById('sendPoll');
+  btn.disabled = true;
+
   const selected = [...pollForm.querySelectorAll('.pill.selected')].map(b => b.dataset.topic);
   const other = document.getElementById('pollOther').value.trim();
 
   if (!selected.length && !other) {
     showModal('Выберите хотя бы одну тему или укажите свою.');
+    btn.disabled = false; SENDING_POLL = false;
     return;
   }
 
-  // отправляем выбранные темы пакетно
-  let ok = true;
-  const batch = [];
-  selected.forEach(t => batch.push({ type:'poll', poll:'webinar_topic', topic:t, other:'' }));
+  // убираем случайные дубли в выбранных темах
+  const uniq = [...new Set(selected)];
+  const batch = uniq.map(t => ({ type:'poll', poll:'webinar_topic', topic:t, other:'' }));
   if (other) batch.push({ type:'poll', poll:'webinar_topic', topic:'Другая тема', other });
 
+  let ok = true;
   for (const p of batch) {
     const sent = await sendToHook(p);
     if (!sent) ok = false;
@@ -270,6 +286,9 @@ document.getElementById('sendPoll').onclick = async () => {
   } else {
     showModal('Не удалось отправить голос. Проверьте подключение и попробуйте ещё раз.');
   }
+
+  btn.disabled = false;
+  SENDING_POLL = false;
 };
 
 // ================== Модалка по центру ==================
