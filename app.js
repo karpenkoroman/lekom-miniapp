@@ -1,55 +1,42 @@
 (() => {
   'use strict';
 
-  // ========= CONFIG =========
+  // ================== CONFIG ==================
   const HOOK = (window && window.LEKOM_HOOK) || '';
 
-  // ========= TELEGRAM USER (если мини-апп открыт в Telegram) =========
-  let TG_USER = null;
-  try {
-    if (window.Telegram && Telegram.WebApp) {
-      Telegram.WebApp.expand();
-      const d = Telegram.WebApp.initDataUnsafe;
-      if (d && d.user) {
-        TG_USER = {
-          id: d.user.id,
-          username: d.user.username || '',
-          first_name: d.user.first_name || ''
-        };
-      }
-    }
-  } catch (_) {}
+  // Telegram WebApp (если мини-апп открыт в Telegram)
+  const TG = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+  const TG_USER = TG?.initDataUnsafe?.user || null;
 
-  // ========= SAFE DOM GETTERS =========
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+  // ================== SAFE DOM ==================
+  const $  = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
 
   // Screens
   const scrStart = $('#screen-start');
   const scrAudit = $('#screen-audit');
   const scrPoll  = $('#screen-poll');
 
-  // Nav buttons
+  // Nav
   const btnGoAudit    = $('#goAudit');
   const btnGoPoll     = $('#goPoll');
   const backFromAudit = $('#backFromAudit');
   const backFromPoll  = $('#backFromPoll');
 
-  // Theme toggle
+  // Theme
   const themeToggle = $('#themeToggle');
   const iconMoon    = $('#iconMoon');
   const iconSun     = $('#iconSun');
   const themeLabel  = $('#themeLabel');
 
-  // Summary box (start screen)
+  // Start summary
   const summaryBox = $('#summaryContent');
 
-  // Audit
+  // Audit DOM
   const auditForm       = $('#auditForm');
   const auditProgressEl = $('#auditProgress');
   const btnAuditResult  = $('#btnAuditResult');
   const btnAuditSub     = $('#btnAuditSub');
-  const resultBox       = $('#resultBox');
   const resultText      = $('#resultText');
   const resultVerdict   = $('#resultVerdict');
   const resultAdvice    = $('#resultAdvice');
@@ -63,14 +50,14 @@
   const leadPhone   = $('#leadPhone');
   const btnSendLead = $('#sendLead');
 
-  // Poll
+  // Poll DOM
   const pollOptions   = $$('#screen-poll .poll-opt');
   const pollOtherBox  = $('#pollOtherBox');
   const pollOtherText = $('#pollOther');
   const btnSendPoll   = $('#sendPoll');
 
-  // ========= UTIL =========
-  function show(el){ if (el) el.style.display = 'flex'; }
+  // ================== UTIL ==================
+  function show(el){ if (el) { el.style.display = 'flex'; el.style.flexDirection = 'column'; } }
   function hide(el){ if (el) el.style.display = 'none'; }
 
   function showScreen(name){
@@ -89,6 +76,7 @@
     return 'баллов';
   }
 
+  // Тост / модалка-подсказка
   function toast(html, withOk = true, onOk = null){
     const wrap = document.createElement('div');
     wrap.className = 'toast-overlay';
@@ -106,7 +94,7 @@
     }
   }
 
-  // ========= THEME =========
+  // ================== THEME ==================
   function applyTheme(theme){
     document.documentElement.classList.toggle('theme-light', theme === 'light');
     document.documentElement.setAttribute('data-theme', theme);
@@ -129,23 +117,20 @@
     applyTheme(cur === 'dark' ? 'light' : 'dark');
   });
 
-  // ========= SUMMARY (start) =========
-  async function loadSummaryToStart() {
+  // ================== SUMMARY (start) ==================
+  async function loadSummaryToStart(){
     if (!summaryBox) return;
     summaryBox.innerHTML = '<div class="muted">Загрузка…</div>';
-
-    try {
+    try{
       const res  = await fetch(HOOK + '?summary=webinar', { cache: 'no-store' });
       const data = await res.json(); // { total, items:[{topic,count}] }
       const wrap = document.createElement('div');
       const total = data.total || 0;
-
       wrap.innerHTML = `<div class="muted" style="margin-bottom:6px">Всего голосов: ${total}</div>`;
 
-      const items = (data.items || []).slice().sort((a, b) => (b.count - a.count));
-
-      items.forEach(it => {
-        const pct = total ? Math.round((it.count / total) * 100) : 0;
+      const items = (data.items || []).slice().sort((a,b)=> (b.count||0)-(a.count||0));
+      items.forEach(it=>{
+        const pct = total ? Math.round((it.count/total)*100) : 0;
         const row = document.createElement('div');
         row.className = 'summary-row';
         row.innerHTML = `
@@ -153,14 +138,12 @@
             <div>${it.topic}</div>
             <div class="muted">${it.count} (${pct}%)</div>
           </div>
-          <div class="summary-bar">
-            <div class="summary-fill" style="width:${pct}%"></div>
-          </div>
+          <div class="summary-bar"><div class="summary-fill" style="width:${pct}%"></div></div>
         `;
         wrap.appendChild(row);
       });
 
-      if (!items.length) {
+      if (!items.length){
         const empty = document.createElement('div');
         empty.className = 'muted';
         empty.textContent = 'Пока нет голосов.';
@@ -169,14 +152,13 @@
 
       summaryBox.innerHTML = '';
       summaryBox.appendChild(wrap);
-
-    } catch (e) {
+    }catch(e){
       console.error('Ошибка сводки:', e);
       summaryBox.innerHTML = '<span class="muted">Не удалось загрузить сводку.</span>';
     }
   }
 
-  // ========= POLL (multi-select) =========
+  // ================== POLL (multi-select) ==================
   pollOptions.forEach(p=>{
     p.addEventListener('click', ()=>{
       p.classList.toggle('selected');
@@ -187,35 +169,45 @@
     });
   });
 
+  let isSendingPoll = false;
+
   btnSendPoll?.addEventListener('click', async ()=>{
+    if (isSendingPoll) return;
     const selected = $$('#screen-poll .poll-opt.selected').map(x=>x.dataset.topic);
     if (!selected.length){ toast('Выберите тему'); return; }
     const otherText = selected.includes('Другая тема') ? (pollOtherText?.value || '').trim() : '';
 
-    try{
-      for (const topic of selected){
-        const payload = {
-          type:'poll', poll:'webinar_topic', topic,
-          other: topic==='Другая тема' ? otherText : '',
-          initData: TG_USER ? { user: TG_USER } : null,
-          user_id: TG_USER?.id || '',
-          username: TG_USER?.username || '',
-          first_name: TG_USER?.first_name || ''
-        };
-        await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), {
-          method:'GET', cache:'no-store'
-        });
-      }
-      toast('Голос учтён! Спасибо 🙌');
-      $$('#screen-poll .poll-opt.selected').forEach(x=>x.classList.remove('selected'));
-      if (pollOtherText) pollOtherText.value = '';
-      if (pollOtherBox)  pollOtherBox.style.display = 'none';
-    }catch(e){
-      toast('Не удалось отправить голос. Попробуйте ещё раз.');
-    }
+    // Моментальный отклик
+    toast('Голос учтён! Спасибо 🙌');
+
+    isSendingPoll = true;
+    const makePayload = (topic) => ({
+      type: 'poll',
+      poll: 'webinar_topic',
+      topic,
+      other: topic === 'Другая тема' ? otherText : '',
+      // прокинем Telegram-поля (если есть)
+      initData: TG_USER ? { user: TG_USER } : null,
+      user_id: TG_USER?.id || '',
+      username: TG_USER?.username || '',
+      first_name: TG_USER?.first_name || ''
+    });
+
+    // отправляем все выбранные темы параллельно
+    const tasks = selected.map(topic =>
+      fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(makePayload(topic))), {
+        method:'GET', cache:'no-store'
+      }).catch(()=> null)
+    );
+    Promise.allSettled(tasks).finally(()=> { isSendingPoll = false; });
+
+    // очистка UI
+    $$('#screen-poll .poll-opt.selected').forEach(x=>x.classList.remove('selected'));
+    if (pollOtherText) pollOtherText.value = '';
+    if (pollOtherBox)  pollOtherBox.style.display = 'none';
   });
 
-  // ========= AUDIT =========
+  // ================== AUDIT ==================
   const TOTAL_Q = 11;
 
   function getAuditAnswers(){
@@ -234,6 +226,7 @@
     if (btnAuditSub)     btnAuditSub.textContent     = `(ответов ${answered} из ${TOTAL_Q})`;
   }
 
+  // одиночный выбор на вопрос
   $$('#auditForm .pill').forEach(p=>{
     p.addEventListener('click', ()=>{
       const q = p.dataset.q;
@@ -249,26 +242,28 @@
     const answers = getAuditAnswers();
     const score = Object.values(answers).reduce((s,a)=> s + (a.score || 0), 0);
 
-    // Вердикт и рекомендация
+    // Вердикт/рекомендация (учли «Требуется пересмотр...»)
     let verdict = 'Нужен аудит';
     let advice  = 'Требуется пересмотр парка и бюджета.';
-    if (score >= 9){ verdict='Зрелая практика';        advice='У вас всё под контролем, продолжайте.'; }
-    else if (score >= 6){ verdict='Частичный контроль';  advice='Рекомендуем уточнить бюджет и процессы.'; }
+    if (score >= 9){       verdict='Зрелая практика';      advice='У вас всё под контролем, продолжайте.'; }
+    else if (score >= 6){  verdict='Частичный контроль';   advice='Рекомендуем уточнить бюджет и процессы.'; }
 
     lastAuditResult = {
       score, verdict, advice,
       answers: Object.fromEntries(Object.entries(answers).map(([k,v])=>[k, v.text]))
     };
 
-    // Показ результата
-    if (resultText)     resultText.innerHTML   = `${score} ${pluralBall(score)} из ${TOTAL_Q}`;
+    // Показ результата (без всплывашек)
+    if (resultText) {
+      resultText.innerHTML = `${score} ${pluralBall(score)} из ${TOTAL_Q}`;
+    }
     if (resultVerdict){ resultVerdict.textContent = verdict; resultVerdict.style.display=''; }
     if (resultAdvice){  resultAdvice.textContent  = advice;  resultAdvice.style.display=''; }
 
-    // Отправка результата (без тостов)
+    // Шлём результат (молча)
     try{
       const payload = {
-        type:'result',
+        type: 'result',
         score, verdict, advice,
         answers: lastAuditResult.answers,
         initData: TG_USER ? { user: TG_USER } : null,
@@ -276,13 +271,12 @@
         username: TG_USER?.username || '',
         first_name: TG_USER?.first_name || ''
       };
-      await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), {
-        method:'GET', cache:'no-store'
-      });
+      fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' })
+        .catch(()=>null);
     }catch(_){}
   });
 
-  // ========= EXPERT & LEAD =========
+  // ================== EXPERT & LEAD ==================
   btnExpert?.addEventListener('click', async ()=>{
     const msg =
       `Добрый день! Хочу обсудить результаты самоаудита печати.\n`+
@@ -305,45 +299,49 @@
     if (!shown){ leadName?.focus(); }
   });
 
+  let isSendingLead = false;
+
   btnSendLead?.addEventListener('click', async ()=>{
+    if (isSendingLead) return;
     const name    = (leadName?.value || '').trim();
     const company = (leadCompany?.value || '').trim();
     const phone   = (leadPhone?.value || '').trim();
     if (!name || !phone){ toast('Укажите имя и контакт (телефон или email).'); return; }
 
-    try{
-      const payload = {
-        type:'lead',
-        name, company, phone,
-        result: lastAuditResult,
-        consent: true,
-        policyUrl: 'https://lekom.ru/politika-konfidencialnosti/',
-        initData: TG_USER ? { user: TG_USER } : null,
-        user_id: TG_USER?.id || '',
-        username: TG_USER?.username || '',
-        first_name: TG_USER?.first_name || ''
-      };
-      await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), {
-        method:'GET', cache:'no-store'
-      });
+    // моментальный отклик
+    toast('Спасибо! Мы свяжемся с вами.');
 
-      toast('Спасибо! Мы свяжемся с вами.');
-      if (leadName)    leadName.value = '';
-      if (leadCompany) leadCompany.value = '';
-      if (leadPhone)   leadPhone.value = '';
-      if (leadForm)    leadForm.style.display = 'none';
-    }catch(e){
-      toast('Не удалось отправить. Попробуйте ещё раз.');
-    }
+    isSendingLead = true;
+    const payload = {
+      type:'lead',
+      name, company, phone,
+      result: lastAuditResult,
+      consent: true,
+      policyUrl: 'https://lekom.ru/politika-konfidencialnosti/',
+      initData: TG_USER ? { user: TG_USER } : null,
+      user_id: TG_USER?.id || '',
+      username: TG_USER?.username || '',
+      first_name: TG_USER?.first_name || ''
+    };
+
+    fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' })
+      .catch(()=> toast('Не удалось отправить. Попробуйте ещё раз.'))
+      .finally(()=> { isSendingLead = false; });
+
+    // очистка формы сразу
+    if (leadName)    leadName.value = '';
+    if (leadCompany) leadCompany.value = '';
+    if (leadPhone)   leadPhone.value = '';
+    if (leadForm)    leadForm.style.display = 'none';
   });
 
-  // ========= NAV =========
-  btnGoAudit    ?.addEventListener('click', ()=> showScreen('audit'));
-  btnGoPoll     ?.addEventListener('click', ()=> showScreen('poll'));
-  backFromAudit ?.addEventListener('click', ()=> showScreen('start'));
-  backFromPoll  ?.addEventListener('click', ()=> showScreen('start'));
+  // ================== NAV ==================
+  btnGoAudit?.addEventListener('click', ()=> showScreen('audit'));
+  btnGoPoll ?.addEventListener('click', ()=> showScreen('poll'));
+  backFromAudit?.addEventListener('click', ()=> showScreen('start'));
+  backFromPoll ?.addEventListener('click', ()=> showScreen('start'));
 
-  // ========= INIT =========
+  // ================== INIT ==================
   (function ensureTheme(){
     try{
       const saved = localStorage.getItem('theme');
