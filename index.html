@@ -29,13 +29,14 @@
   .muted{color:var(--text-dim);}
 
   .btn{
-    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
     width:100%;min-height:46px;padding:12px 16px;
     font-size:16px;font-weight:700;line-height:1.15;letter-spacing:.2px;
     border-radius:12px;border:1px solid transparent;cursor:pointer;
     transition:filter .12s,transform .06s ease;user-select:none;-webkit-tap-highlight-color:transparent;
-    text-align:center;flex-direction:column;box-sizing:border-box;
+    text-align:center;flex-direction:row;box-sizing:border-box;
   }
+  .btn svg{width:18px;height:18px;flex:0 0 18px}
   .btn:active{transform:translateY(1px);}
   .btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
   .btn + .btn{margin-top:10px;}
@@ -43,7 +44,7 @@
   .btn-primary:hover{filter:brightness(1.06);}
   .btn-secondary{color:var(--text);background:#101625;border:1px solid var(--stroke);}
   .btn-secondary:hover{background:#141b2b;}
-  .btn-sub{font-weight:600;font-size:13px;color:#ffffff;opacity:.9;margin-top:2px;} /* читабельность второй строки */
+  .btn-sub{display:block;font-weight:600;font-size:13px;color:#ffffff;opacity:.9;margin-top:2px;}
 
   .btn-row{display:flex;gap:12px;flex-wrap:wrap;}
   .btn-row .btn{flex:1 1 220px;}
@@ -74,7 +75,7 @@
     background:#0f1623;border:1px solid #22314d;border-radius:16px;padding:16px;
     box-shadow:0 12px 36px rgba(0,0,0,.35);
   }
-  .result-score{font-size:22px;font-weight:800;}
+  .result-score{font-size:22px;font-weight:800;text-align:center;margin-bottom:6px;}
   .result-hint{margin-top:6px;color:var(--text-dim);}
   #resultBox .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
   #resultBox .btn{flex:1 1 220px;}
@@ -113,7 +114,12 @@
 
     <!-- Аудит -->
     <div id="screen-audit" class="card section" style="display:none">
-      <h1>Аудит печатной инфраструктуры</h1>
+      <h1>
+        Аудит печатной инфраструктуры
+        <span class="muted" style="display:block;font-size:14px;font-weight:500;margin-top:6px;">
+          На основе вашего опросника «Аудит печатной инфраструктуры ЛЕКОМ»
+        </span>
+      </h1>
       <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
 
       <form id="auditForm">
@@ -186,7 +192,7 @@
       </form>
 
       <div class="section">
-        <button id="btnAuditResult" class="btn btn-primary">
+        <button id="btnAuditResult" class="btn btn-primary" style="flex-direction:column;">
           <span>Посмотреть результат</span>
           <span class="btn-sub" id="btnAuditSub">(ответов 0 из 11)</span>
         </button>
@@ -194,9 +200,8 @@
 
       <div id="resultBox" class="section" style="display:block">
         <div class="result-card" id="resultCard">
-          <!-- Заголовок «Ваш результат» удалён -->
           <div class="result-score" id="resultText">Ответьте на вопросы и нажмите кнопку выше.</div>
-          <div class="result-hint">Это быстрая оценка. Для детального аудита — оставьте контакт или обсудите с экспертом.</div>
+          <div class="result-hint" style="text-align:center;">Это быстрая оценка. Для детального аудита — оставьте контакт или обсудите с экспертом.</div>
           <div class="cta-row">
             <button id="ctaExpert" class="btn btn-secondary">💬 Обсудить с экспертом</button>
             <button id="toggleLead" class="btn btn-secondary">📩 Оставить контакты</button>
@@ -206,13 +211,17 @@
             <input id="leadCompany" type="text" placeholder="Компания" style="margin-top:8px" />
             <input id="leadPhone"   type="text" placeholder="Телефон или email" style="margin-top:8px" />
             <button id="sendLead" class="btn btn-primary" style="margin-top:10px">Отправить</button>
-            <div class="muted" style="margin-top:8px">Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.</div>
+            <div class="muted" style="margin-top:8px;text-align:center;">Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.</div>
           </div>
         </div>
       </div>
 
       <div class="section">
-        <button id="backStart1" class="btn btn-secondary">Вернуться</button>
+        <button id="backStart1" class="btn btn-secondary">
+          <!-- круговая стрелка -->
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 5a7 7 0 1 1-6.32 4H3m0 0 3-3m-3 3 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Вернуться
+        </button>
       </div>
     </div>
 
@@ -234,11 +243,14 @@
       </div>
 
       <div class="section">
-        <button id="backStart2" class="btn btn-secondary">Вернуться</button>
+        <button id="backStart2" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 5a7 7 0 1 1-6.32 4H3m0 0 3-3m-3 3 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Вернуться
+        </button>
       </div>
     </div>
   </div>
 
-  <script src="app.js?v=2025-10-29-10"></script>
+  <script src="app.js?v=2025-10-29-11"></script>
 </body>
 </html>
