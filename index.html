@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ЛЕКОМ · Мини-апп</title>
+  <title>ЛЕКОМ · мини-приложение</title>
 
-  <!-- 0) РАННЯЯ УСТАНОВКА ТЕМЫ (без мигания) -->
+  <!-- Ранняя установка темы (без «мигания») -->
   <script>
     (function(){
       const saved = localStorage.getItem('theme');
-      const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      const prefersLight = window.matchMedia?.('(prefers-color-scheme: light)').matches;
       const theme = saved || (prefersLight ? 'light' : 'dark');
       if (theme === 'light') document.documentElement.classList.add('theme-light');
       document.documentElement.setAttribute('data-theme', theme);
@@ -19,7 +19,7 @@
   <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-  /* === ТЁМНАЯ ТЕМА ПО УМОЛЧАНИЮ === */
+  /* Тёмная тема по умолчанию */
   :root{
     --bg:#0e1015; --bg2:#171b25; --stroke:#293044;
     --text:#eaf0fa; --text-dim:#96a2c2;
@@ -29,7 +29,7 @@
     --shadow:0 10px 30px rgba(0,0,0,.25);
     --result-bg:#0f1623; --result-stroke:#22314d; --bar-bg:#101625;
   }
-  /* === СВЕТЛАЯ ТЕМА (перекрытия) === */
+  /* Светлая тема перекрытия */
   html.theme-light{
     --bg:#f6f8fb; --bg2:#ffffff; --stroke:#e2e8f0;
     --text:#0f172a; --text-dim:#4b5563;
@@ -44,14 +44,13 @@
     font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   }
-  body,.app,.card{overflow-x:hidden;}
-  .app{max-width:720px;margin:0 auto;padding:20px 16px 28px;box-sizing:border-box;}
+  .app{max-width:720px;margin:0 auto;padding:16px 16px 28px;box-sizing:border-box;}
 
-  /* ШАПКА */
-  .topbar{
-    display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;
-  }
-  .topbar h1{font-size:26px;margin:0;}
+  /* Шапка: логотип + переключатель темы */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;}
+  .logo-bar{display:flex;align-items:center;justify-content:flex-start;padding:2px 0 6px;}
+  .logo-bar img{height:40px;max-width:200px;object-fit:contain;display:none}
+
   .theme-toggle{
     display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;
     background:var(--bg2);border:1px solid var(--stroke);cursor:pointer;user-select:none;
@@ -59,13 +58,14 @@
   .theme-toggle svg{width:18px;height:18px}
   .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
 
-  .card{
-    background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);
-    padding:16px;box-shadow:var(--shadow);box-sizing:border-box;width:100%;
-  }
-  h1{font-size:26px;margin:0 0 12px;} h2{font-size:22px;margin:0 0 10px;} h3{font-size:18px;margin:0 0 8px;}
-  .muted{color:var(--text-dim);}
+  /* Карточки и типографика */
+  .card{background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  h1{font-size:26px;margin:0 0 12px} h2{font-size:22px;margin:0 0 10px} h3{font-size:18px;margin:0 0 8px}
+  .muted{color:var(--text-dim)}
+  .section + .section{margin-top:16px}
+  hr{border:0;height:1px;background:var(--stroke);opacity:.6;margin:14px 0}
 
+  /* Кнопки */
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
     width:100%;min-height:46px;padding:12px 16px;
@@ -74,75 +74,58 @@
     transition:filter .12s,transform .06s ease;user-select:none;-webkit-tap-highlight-color:transparent;
     text-align:center;flex-direction:column;box-sizing:border-box;
   }
-  .btn svg{width:18px;height:18px}
-  .btn:active{transform:translateY(1px);}
-  .btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
-  .btn + .btn{margin-top:10px;}
-  .btn-primary{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 10px 28px rgba(42,125,225,.18);}
-  .btn-primary:hover{filter:brightness(1.06);}
-  .btn-secondary{color:var(--text);background:var(--bg2);border:1px solid var(--stroke);}
-  .btn-secondary:hover{filter:brightness(1.03);}
-  .btn-sub{display:block;font-weight:600;font-size:13px;opacity:.9;margin-top:2px;color:inherit;}
+  .btn-sub{display:block;font-weight:600;font-size:13px;opacity:.9;margin-top:2px}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+  .btn + .btn{margin-top:10px}
+  .btn-primary{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 10px 28px rgba(42,125,225,.18)}
+  .btn-primary:hover{filter:brightness(1.06)}
+  .btn-secondary{color:var(--text);background:var(--bg2);border:1px solid var(--stroke)}
+  .btn-secondary:hover{filter:brightness(1.03)}
+  .btn-row{display:flex;gap:12px;flex-wrap:wrap}
+  .btn-row .btn{flex:1 1 220px}
 
-  .btn-row{display:flex;gap:12px;flex-wrap:wrap;}
-  .btn-row .btn{flex:1 1 220px;}
-
-  .q{margin-top:18px;}
-  .q b{display:block;margin-bottom:10px;font-size:17px;}
+  /* Плашки ответов */
+  .q{margin-top:18px}
+  .q b{display:block;margin-bottom:10px;font-size:17px}
   .pill{
     display:block;width:100%;text-align:left;font-size:16px;line-height:1.45;
     padding:14px 16px;margin-top:8px;border-radius:12px;border:1px solid var(--stroke);
     background:var(--pill);color:var(--text);cursor:pointer;box-sizing:border-box;
     word-break:break-word;overflow-wrap:anywhere;
   }
-  .pill:hover{background:var(--pill-hover);}
-  .pill.selected{background:var(--pill-selected);border-color:var(--brand2);outline:2px solid var(--pill-outline);}
+  .pill:hover{background:var(--pill-hover)}
+  .pill.selected{background:var(--pill-selected);border-color:var(--brand2);outline:2px solid var(--pill-outline)}
 
-  input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);background:var(--bg2);color:var(--text);box-sizing:border-box;}
-  input[type=text]::placeholder{color:var(--text-dim);}
+  /* Результат */
+  #auditProgress{margin:6px 0 12px;font-size:14px;color:var(--text-dim)}
+  #resultBox{margin-top:16px}
+  .result-card{background:var(--result-bg);border:1px solid var(--result-stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+  .result-score{font-size:22px;font-weight:800;text-align:center;margin-bottom:6px}
+  .result-hint{margin-top:6px;color:var(--text-dim);text-align:center}
+  #resultBox .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+  #resultBox .btn{flex:1 1 220px}
 
-  #auditProgress{margin:6px 0 12px;font-size:14px;color:var(--text-dim);}
+  /* Сводка голосования */
+  .summary-row{margin:8px 0}
+  .summary-head{display:flex;justify-content:space-between;gap:8px}
+  .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden}
+  .summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
 
-  .summary-row{margin:8px 0;}
-  .summary-head{display:flex;justify-content:space-between;gap:8px;}
-  .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
-  .summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
+  /* Тост */
+  .toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999}
+  .toast-box{background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:var(--shadow)}
+  .toast-box .btn{width:100%;margin-top:10px}
 
-  #resultBox{margin-top:16px;}
-  .result-card{
-    background:var(--result-bg);border:1px solid var(--result-stroke);border-radius:16px;padding:16px;
-    box-shadow:var(--shadow);
-  }
-  .result-score{font-size:22px;font-weight:800;text-align:center;margin-bottom:6px;}
-  .result-hint{margin-top:6px;color:var(--text-dim);text-align:center;}
-  #resultBox .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
-  #resultBox .btn{flex:1 1 220px;}
-
-  .toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;}
-  .toast-box{
-    background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;
-    max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:var(--shadow);
-  }
-  .toast-box .btn{width:100%;box-sizing:border-box;margin-top:10px;}
-
-  .section + .section{margin-top:16px;}
-  hr{border:0;height:1px;background:var(--stroke);opacity:.6;margin:14px 0;}
-
-  /* футер */
-  .footer{
-    margin-top:24px;padding-top:12px;
-    border-top:1px solid var(--stroke);
-    text-align:center;font-size:14px;color:var(--text-dim);
-  }
-  .footer a{color:var(--brand2);text-decoration:none;font-weight:500;}
-  .footer a:hover{text-decoration:underline;}
-  .footer-icons{display:flex;justify-content:center;gap:14px;margin-bottom:6px;}
-  .footer-icons svg{width:22px;height:22px;}
-  .yt-shape{fill:transparent;stroke:var(--brand2);stroke-width:1.2;}
-  .yt-play{fill:var(--brand2);}
+  /* Футер */
+  .footer{margin-top:24px;padding-top:12px;border-top:1px solid var(--stroke);text-align:center;font-size:14px;color:var(--text-dim)}
+  .footer a{color:var(--brand2);text-decoration:none;font-weight:500}
+  .footer a:hover{text-decoration:underline}
+  .footer-icons{display:flex;justify-content:center;gap:14px;margin-bottom:6px}
+  .footer-icons svg{width:22px;height:22px}
   </style>
 
-  <!-- актуальный EXEC-хук -->
+  <!-- Актуальный EXEC-hook -->
   <script>
     window.LEKOM_HOOK='https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
   </script>
@@ -150,9 +133,13 @@
 <body>
   <div class="app">
 
-    <!-- Топбар с переключателем темы -->
+    <!-- Топбар: логотип + переключатель темы -->
     <div class="topbar">
-      <h1>ЛЕКОМ · Мини-апп</h1>
+      <div class="logo-bar">
+        <!-- логотипы из GitHub -->
+        <img id="logoDark"  src="https://raw.githubusercontent.com/karpenkoroman/lekom-miniapp/main/img/logo-dark.png"  alt="ЛЕКОМ" />
+        <img id="logoLight" src="https://raw.githubusercontent.com/karpenkoroman/lekom-miniapp/main/img/logo-light.png" alt="ЛЕКОМ" />
+      </div>
       <button id="themeToggle" class="theme-toggle" type="button" aria-label="Сменить тему">
         <svg id="iconMoon" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <svg id="iconSun" viewBox="0 0 24 24" fill="none" style="display:none"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/><path d="M12 1v3m0 16v3M4.22 4.22 6.34 6.34m11.32 11.32 2.12 2.12M1 12h3m16 0h3M4.22 19.78 6.34 17.66m11.32-11.32 2.12-2.12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -164,10 +151,10 @@
     <div id="screen-start" class="card section">
       <div class="btn-row">
         <button id="goAudit" class="btn btn-primary">
-  Пройдите быстрый аудит печати
-  <span class="btn-sub">выявите слабые места в&nbsp;управлении печатной инфраструктурой</span>
-</button>
-        <button id="goPoll"  class="btn btn-secondary">Выберите тему вебинара</button>
+          Пройдите быстрый аудит печати
+          <span class="btn-sub">выявите слабые места в&nbsp;управлении печатной инфраструктурой</span>
+        </button>
+        <button id="goPoll" class="btn btn-secondary">Выберите тему вебинара</button>
       </div>
 
       <hr>
@@ -182,117 +169,20 @@
           <a href="https://lekomIT.t.me" target="_blank" title="Telegram">
             <svg viewBox="0 0 24 24" fill="none"><path fill="var(--brand2)" d="M21.6 5.6a1 1 0 0 0-1.1-.1L3.5 12.9a.9.9 0 0 0 .1 1.7l4.4 1.4 1.7 5a1 1 0 0 0 1.7.4l2.3-2.3 4.5 3.2a1 1 0 0 0 1.6-.6l2.8-14.5a1 1 0 0 0-.4-1zM9.6 15l8.6-7-10.6 6 2 1z"/></svg>
           </a>
-          <!-- YouTube (оригинальная форма, в цвете приложения) -->
-          <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
-            <svg viewBox="0 0 24 24">
-              <path class="yt-shape" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
-              <path class="yt-play" d="M10 15V9l5 3-5 3z"/>
-            </svg>
-          </a>
         </div>
-        Присоединяйтесь к нам: <a href="https://lekomIT.t.me" target="_blank">@LekomIT</a>
+        Присоединяйтесь к&nbsp;нам: <a href="https://lekomIT.t.me" target="_blank">@LekomIT</a>
       </div>
     </div>
 
-    <!-- Аудит -->
+    <!-- экран аудита -->
     <div id="screen-audit" class="card section" style="display:none">
       <h1>
         Аудит печатной инфраструктуры
-        <span class="muted" style="display:block;font-size:14px;font-weight:500;margin-top:6px;">
-          Неудобные вопросы, которые нужно задать самим себе
-        </span>
+        <span class="muted" style="display:block;font-size:14px;font-weight:500;margin-top:6px;">Неудобные вопросы, которые нужно задать самим себе</span>
       </h1>
       <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
 
-      <form id="auditForm">
-        <!-- Блоки и вопросы — как в твоей утверждённой версии (оставлены без изменений) -->
-        <h3 style="margin-top:12px">Блок 1. Иллюзия контроля</h3>
-        <div class="q">
-          <b>1. Как вы оцениваете прозрачность учета расходов на печать в вашей организации?</b>
-          <div class="pill" data-q="q1" data-score="1">Мы ведем точный и полный учет всех расходов, включая капитальные.</div>
-          <div class="pill" data-q="q1" data-score="0">Мы учитываем только расходные материалы (картриджи, бумагу и т.п.).</div>
-          <div class="pill" data-q="q1" data-score="0">Учет ведется частично, по запросу или в разных подразделениях по-разному.</div>
-          <div class="pill" data-q="q1" data-score="0">Точных данных нет, расходы оцениваются «на глаз».</div>
-        </div>
-        <div class="q">
-          <b>2. Включены ли в ваш расчет стоимости печати капитальные затраты (амортизация, обновление парка)?</b>
-          <div class="pill" data-q="q2" data-score="1">Да, мы учитываем полную стоимость владения (TCO).</div>
-          <div class="pill" data-q="q2" data-score="0">Частично, только при крупных закупках.</div>
-          <div class="pill" data-q="q2" data-score="0">Нет, считаем только текущие затраты.</div>
-          <div class="pill" data-q="q2" data-score="0">Не знаю / этим занимается другой отдел.</div>
-        </div>
-
-        <h3 style="margin-top:12px">Блок 2. Ловушка старых цен</h3>
-        <div class="q">
-          <b>3. При планировании бюджета на обновление техники вы опираетесь на:</b>
-          <div class="pill" data-q="q3" data-score="1">Актуальные рыночные данные и котировки поставщиков.</div>
-          <div class="pill" data-q="q3" data-score="0">Внутренние шаблоны или цифры прошлых лет.</div>
-          <div class="pill" data-q="q3" data-score="0">Субъективные ожидания («примерно столько, сколько раньше»).</div>
-          <div class="pill" data-q="q3" data-score="0">Не выделяем отдельный бюджет на обновление парка.</div>
-        </div>
-        <div class="q">
-          <b>4. Проверяли ли вы соответствие текущего бюджета реальной стоимости оборудования в последние 12 месяцев?</b>
-          <div class="pill" data-q="q4" data-score="1">Да, проводим регулярный пересмотр цен.</div>
-          <div class="pill" data-q="q4" data-score="0">Один раз давно, цены могут быть неактуальны.</div>
-          <div class="pill" data-q="q4" data-score="0">Нет, не пересматривали.</div>
-          <div class="pill" data-q="q4" data-score="0">Не знаю.</div>
-        </div>
-
-        <h3 style="margin-top:12px">Блок 3. “Патриотическая” наценка</h3>
-        <div class="q">
-          <b>5. Учтено ли в вашем бюджете требование закупать оборудование из реестра отечественного ПО (ПП №185, ПП №878 и др.)?</b>
-          <div class="pill" data-q="q5" data-score="1">Да, бюджет сформирован с учетом реестровых решений.</div>
-          <div class="pill" data-q="q5" data-score="0">Частично, только для критичных закупок.</div>
-          <div class="pill" data-q="q5" data-score="0">Нет, закупаем по остаточному принципу.</div>
-          <div class="pill" data-q="q5" data-score="0">Не применимо (мы не попадаем под эти требования).</div>
-        </div>
-        <div class="q">
-          <b>6. Готов ли ваш бюджет к сценарию, где стоимость принтера увеличивается в 3–5 раз из-за регуляторных требований?</b>
-          <div class="pill" data-q="q6" data-score="1">Да, предусмотрен резерв или гибкий бюджет.</div>
-          <div class="pill" data-q="q6" data-score="0">Нет, это стало бы серьезной проблемой.</div>
-          <div class="pill" data-q="q6" data-score="0">Пока не анализировали.</div>
-          <div class="pill" data-q="q6" data-score="0">Не знаю.</div>
-        </div>
-
-        <h3 style="margin-top:12px">Блок 4. Опасность делегирования</h3>
-        <div class="q">
-          <b>7. Кто в вашей компании фактически принимает решения по закупке и обслуживанию печатной техники?</b>
-          <div class="pill" data-q="q7" data-score="1">IT-директор / руководитель департамента.</div>
-          <div class="pill" data-q="q7" data-score="0">Системный администратор или инженер.</div>
-          <div class="pill" data-q="q7" data-score="0">Закупочный отдел.</div>
-          <div class="pill" data-q="q7" data-score="0">Несколько лиц, без четкой ответственности.</div>
-        </div>
-        <div class="q">
-          <b>8. На чем основаны текущие решения по обслуживанию и эксплуатации печати?</b>
-          <div class="pill" data-q="q8" data-score="1">На данных TCO-анализа и объективных метриках.</div>
-          <div class="pill" data-q="q8" data-score="0">На личном опыте исполнителей («всегда так делали»).</div>
-          <div class="pill" data-q="q8" data-score="0">На внешних рекомендациях поставщиков.</div>
-          <div class="pill" data-q="q8" data-score="0">На попытке минимизировать расходы «здесь и сейчас».</div>
-        </div>
-        <div class="q">
-          <b>9. Используете ли совместимые картриджи или заправку картриджей?</b>
-          <div class="pill" data-q="q9" data-score="1">Нет, только оригинальные расходники.</div>
-          <div class="pill" data-q="q9" data-score="0">Да, массово.</div>
-          <div class="pill" data-q="q9" data-score="0">Да, но только в отдельных случаях.</div>
-          <div class="pill" data-q="q9" data-score="0">Не знаю / не контролирую этот процесс.</div>
-        </div>
-
-        <h3 style="margin-top:12px">Блок 5. Итоговая самооценка</h3>
-        <div class="q">
-          <b>10. Как вы оцениваете уровень зрелости управления печатью в вашей организации?</b>
-          <div class="pill" data-q="q10" data-score="1">Стратегический уровень — есть политика, метрики, аналитика, бюджетирование.</div>
-          <div class="pill" data-q="q10" data-score="0">Тактический уровень — решаем по мере возникновения задач.</div>
-          <div class="pill" data-q="q10" data-score="0">Реактивный уровень — действуем при сбоях и запросах пользователей.</div>
-          <div class="pill" data-q="q10" data-score="0">Нет системы управления, процесс стихийный.</div>
-        </div>
-        <div class="q">
-          <b>11. Насколько вы уверены, что ваш бюджет по печати не содержит “слепых зон”?</b>
-          <div class="pill" data-q="q11" data-score="1">Полностью уверен.</div>
-          <div class="pill" data-q="q11" data-score="0">Скорее уверен.</div>
-          <div class="pill" data-q="q11" data-score="0">Есть сомнения.</div>
-          <div class="pill" data-q="q11" data-score="0">Бюджет определенно требует пересмотра.</div>
-        </div>
-      </form>
+      <form id="auditForm"></form>
 
       <div class="section">
         <button id="btnAuditResult" class="btn btn-primary">
@@ -361,13 +251,15 @@
     </div>
   </div>
 
-  <!-- 1) Обработчик переключения темы (без правок app.js) -->
+  <!-- JS: переключение темы + логотипы -->
   <script>
     (function(){
       const btn = document.getElementById('themeToggle');
       const iconMoon = document.getElementById('iconMoon');
       const iconSun  = document.getElementById('iconSun');
       const label = document.getElementById('themeLabel');
+      const logoDark  = document.getElementById('logoDark');
+      const logoLight = document.getElementById('logoLight');
 
       function apply(theme){
         const isLight = theme === 'light';
@@ -376,19 +268,22 @@
         iconMoon.style.display = isLight ? 'none' : '';
         iconSun.style.display  = isLight ? '' : 'none';
         label.textContent = isLight ? 'Светлая' : 'Тёмная';
+        logoDark.style.display  = isLight ? 'none'  : 'block';
+        logoLight.style.display = isLight ? 'block' : 'none';
       }
+
       btn?.addEventListener('click', ()=>{
         const current = document.documentElement.getAttribute('data-theme') || 'dark';
         const next = current === 'dark' ? 'light' : 'dark';
         localStorage.setItem('theme', next);
         apply(next);
       });
-      // синхронизируем состояние кнопки
+
       apply(document.documentElement.getAttribute('data-theme') || 'dark');
     })();
   </script>
 
-  <!-- твой основной функционал -->
-  <script src="app.js?v=light-toggle-1"></script>
+  <!-- Основная логика приложения -->
+  <script src="app.js?v=logo-github-1"></script>
 </body>
 </html>
