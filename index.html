@@ -61,7 +61,7 @@
   .theme-toggle svg{width:18px;height:18px}
   .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
 
-  /* Карточка-экран: flex-колонка, чтоб кнопка «Вернуться» была снизу */
+  /* Карточка-экран */
   .screen.card{
     background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);
     padding:16px;box-shadow:var(--shadow);
@@ -123,8 +123,26 @@
 
   /* Футер-кнопка всегда внизу экрана */
   .footer-actions{margin-top:auto;text-align:center;}
-  .back-btn{max-width:240px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:8px;}
-  .icon-back{width:16px;height:16px;display:block;}
+  
+    .back-btn {
+              display:inline-flex;
+              align-items:center;
+              justify-content:center;
+              gap:6px;
+              padding:8px 14px;
+              font-size:15px;
+              font-weight:600;
+              border-radius:10px;
+              width:auto;
+              min-height:auto;
+              line-height:1.2;
+              margin:0 auto;
+    }
+    .icon-back {
+      width:14px;
+      height:14px;
+      display:block;
+    }
 
   /* Глобальный футер (в самом низу страницы, вне карточек) */
   .global-footer{
@@ -142,8 +160,8 @@
     <!-- Шапка -->
     <div class="topbar">
       <div class="brand">
-        <img src="/assets/logo-dark.png" alt="LEKOM" class="logo logo-dark" />
-        <img src="/assets/logo-light.png" alt="LEKOM" class="logo logo-light" />
+          <img src="img/logo-dark.png" alt="LEKOM" class="logo logo-dark" />
+          <img src="img/logo-light.png" alt="LEKOM" class="logo logo-light" />
       </div>
       <button id="themeToggle" class="theme-toggle" type="button" aria-label="Сменить тему">
         <svg id="iconMoon" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
