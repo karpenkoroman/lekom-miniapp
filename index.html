@@ -99,16 +99,19 @@
   .footer a{color:var(--brand2);text-decoration:none;font-weight:500;}
   .footer a:hover{text-decoration:underline;}
   .footer-icons{display:flex;justify-content:center;gap:14px;margin-bottom:6px;}
-  .footer-icons svg{width:22px;height:22px;fill:var(--brand2);}
+  .footer-icons svg{width:22px;height:22px;}
+  .yt-shape{fill:transparent;stroke:var(--brand2);stroke-width:1.2;}
+  .yt-play{fill:var(--brand2);}
   </style>
 
+  <!-- актуальный EXEC-хук -->
   <script>
     window.LEKOM_HOOK='https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
   </script>
 </head>
 <body>
   <div class="app">
-    <!-- Стартовый экран -->
+    <!-- стартовый экран -->
     <div id="screen-start" class="card section">
       <h1>ЛЕКОМ · Мини-апп</h1>
       <div class="btn-row">
@@ -127,18 +130,25 @@
       <!-- футер -->
       <div class="footer">
         <div class="footer-icons">
+          <!-- Telegram -->
           <a href="https://lekomIT.t.me" target="_blank" title="Telegram">
-            <svg viewBox="0 0 24 24"><path d="M21.6 5.6a1 1 0 0 0-1.1-.1L3.5 12.9a.9.9 0 0 0 .1 1.7l4.4 1.4 1.7 5a1 1 0 0 0 1.7.4l2.3-2.3 4.5 3.2a1 1 0 0 0 1.6-.6l2.8-14.5a1 1 0 0 0-.4-1zM9.6 15l8.6-7-10.6 6 2 1z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none"><path fill="var(--brand2)" d="M21.6 5.6a1 1 0 0 0-1.1-.1L3.5 12.9a.9.9 0 0 0 .1 1.7l4.4 1.4 1.7 5a1 1 0 0 0 1.7.4l2.3-2.3 4.5 3.2a1 1 0 0 0 1.6-.6l2.8-14.5a1 1 0 0 0-.4-1zM9.6 15l8.6-7-10.6 6 2 1z"/></svg>
           </a>
+          <!-- YouTube (оригинальная форма, в цвете приложения) -->
           <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
-            <svg viewBox="0 0 24 24"><path d="M10 15V9l5 3-5 3zm11-3c0 2.1-.2 4.2-.2 4.2s-.2 1.5-1 2.2c-.9 1-1.8 1-2.3 1.1-3.2.2-8.1.2-8.1.2s-4.9 0-8.1-.2c-.5 0-1.4 0-2.3-1.1-.8-.7-1-2.2-1-2.2S0 14.1 0 12s.2-4.2.2-4.2.2-1.5 1-2.2C2.1 4.5 3 4.5 3.5 4.4 6.7 4.2 11.6 4.2 11.6 4.2s4.9 0 8.1.2c.5 0 1.4 0 2.3 1.1.8.7 1 2.2 1 2.2S21 9.9 21 12z"/></svg>
+            <svg viewBox="0 0 24 24">
+              <!-- скруглённый прямоугольник YouTube -->
+              <path class="yt-shape" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
+              <!-- play -->
+              <path class="yt-play" d="M10 15V9l5 3-5 3z"/>
+            </svg>
           </a>
         </div>
         Следите за нами: <a href="https://lekomIT.t.me" target="_blank">@LekomIT</a> · <a href="https://www.youtube.com/@lekomIT" target="_blank">YouTube</a>
       </div>
     </div>
 
-    <!-- Аудит -->
+    <!-- аудит -->
     <div id="screen-audit" class="card section" style="display:none">
       <h1>
         Аудит печатной инфраструктуры
@@ -149,71 +159,96 @@
       <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
 
       <form id="auditForm">
+        <!-- Блок 1. Иллюзия контроля -->
+        <h3 style="margin-top:12px">Блок 1. Иллюзия контроля</h3>
         <div class="q">
-          <b>1) Учитываете ли вы TCO (полную стоимость печати) при планировании бюджета?</b>
-          <div class="pill" data-q="q1" data-score="1">Да, считаем TCO регулярно и корректируем</div>
-          <div class="pill" data-q="q1" data-score="0">Частично/эпизодически</div>
-          <div class="pill" data-q="q1" data-score="0">Нет, смотрим только прямые расходы</div>
+          <b>1. Как вы оцениваете прозрачность учета расходов на печать в вашей организации?</b>
+          <div class="pill" data-q="q1" data-score="1">Мы ведем точный и полный учет всех расходов, включая капитальные.</div>
+          <div class="pill" data-q="q1" data-score="0">Мы учитываем только расходные материалы (картриджи, бумагу и т.п.).</div>
+          <div class="pill" data-q="q1" data-score="0">Учет ведется частично, по запросу или в разных подразделениях по-разному.</div>
+          <div class="pill" data-q="q1" data-score="0">Точных данных нет, расходы оцениваются «на глаз».</div>
         </div>
         <div class="q">
-          <b>2) Есть ли утверждённая политика печати (правила, роли, ограничения)?</b>
-          <div class="pill" data-q="q2" data-score="1">Да, действует и обновляется</div>
-          <div class="pill" data-q="q2" data-score="0">В разработке/неполная</div>
-          <div class="pill" data-q="q2" data-score="0">Нет</div>
+          <b>2. Включены ли в ваш расчет стоимости печати капитальные затраты (амортизация, обновление парка)?</b>
+          <div class="pill" data-q="q2" data-score="1">Да, мы учитываем полную стоимость владения (TCO).</div>
+          <div class="pill" data-q="q2" data-score="0">Частично, только при крупных закупках.</div>
+          <div class="pill" data-q="q2" data-score="0">Нет, считаем только текущие затраты.</div>
+          <div class="pill" data-q="q2" data-score="0">Не знаю / этим занимается другой отдел.</div>
+        </div>
+
+        <!-- Блок 2. Ловушка старых цен -->
+        <h3 style="margin-top:12px">Блок 2. Ловушка старых цен</h3>
+        <div class="q">
+          <b>3. При планировании бюджета на обновление техники вы опираетесь на:</b>
+          <div class="pill" data-q="q3" data-score="1">Актуальные рыночные данные и котировки поставщиков.</div>
+          <div class="pill" data-q="q3" data-score="0">Внутренние шаблоны или цифры прошлых лет.</div>
+          <div class="pill" data-q="q3" data-score="0">Субъективные ожидания («примерно столько, сколько раньше»).</div>
+          <div class="pill" data-q="q3" data-score="0">Не выделяем отдельный бюджет на обновление парка.</div>
         </div>
         <div class="q">
-          <b>3) Контролируете ли вы доступ/аутентификацию к устройствам (PIN/карты/SSO)?</b>
-          <div class="pill" data-q="q3" data-score="1">Да, для всех МФУ/принтеров</div>
-          <div class="pill" data-q="q3" data-score="0">Только частично</div>
-          <div class="pill" data-q="q3" data-score="0">Нет</div>
+          <b>4. Проверяли ли вы соответствие текущего бюджета реальной стоимости оборудования в последние 12 месяцев?</b>
+          <div class="pill" data-q="q4" data-score="1">Да, проводим регулярный пересмотр цен.</div>
+          <div class="pill" data-q="q4" data-score="0">Один раз давно, цены могут быть неактуальны.</div>
+          <div class="pill" data-q="q4" data-score="0">Нет, не пересматривали.</div>
+          <div class="pill" data-q="q4" data-score="0">Не знаю.</div>
+        </div>
+
+        <!-- Блок 3. “Патриотическая” наценка -->
+        <h3 style="margin-top:12px">Блок 3. “Патриотическая” наценка</h3>
+        <div class="q">
+          <b>5. Учтено ли в вашем бюджете требование закупать оборудование из реестра отечественного ПО (ПП №185, ПП №878 и др.)?</b>
+          <div class="pill" data-q="q5" data-score="1">Да, бюджет сформирован с учетом реестровых решений.</div>
+          <div class="pill" data-q="q5" data-score="0">Частично, только для критичных закупок.</div>
+          <div class="pill" data-q="q5" data-score="0">Нет, закупаем по остаточному принципу.</div>
+          <div class="pill" data-q="q5" data-score="0">Не применимо (мы не попадаем под эти требования).</div>
         </div>
         <div class="q">
-          <b>4) Используется ли безопасная печать (удержание/релиз задания пользователем)?</b>
-          <div class="pill" data-q="q4" data-score="1">Да, настроено повсеместно</div>
-          <div class="pill" data-q="q4" data-score="0">Только на критичных узлах</div>
-          <div class="pill" data-q="q4" data-score="0">Нет</div>
+          <b>6. Готов ли ваш бюджет к сценарию, где стоимость принтера увеличивается в 3–5 раз из-за регуляторных требований?</b>
+          <div class="pill" data-q="q6" data-score="1">Да, предусмотрен резерв или гибкий бюджет.</div>
+          <div class="pill" data-q="q6" data-score="0">Нет, это стало бы серьезной проблемой.</div>
+          <div class="pill" data-q="q6" data-score="0">Пока не анализировали.</div>
+          <div class="pill" data-q="q6" data-score="0">Не знаю.</div>
+        </div>
+
+        <!-- Блок 4. Опасность делегирования -->
+        <h3 style="margin-top:12px">Блок 4. Опасность делегирования</h3>
+        <div class="q">
+          <b>7. Кто в вашей компании фактически принимает решения по закупке и обслуживанию печатной техники?</b>
+          <div class="pill" data-q="q7" data-score="1">IT-директор / руководитель департамента.</div>
+          <div class="pill" data-q="q7" data-score="0">Системный администратор или инженер.</div>
+          <div class="pill" data-q="q7" data-score="0">Закупочный отдел.</div>
+          <div class="pill" data-q="q7" data-score="0">Несколько лиц, без четкой ответственности.</div>
         </div>
         <div class="q">
-          <b>5) Есть ли централизованный мониторинг парка (счётчики, расходники, инциденты)?</b>
-          <div class="pill" data-q="q5" data-score="1">Да, в единой системе/дашборде</div>
-          <div class="pill" data-q="q5" data-score="0">Частично/вручную</div>
-          <div class="pill" data-q="q5" data-score="0">Нет</div>
+          <b>8. На чем основаны текущие решения по обслуживанию и эксплуатации печати?</b>
+          <div class="pill" data-q="q8" data-score="1">На данных TCO-анализа и объективных метриках.</div>
+          <div class="pill" data-q="q8" data-score="0">На личном опыте исполнителей («всегда так делали»).</div>
+          <div class="pill" data-q="q8" data-score="0">На внешних рекомендациях поставщиков.</div>
+          <div class="pill" data-q="q8" data-score="0">На попытке минимизировать расходы «здесь и сейчас».</div>
         </div>
         <div class="q">
-          <b>6) Оптимизирован ли парк по типам/локациям (А3/А4, ЦП/дистрибуция, удалёнка)?</b>
-          <div class="pill" data-q="q6" data-score="1">Да, есть схема и ревью</div>
-          <div class="pill" data-q="q6" data-score="0">Частично</div>
-          <div class="pill" data-q="q6" data-score="0">Нет</div>
+          <b>9. Используете ли совместимые картриджи или заправку картриджей?</b>
+          <div class="pill" data-q="q9" data-score="1">Нет, только оригинальные расходники.</div>
+          <div class="pill" data-q="q9" data-score="0">Да, массово.</div>
+          <div class="pill" data-q="q9" data-score="0">Да, но только в отдельных случаях.</div>
+          <div class="pill" data-q="q9" data-score="0">Не знаю / не контролирую этот процесс.</div>
+        </div>
+
+        <!-- Блок 5. Итоговая самооценка -->
+        <h3 style="margin-top:12px">Блок 5. Итоговая самооценка</h3>
+        <div class="q">
+          <b>10. Как вы оцениваете уровень зрелости управления печатью в вашей организации?</b>
+          <div class="pill" data-q="q10" data-score="1">Стратегический уровень — есть политика, метрики, аналитика, бюджетирование.</div>
+          <div class="pill" data-q="q10" data-score="0">Тактический уровень — решаем по мере возникновения задач.</div>
+          <div class="pill" data-q="q10" data-score="0">Реактивный уровень — действуем при сбоях и запросах пользователей.</div>
+          <div class="pill" data-q="q10" data-score="0">Нет системы управления, процесс стихийный.</div>
         </div>
         <div class="q">
-          <b>7) Контролируете ли качество расходников (OEM/проверенный аналог, брак/возвраты)?</b>
-          <div class="pill" data-q="q7" data-score="1">Да, с KPI по браку/срокам</div>
-          <div class="pill" data-q="q7" data-score="0">Есть базовые проверки</div>
-          <div class="pill" data-q="q7" data-score="0">Нет, «как получится»</div>
-        </div>
-        <div class="q">
-          <b>8) Закрыты ли вопросы ИБ/ПДн (журналы, доступ, уничтожение носителей)?</b>
-          <div class="pill" data-q="q8" data-score="1">Да, регламенты+контроль</div>
-          <div class="pill" data-q="q8" data-score="0">Частично</div>
-          <div class="pill" data-q="q8" data-score="0">Нет</div>
-        </div>
-        <div class="q">
-          <b>9) Как решены сервис и SLA (время реакции/восстановления, запасы ЗИП/тонера)?</b>
-          <div class="pill" data-q="q9" data-score="1">Есть SLA и фактический контроль</div>
-          <div class="pill" data-q="q9" data-score="0">Частично</div>
-          <div class="pill" data-q="q9" data-score="0">Нет</div>
-        </div>
-        <div class="q">
-          <b>10) Анализируете ли вы объёмы и аномалии печати по подразделениям/пользователям?</b>
-          <div class="pill" data-q="q10" data-score="1">Да, в отчётах/дашбордах</div>
-          <div class="pill" data-q="q10" data-score="0">Иногда/по запросу</div>
-          <div class="pill" data-q="q10" data-score="0">Нет</div>
-        </div>
-        <div class="q">
-          <b>11) Есть ли план развития (импортозамещение, MPS, унификация, бюджет-2026)?</b>
-          <div class="pill" data-q="q11" data-score="1">Да, утверждённый план</div>
-          <div class="pill" data-q="q11" data-score="0">Черновик/в обсуждении</div>
-          <div class="pill" data-q="q11" data-score="0">Нет</div>
+          <b>11. Насколько вы уверены, что ваш бюджет по печати не содержит “слепых зон”?</b>
+          <div class="pill" data-q="q11" data-score="1">Полностью уверен.</div>
+          <div class="pill" data-q="q11" data-score="0">Скорее уверен.</div>
+          <div class="pill" data-q="q11" data-score="0">Есть сомнения.</div>
+          <div class="pill" data-q="q11" data-score="0">Бюджет определенно требует пересмотра.</div>
         </div>
       </form>
 
@@ -250,7 +285,7 @@
       </div>
     </div>
 
-    <!-- Голосование по вебинару -->
+    <!-- экран вебинара без изменений -->
     <div id="screen-poll" class="card section" style="display:none">
       <h1>Выбор темы вебинара</h1>
       <form id="pollForm" class="section">
@@ -276,6 +311,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=2025-10-29-12"></script>
+  <script src="app.js?v=2025-10-29-13"></script>
 </body>
 </html>
