@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ЛЕКОМ · Интерактив</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
@@ -19,9 +19,9 @@ h1{font-size:26px;margin:0 0 8px;}h2{font-size:22px;margin:0 0 6px;}h3{font-size
 .btn{display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;line-height:1;
   padding:14px 16px;border-radius:12px;border:1px solid transparent;cursor:pointer;width:100%;transition:filter .12s,transform .12s;}
 .btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;}
-.btn-primary:hover{filter:brightness(1.07)}
+.btn-primary:hover{filter:brightness(1.07);}
 .btn-secondary{background:transparent;color:var(--text);border:1px solid var(--stroke);}
-.btn-secondary:hover{background:rgba(255,255,255,.05)}
+.btn-secondary:hover{background:rgba(255,255,255,.05);}
 .q{margin-top:18px;}
 .q b{display:block;margin-bottom:8px;font-size:17px;}
 .pill{width:100%;text-align:left;font-size:16px;line-height:1.45;padding:14px 16px;margin-top:6px;
@@ -29,13 +29,17 @@ h1{font-size:26px;margin:0 0 8px;}h2{font-size:22px;margin:0 0 6px;}h3{font-size
 .pill:hover{background:#141b2b;}
 .pill.selected{background:rgba(29,184,170,.25);border-color:var(--brand2);}
 input[type=text]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--stroke);background:#111620;color:var(--text);}
-.summary-row{margin:6px 0}.summary-head{display:flex;justify-content:space-between}.summary-bar{height:8px;background:#101625;border:1px solid var(--stroke);border-radius:999px;overflow:hidden}.summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
+.summary-row{margin:6px 0;}
+.summary-head{display:flex;justify-content:space-between;gap:8px;}
+.summary-bar{height:8px;background:#101625;border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
+.summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
 .toast-overlay{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999;}
 .toast-box{background:var(--bg2);border:1px solid var(--stroke);padding:20px 24px;border-radius:14px;max-width:90%;text-align:center;line-height:1.5;}
 </style>
 </head>
 
 <body>
+<!-- === Старт === -->
 <div id="screen-start" class="app" style="display:block;">
   <div class="card">
     <h1>ЛЕКОМ · Интерактив</h1>
@@ -53,7 +57,7 @@ input[type=text]{width:100%;padding:10px 12px;border-radius:10px;border:1px soli
   </div>
 </div>
 
-<!-- ======= Аудит ======= -->
+<!-- === Аудит === -->
 <div id="screen-audit" class="app" style="display:none;">
   <button id="backStart1" class="btn btn-secondary" style="margin-bottom:10px;width:auto;">↩ Вернуться</button>
   <div class="card">
@@ -61,19 +65,93 @@ input[type=text]{width:100%;padding:10px 12px;border-radius:10px;border:1px soli
     <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
 
     <form id="auditForm" style="margin-top:10px;">
+      <!-- 1 -->
       <div class="q" data-q="q1">
         <b>1. Как вы оцениваете прозрачность учёта расходов на печать?</b>
-        <button type="button" class="pill" data-q="q1" data-score="1">Ведём полный учёт</button>
+        <button type="button" class="pill" data-q="q1" data-score="1">Ведём точный и полный учёт всех расходов</button>
         <button type="button" class="pill" data-q="q1">Учитываем только расходники</button>
         <button type="button" class="pill" data-q="q1">Частичный учёт</button>
         <button type="button" class="pill" data-q="q1">«На глаз»</button>
       </div>
-
+      <!-- 2 -->
       <div class="q" data-q="q2">
-        <b>2. Учитываете ли капитальные затраты?</b>
-        <button type="button" class="pill" data-q="q2" data-score="1">Да, считаем TCO</button>
+        <b>2. Включены ли капитальные затраты (амортизация, обновление парка)?</b>
+        <button type="button" class="pill" data-q="q2" data-score="1">Да, считаем полную стоимость владения (TCO)</button>
         <button type="button" class="pill" data-q="q2">Частично</button>
-        <button type="button" class="pill" data-q="q2">Нет</button>
+        <button type="button" class="pill" data-q="q2">Нет, только текущие</button>
+        <button type="button" class="pill" data-q="q2">Не знаю</button>
+      </div>
+      <!-- 3 -->
+      <div class="q" data-q="q3">
+        <b>3. На чём основан бюджет обновления техники?</b>
+        <button type="button" class="pill" data-q="q3" data-score="1">Актуальные рыночные данные</button>
+        <button type="button" class="pill" data-q="q3">Цифры прошлых лет</button>
+        <button type="button" class="pill" data-q="q3">Оценка «на глаз»</button>
+        <button type="button" class="pill" data-q="q3">Бюджет не выделяется</button>
+      </div>
+      <!-- 4 -->
+      <div class="q" data-q="q4">
+        <b>4. Проверялись ли цены в последние 12 месяцев?</b>
+        <button type="button" class="pill" data-q="q4" data-score="1">Да, регулярно</button>
+        <button type="button" class="pill" data-q="q4">Раньше проверяли, сейчас нет</button>
+        <button type="button" class="pill" data-q="q4">Нет</button>
+        <button type="button" class="pill" data-q="q4">Не знаю</button>
+      </div>
+      <!-- 5 -->
+      <div class="q" data-q="q5">
+        <b>5. Учтены ли требования закупать оборудование из реестра?</b>
+        <button type="button" class="pill" data-q="q5" data-score="1">Да, учитываем полностью</button>
+        <button type="button" class="pill" data-q="q5">Частично</button>
+        <button type="button" class="pill" data-q="q5">Нет</button>
+        <button type="button" class="pill" data-q="q5">Не применимо</button>
+      </div>
+      <!-- 6 -->
+      <div class="q" data-q="q6">
+        <b>6. Готов ли бюджет к росту цен в 3–5 раз из-за регуляторных требований?</b>
+        <button type="button" class="pill" data-q="q6" data-score="1">Да, предусмотрен резерв</button>
+        <button type="button" class="pill" data-q="q6">Нет, станет проблемой</button>
+        <button type="button" class="pill" data-q="q6">Не анализировали</button>
+        <button type="button" class="pill" data-q="q6">Не знаю</button>
+      </div>
+      <!-- 7 -->
+      <div class="q" data-q="q7">
+        <b>7. Кто принимает решения по печати?</b>
+        <button type="button" class="pill" data-q="q7" data-score="1">IT-директор / руководитель департамента</button>
+        <button type="button" class="pill" data-q="q7">Системный администратор</button>
+        <button type="button" class="pill" data-q="q7">Закупочный отдел</button>
+        <button type="button" class="pill" data-q="q7">Несколько лиц без чёткой ответственности</button>
+      </div>
+      <!-- 8 -->
+      <div class="q" data-q="q8">
+        <b>8. На чём основаны решения по обслуживанию?</b>
+        <button type="button" class="pill" data-q="q8" data-score="1">На данных и метриках</button>
+        <button type="button" class="pill" data-q="q8">На личном опыте</button>
+        <button type="button" class="pill" data-q="q8">На рекомендациях поставщиков</button>
+        <button type="button" class="pill" data-q="q8">На попытке сэкономить «здесь и сейчас»</button>
+      </div>
+      <!-- 9 -->
+      <div class="q" data-q="q9">
+        <b>9. Используете ли совместимые картриджи?</b>
+        <button type="button" class="pill" data-q="q9" data-score="1">Нет, только оригинальные</button>
+        <button type="button" class="pill" data-q="q9">Да, массово</button>
+        <button type="button" class="pill" data-q="q9">Да, частично</button>
+        <button type="button" class="pill" data-q="q9">Не контролирую процесс</button>
+      </div>
+      <!-- 10 -->
+      <div class="q" data-q="q10">
+        <b>10. Каков уровень зрелости управления печатью?</b>
+        <button type="button" class="pill" data-q="q10" data-score="1">Стратегический — есть политика и метрики</button>
+        <button type="button" class="pill" data-q="q10">Тактический — решаем по мере задач</button>
+        <button type="button" class="pill" data-q="q10">Реактивный — действуем при сбоях</button>
+        <button type="button" class="pill" data-q="q10">Стихийный процесс, без системы</button>
+      </div>
+      <!-- 11 -->
+      <div class="q" data-q="q11">
+        <b>11. Насколько вы уверены в корректности бюджета печати?</b>
+        <button type="button" class="pill" data-q="q11" data-score="1">Полностью уверен</button>
+        <button type="button" class="pill" data-q="q11">Скорее уверен</button>
+        <button type="button" class="pill" data-q="q11">Есть сомнения</button>
+        <button type="button" class="pill" data-q="q11">Требуется пересмотр</button>
       </div>
 
       <button id="btnAuditResult" type="button" class="btn btn-primary" style="margin-top:20px;">Посмотреть результат</button>
@@ -102,7 +180,7 @@ input[type=text]{width:100%;padding:10px 12px;border-radius:10px;border:1px soli
   </div>
 </div>
 
-<!-- ======= Вебинары ======= -->
+<!-- === Вебинары === -->
 <div id="screen-poll" class="app" style="display:none;">
   <button id="backStart2" class="btn btn-secondary" style="margin-bottom:10px;width:auto;">↩ Вернуться</button>
   <div class="card">
@@ -126,6 +204,7 @@ input[type=text]{width:100%;padding:10px 12px;border-radius:10px;border:1px soli
 </div>
 
 <script>
+/* АКТУАЛЬНЫЙ HOOK */
 window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
 </script>
 <script src="app.js"></script>
