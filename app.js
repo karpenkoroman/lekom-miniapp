@@ -124,7 +124,7 @@ function renderSummary(data) {
   });
 }
 
-// Быстрый placeholder + ретраи загрузки
+// быстрый placeholder + ретраи
 renderSummary([
   {label:'Обзор рынка и тренды 2025', count:0},
   {label:'Импортозамещение', count:0},
@@ -142,7 +142,7 @@ const auditForm = document.getElementById('auditForm');
 const prog = document.getElementById('auditProgress');
 const TOTAL_Q = 11;
 
-// Выбор ответов-«пилюль»
+// выбор ответов-«пилюль»
 auditForm.addEventListener('click', (e)=>{
   const b = e.target.closest('.pill'); if(!b) return;
   const q = b.dataset.q;
@@ -153,7 +153,7 @@ auditForm.addEventListener('click', (e)=>{
   prog.textContent = `Ответы: ${answered} / ${TOTAL_Q}`;
 });
 
-// Подсчёт результата
+// подсчёт результата
 function calcAudit() {
   let score = 0;
   const answers = {};
@@ -169,7 +169,7 @@ function calcAudit() {
   return { score, verdict, advice, answers };
 }
 
-// Показать результат + отправить на хук
+// показать результат (тихо отправляем, без алертов)
 document.getElementById('btnAuditResult').onclick = async ()=>{
   const res = calcAudit();
   document.getElementById('resultText').innerHTML =
@@ -182,7 +182,7 @@ document.getElementById('btnAuditResult').onclick = async ()=>{
     advice: res.advice,
     answers: res.answers
   });
-  window.__lastAuditResult = res; // для «Обсудить с экспертом» и Лидов
+  window.__lastAuditResult = res; // для «Обсудить с экспертом» и лидов
 };
 
 // ================== Лиды ==================
@@ -213,7 +213,7 @@ document.getElementById('sendLead').onclick = async ()=>{
     document.getElementById('leadForm').style.display = 'none';
     document.getElementById('resultText').innerHTML = `<b>Спасибо!</b> Контакты отправлены.`;
   } else {
-    alert('Не удалось отправить контакты. Проверьте подключение и попробуйте ещё раз.');
+    showModal('Не удалось отправить контакты. Проверьте подключение и попробуйте ещё раз.');
   }
 };
 
@@ -221,7 +221,7 @@ document.getElementById('sendLead').onclick = async ()=>{
 document.getElementById('ctaExpert').onclick = async ()=>{
   const r = window.__lastAuditResult;
   const msg = r
-    ? `Здравствуйте! Хочу обсудить аудит печати.\nСчёт: ${r.score}/11, вердикт: ${r.verdict}.`
+    ? `Здравствуйте! Хочу обсудить аудит печати.\nСчёт: ${r.score}/11, вердикт: ${r.verдикт||r.verdict}.`
     : `Здравствуйте! Хочу обсудить аудит печати.`;
 
   try { await navigator.clipboard.writeText(msg); } catch(_){}
@@ -239,19 +239,35 @@ pollForm.addEventListener('click', (e)=>{
   b.classList.toggle('selected');
 });
 
-document.getElementById('sendPoll').onclick = async ()=>{
-  const selected = [...pollForm.querySelectorAll('.pill.selected')].map(b=>b.dataset.topic);
+document.getElementById('sendPoll').onclick = async () => {
+  const selected = [...pollForm.querySelectorAll('.pill.selected')].map(b => b.dataset.topic);
   const other = document.getElementById('pollOther').value.trim();
-  if (!selected.length && !other) { alert('Выберите хотя бы одну тему или укажите свою.'); return; }
 
+  if (!selected.length && !other) {
+    showModal('Выберите хотя бы одну тему или укажите свою.');
+    return;
+  }
+
+  // отправляем выбранные темы пакетно
+  let ok = true;
   const batch = [];
   selected.forEach(t => batch.push({ type:'poll', poll:'webinar_topic', topic:t, other:'' }));
-  if (other) batch.push({ type:'poll', poll:'webinar_topic', topic:'Другая тема', other });
+  if (other) batch.push({ type:'poll', poll:'webinar_topic', topic:'Другая тема', other }));
 
-  for (const p of batch) { await sendToHook(p); }
-  alert('Голос учтён!');
-  const sum = await getSummaryRobust(); if (sum && sum.length) renderSummary(sum);
-  show('screen-start');
+  for (const p of batch) {
+    const sent = await sendToHook(p);
+    if (!sent) ok = false;
+  }
+
+  if (ok) {
+    showModal('Голос учтён! Спасибо 🙌', async () => {
+      const sum = await getSummaryRobust();
+      if (sum && sum.length) renderSummary(sum);
+      show('screen-start');
+    });
+  } else {
+    showModal('Не удалось отправить голос. Проверьте подключение и попробуйте ещё раз.');
+  }
 };
 
 // ================== Модалка по центру ==================
