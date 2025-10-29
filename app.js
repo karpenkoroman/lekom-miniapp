@@ -212,4 +212,18 @@ document.getElementById('sendPoll').onclick = async ()=>{
   }
   // вернёмся на старт
   show('screen-start');
+
+  function showToast(text, ms=2500){
+  let el = document.getElementById('__lekom_toast');
+  if(!el){
+    el = document.createElement('div');
+    el.id='__lekom_toast';
+    el.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);background:#171b25;border:1px solid #293044;color:#eaf0fa;padding:10px 14px;border-radius:10px;z-index:9999;opacity:0;transition:opacity .15s';
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+  el.style.opacity = '1';
+  clearTimeout(el.__t);
+  el.__t = setTimeout(()=>{ el.style.opacity='0'; }, ms);
+}
 };
