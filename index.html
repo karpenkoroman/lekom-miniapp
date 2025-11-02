@@ -16,7 +16,7 @@
     })();
   </script>
 
-  <!-- Ваш актуальный EXEC-hook -->
+  <!-- Актуальный EXEC-hook -->
   <script>
     window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
   </script>
@@ -45,7 +45,8 @@
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
     font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
   body{overflow-x:hidden;}
-  .app{max-width:720px;margin:0 auto;padding:20px 16px calc(var(--footer-h) + 24px);box-sizing:border-box;}
+  /* +80px чтобы формы не упирались в фикс-футер */
+  .app{max-width:720px;margin:0 auto;padding:20px 16px calc(var(--footer-h) + 80px);box-sizing:border-box;}
 
   /* Шапка */
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
@@ -60,7 +61,7 @@
   .theme-toggle svg{width:18px;height:18px}
   .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
 
-  /* Карточки-экраны */
+  /* Экраны */
   .screen.card{
     background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);
     padding:16px;box-shadow:var(--shadow);
@@ -83,7 +84,7 @@
   .btn-sub{display:block;font-weight:600;font-size:13px;opacity:.9;margin-top:2px;color:inherit;}
   .btn-row{display:flex;gap:12px;flex-wrap:wrap;} .btn-row .btn{flex:1 1 220px;}
 
-  /* Плашки-ответы */
+  /* Ответы */
   .q{margin-top:18px;}
   .q b{display:block;margin-bottom:10px;font-size:17px;}
   .pill{display:block;width:100%;text-align:left;font-size:16px;line-height:1.45;padding:14px 16px;margin-top:8px;
@@ -103,12 +104,12 @@
   .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
   .summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
 
-  /* Аудит — карточки вопросов (контейнер) */
+  /* Карточки вопросов */
   #qcards{display:flex;flex-direction:column;gap:14px;}
-  .qcard{
-    border:1px solid var(--stroke);border-radius:14px;background:var(--bg2);padding:14px;
-  }
+  .qcard{border:1px solid var(--stroke);border-radius:14px;background:var(--bg2);padding:14px;}
   .qtext{font-size:17px;font-weight:600;margin-bottom:10px;}
+  .qnav{display:flex;gap:12px;margin-top:12px;}
+  .qnav .btn{flex:1 1 0;}
 
   /* Прогресс */
   #auditProgress{margin:6px 0 12px;font-size:14px;color:var(--text-dim);}
@@ -127,7 +128,7 @@
   .toast-box{background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:var(--shadow);}
   .toast-box .btn{width:100%;margin-top:10px;}
 
-  /* Футер FIXED (всегда прижат) */
+  /* Футер фиксированный */
   .global-footer{
     position:fixed;left:0;right:0;bottom:0;height:var(--footer-h);
     background:var(--bg2);border-top:1px solid var(--stroke);
@@ -135,7 +136,6 @@
     color:var(--text-dim);z-index:5000;
   }
   .global-footer a{color:var(--brand2);text-decoration:none;font-weight:500;}
-  .global-footer a:hover{text-decoration:underline;}
   .footer-icons{display:flex;gap:14px;align-items:center;}
   .footer-icons svg{width:22px;height:22px;}
   </style>
@@ -166,13 +166,18 @@
           <button id="goPoll" class="btn btn-secondary">Выберите тему вебинара</button>
         </div>
 
+        <!-- CTA «Показать результаты» появится после прохождения аудита -->
+        <div id="resumeCta" class="section" style="display:none;margin-top:12px;">
+          <button id="showResultFromStart" class="btn btn-secondary">Показать результаты самоаудита</button>
+        </div>
+
         <hr>
         <h3>Сводка голосования по темам</h3>
         <div id="summaryContent"><div class="muted">Загрузка…</div></div>
       </div>
     </div>
 
-    <!-- Аудит (вопросы карточками) -->
+    <!-- Аудит (карточки) -->
     <div id="screen-audit" class="screen card" style="display:none">
       <div>
         <h1>
@@ -192,7 +197,7 @@
       </div>
     </div>
 
-    <!-- Экран результатов -->
+    <!-- Результаты -->
     <div id="screen-result" class="screen card" style="display:none">
       <div class="result-card">
         <div class="result-score" id="resultText">0 баллов из 11</div>
@@ -203,7 +208,7 @@
         </div>
 
         <div id="resultCTAs">
-          <button id="ctaExpert" class="btn btn-secondary">💬 Обсудить с экспертом</button>
+          <button id="ctaExpert" class="btn btn-secondary">💬 Обсудить сейчас</button>
           <button id="toggleLead" class="btn btn-secondary">📩 Оставить контакты</button>
         </div>
 
@@ -225,7 +230,7 @@
       </div>
     </div>
 
-    <!-- Экран голосования (без итогов) -->
+    <!-- Голосование -->
     <div id="screen-poll" class="screen card" style="display:none">
       <div>
         <h1>Выбор темы вебинара</h1>
@@ -255,7 +260,7 @@
     </div>
   </div>
 
-  <!-- Футер фиксированный -->
+  <!-- Футер (только иконки) -->
   <div class="global-footer">
     <div class="footer-icons">
       <a href="https://lekomIT.t.me" target="_blank" title="Telegram">
@@ -264,11 +269,10 @@
       <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
         <svg viewBox="0 0 24 24">
           <path style="fill:transparent;stroke:var(--brand2);stroke-width:1.2" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
-          <path style="fill:var(--brand2)" d="M10 15V9l5 3-5 3z"/>
+          <path style="fill:var(--brand2)" d="M10 15V9л5 3-5 3z"/>
         </svg>
       </a>
     </div>
-    Присоединяйтесь к нам: <a href="https://lekomIT.t.me" target="_blank">@LekomIT</a>
   </div>
 
   <script defer src="/app.js"></script>
