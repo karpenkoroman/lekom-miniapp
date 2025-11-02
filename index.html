@@ -24,11 +24,10 @@
   <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
 
-  /* ===== Базовые переменные (тёмная тема по умолчанию) ===== */
   :root{
     --bg:#0e1015; --bg2:#171b25; --stroke:#293044;
     --text:#eaf0fa; --text-dim:#96a2c2;
-    --brand:#2a7de1; --brand2:#10b3a3;
+    --brand:#2a7de1; --brand2:#10b3a3; /* бирюзовый */
     --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.25);
     --pill:#101625; --pill-hover:#141b2b; --pill-sel:rgba(16,179,163,.18);
     --res-bg:#0f1623; --res-stroke:#22314d; --bar-bg:#101625;
@@ -43,15 +42,13 @@
     --res-bg:#ffffff; --res-stroke:#d7e0ef; --bar-bg:#edf2f7;
   }
 
-  /* ===== Глобальные ===== */
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-    font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif; -webkit-font-smoothing:antialiased;}
+    font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;}
   .app{max-width:720px;margin:0 auto;padding:20px 16px calc(var(--footer-h) + 16px); box-sizing:border-box;}
   h1{font-size:26px;margin:0 0 12px;} h2{font-size:22px;margin:0 0 10px;} h3{font-size:18px;margin:0 0 8px;}
   .muted{color:var(--text-dim);} hr{border:0;height:1px;background:var(--stroke);opacity:.6;margin:14px 0;}
   .card{background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
 
-  /* ===== Шапка ===== */
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
   .brand{display:flex;align-items:center;gap:10px;}
   .logo{height:28px;display:none}
@@ -61,7 +58,6 @@
   .theme-toggle{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:var(--bg2);border:1px solid var(--stroke);cursor:pointer;}
   .theme-toggle svg{width:18px;height:18px} .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
 
-  /* ===== Кнопки ===== */
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
     min-height:48px;padding:12px 16px;font-size:16px;font-weight:800;line-height:1.15;letter-spacing:.2px;
     border-radius:12px;border:1px solid transparent;cursor:pointer;transition:filter .12s,transform .06s;user-select:none;text-align:center;}
@@ -71,29 +67,25 @@
   .btn-sub{display:block;font-weight:600;font-size:13px;opacity:.9;margin-top:2px;color:inherit;}
   .btn-row{display:flex;gap:12px;flex-wrap:wrap;} .btn-row .btn{flex:1 1 220px;}
 
-  /* ===== Сводка ===== */
   .summary-row{margin:8px 0;}
   .summary-head{display:flex;justify-content:space-between;gap:8px;}
   .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
   .summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
 
-  /* ===== Экран старта ===== */
   .screen{display:none;flex-direction:column;min-height:60vh;}
   .screen.show{display:flex;}
 
-  /* ===== Аудит: карточки ===== */
   .q-progress{font-size:14px;color:var(--text-dim);margin:4px 0 12px;}
   .q-card{background:var(--bg2);border:1px solid var(--stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow);}
   .q-title{font-size:20px;font-weight:900;margin:0 0 12px;}
   .pill{display:block;width:100%;text-align:left;font-size:16px;line-height:1.45;padding:14px 16px;margin-top:10px;border-radius:12px;
-        border:1px solid var(--stroke);background:var(--pill);color:var(--text);cursor:pointer;box-sizing:border-box;}
+        border:1px solid var(--stroke);background:var(--pill);color:var(--text);cursor:pointer;}
   .pill:hover{background:var(--pill-hover);} .pill.selected{background:var(--pill-sel);border-color:var(--brand2);}
 
   .qnav{display:flex;gap:12px;margin-top:16px;}
   .qnav .btn{flex:1 1 0;}
 
-  /* ===== Экран результата ===== */
-  #resultBox .result-card{background:var(--res-bg);border:1px solid var(--res-stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow);position:relative;z-index:20;}
+  #resultBox .result-card{background:var(--res-bg);border:1px solid var(--res-stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow);}
   .result-score{font-size:24px;font-weight:900;text-align:center;margin:0 0 6px;}
   .result-verdict{font-size:18px;font-weight:800;text-align:center;margin-top:6px;}
   .result-advice{margin-top:6px;color:var(--text-dim);text-align:center;}
@@ -106,12 +98,10 @@
   }
   input::placeholder, textarea::placeholder{color:var(--text-dim);}
 
-  /* ===== Тост ===== */
   .toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;}
   .toast-box{background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:var(--shadow);}
   .toast-box .btn{width:100%;margin-top:10px;}
 
-  /* ===== Глобальный футер (фиксированный) ===== */
   .global-footer{
     position:fixed;left:0;right:0;bottom:0;z-index:10;
     background:var(--bg2);border-top:1px solid var(--stroke);
@@ -137,7 +127,7 @@
       </button>
     </div>
 
-    <!-- ========== ЭКРАН: старт ========== -->
+    <!-- Старт -->
     <div id="screen-start" class="screen show">
       <div class="card">
         <div class="btn-row">
@@ -149,7 +139,7 @@
         </div>
 
         <div id="resumeBox" style="display:none;margin-top:12px">
-          <button id="openResultFromStart" class="btn btn-secondary">Показать результаты самоаудита</button>
+          <button id="openResultFromStart" class="btn btn-primary">Показать результаты самоаудита</button>
         </div>
 
         <hr>
@@ -158,7 +148,7 @@
       </div>
     </div>
 
-    <!-- ========== ЭКРАН: аудит (карточки) ========== -->
+    <!-- Аудит (карточки) -->
     <div id="screen-audit" class="screen">
       <div class="card">
         <h1>
@@ -169,16 +159,16 @@
         </h1>
         <div id="auditProgress" class="q-progress">Вопросы: 0 из 11</div>
 
-        <div id="qContainer" class="q-card"><!-- сюда рендерится карточка вопроса --></div>
+        <div id="qContainer" class="q-card"></div>
 
         <div class="qnav">
           <button id="btnPrev" class="btn btn-secondary">Назад</button>
-          <button id="btnNext" class="btn btn-primary" disabled>Далее</button>
+          <button id="btnNext" class="btn btn-primary" style="display:none" disabled>Далее</button>
         </div>
       </div>
     </div>
 
-    <!-- ========== ЭКРАН: результат ========== -->
+    <!-- Результат -->
     <div id="screen-result" class="screen">
       <div class="card" id="resultBox">
         <div class="result-card">
@@ -191,15 +181,15 @@
           </div>
 
           <div class="cta-row" style="margin-top:12px">
-            <button id="ctaExpert" class="btn btn-secondary">💬 Обсудить сейчас</button>
-            <!-- Форма контактов сразу видна -->
+            <button id="ctaExpert" class="btn btn-primary">💬 Обсудить сейчас</button>
+            <button id="ctaScrollLead" class="btn btn-primary">📩 Отправить контакты</button>
           </div>
 
           <div id="leadForm" style="margin-top:10px">
             <input id="leadName"    type="text" placeholder="Ваше имя" style="margin-top:8px" />
             <input id="leadCompany" type="text" placeholder="Компания" style="margin-top:8px" />
             <input id="leadPhone"   type="text" placeholder="Телефон или email" style="margin-top:8px" />
-            <button id="sendLead" class="btn btn-primary" style="margin-top:10px">Отправить</button>
+            <button id="sendLead" class="btn btn-primary" style="margin-top:10px" disabled>Отправить</button>
             <div class="muted" style="margin-top:8px;text-align:center;">
               Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.
             </div>
@@ -212,7 +202,7 @@
       </div>
     </div>
 
-    <!-- ========== ЭКРАН: выбор темы вебинара ========== -->
+    <!-- Вебинар — выбор темы -->
     <div id="screen-poll" class="screen">
       <div class="card">
         <h1>Выбор темы вебинара</h1>
@@ -237,7 +227,7 @@
       </div>
     </div>
 
-  </div><!-- /app -->
+  </div>
 
   <!-- Фикс-футер -->
   <div class="global-footer">
@@ -249,7 +239,7 @@
         <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
           <svg viewBox="0 0 24 24">
             <path style="fill:transparent;stroke:var(--brand2);stroke-width:1.2" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
-            <path style="fill:var(--brand2)" d="M10 15V9l5 3-5 3z"/>
+            <path style="fill:var(--brand2)" d="M10 15V9л5 3-5 3z"/>
           </svg>
         </a>
       </div>
