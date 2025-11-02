@@ -1,16 +1,14 @@
 (() => {
   'use strict';
 
-  // ================== CONFIG ==================
+  // ===== CONFIG =====
   const HOOK = (window && window.LEKOM_HOOK) || '';
-
-  // Telegram WebApp (если мини-апп открыт в Telegram)
-  const TG = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+  const TG   = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
   const TG_USER = TG?.initDataUnsafe?.user || null;
 
-  // ================== SAFE DOM ==================
-  const $  = sel => document.querySelector(sel);
-  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  // ===== FAST DOM =====
+  const $  = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
 
   // Screens
   const scrStart = $('#screen-start');
@@ -32,8 +30,7 @@
   // Start summary
   const summaryBox = $('#summaryContent');
 
-  // Audit DOM
-  const auditForm       = $('#auditForm');
+  // Audit
   const auditProgressEl = $('#auditProgress');
   const btnAuditResult  = $('#btnAuditResult');
   const btnAuditSub     = $('#btnAuditSub');
@@ -41,7 +38,7 @@
   const resultVerdict   = $('#resultVerdict');
   const resultAdvice    = $('#resultAdvice');
 
-  // CTA in result
+  // Expert/Lead
   const btnExpert   = $('#ctaExpert');
   const btnLeadTgl  = $('#toggleLead');
   const leadForm    = $('#leadForm');
@@ -50,20 +47,19 @@
   const leadPhone   = $('#leadPhone');
   const btnSendLead = $('#sendLead');
 
-  // Poll DOM
+  // Poll
   const pollOptions   = $$('#screen-poll .poll-opt');
   const pollOtherBox  = $('#pollOtherBox');
   const pollOtherText = $('#pollOther');
   const btnSendPoll   = $('#sendPoll');
 
-  // ================== UTIL ==================
-  function show(el){ if (el) { el.style.display = 'flex'; el.style.flexDirection = 'column'; } }
-  function hide(el){ if (el) el.style.display = 'none'; }
-
+  // ===== UTIL =====
+  function show(el){ if (el){ el.style.display='flex'; el.style.flexDirection='column'; } }
+  function hide(el){ if (el){ el.style.display='none'; } }
   function showScreen(name){
     hide(scrStart); hide(scrAudit); hide(scrPoll);
     if (name === 'start'){ show(scrStart); loadSummaryToStart(); }
-    if (name === 'audit'){ show(scrAudit); updateAuditProgress(); }
+    if (name === 'audit'){ show(scrAudit); updateAuditProgress(); resetCarouselLayout(); }
     if (name === 'poll'){  show(scrPoll); }
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
@@ -76,60 +72,46 @@
     return 'баллов';
   }
 
-  // Тост / модалка-подсказка
-  function toast(html, withOk = true, onOk = null){
+  function toast(html, ok = true, onOk = null){
     const wrap = document.createElement('div');
     wrap.className = 'toast-overlay';
     wrap.innerHTML = `
       <div class="toast-box">
         <div style="margin-bottom:10px">${html}</div>
-        ${withOk ? '<button class="btn btn-primary" type="button">OK</button>' : ''}
+        ${ok ? '<button class="btn btn-primary" type="button">OK</button>' : ''}
       </div>`;
     document.body.appendChild(wrap);
     const btn = wrap.querySelector('button');
-    if (btn){
-      btn.onclick = ()=>{ document.body.removeChild(wrap); onOk && onOk(); };
-    } else {
-      wrap.addEventListener('click', ()=> document.body.removeChild(wrap));
-    }
+    if (btn){ btn.onclick = ()=>{ document.body.removeChild(wrap); onOk && onOk(); }; }
+    else { wrap.addEventListener('click', ()=> document.body.removeChild(wrap)); }
   }
 
-  // ================== THEME ==================
+  // ===== THEME =====
   function applyTheme(theme){
     document.documentElement.classList.toggle('theme-light', theme === 'light');
     document.documentElement.setAttribute('data-theme', theme);
     if (themeLabel){
-      if (theme === 'light'){
-        if (iconMoon) iconMoon.style.display = 'none';
-        if (iconSun)  iconSun.style.display  = '';
-        themeLabel.textContent = 'Светлая';
-      } else {
-        if (iconMoon) iconMoon.style.display = '';
-        if (iconSun)  iconSun.style.display  = 'none';
-        themeLabel.textContent = 'Тёмная';
-      }
+      if (theme === 'light'){ iconMoon && (iconMoon.style.display='none'); iconSun && (iconSun.style.display=''); themeLabel.textContent='Светлая'; }
+      else { iconMoon && (iconMoon.style.display=''); iconSun && (iconSun.style.display='none'); themeLabel.textContent='Тёмная'; }
     }
     try{ localStorage.setItem('theme', theme); }catch(_){}
   }
-
-  themeToggle?.addEventListener('click', () => {
+  themeToggle?.addEventListener('click', ()=>{
     const cur = document.documentElement.getAttribute('data-theme') || 'dark';
     applyTheme(cur === 'dark' ? 'light' : 'dark');
   });
 
-  // ================== SUMMARY (start) ==================
+  // ===== SUMMARY (sorted) =====
   async function loadSummaryToStart(){
     if (!summaryBox) return;
     summaryBox.innerHTML = '<div class="muted">Загрузка…</div>';
     try{
-      const res  = await fetch(HOOK + '?summary=webinar', { cache: 'no-store' });
+      const res  = await fetch(HOOK + '?summary=webinar', { cache:'no-store' });
       const data = await res.json(); // { total, items:[{topic,count}] }
       const wrap = document.createElement('div');
       const total = data.total || 0;
       wrap.innerHTML = `<div class="muted" style="margin-bottom:6px">Всего голосов: ${total}</div>`;
-
-      const items = (data.items || []).slice().sort((a,b)=> (b.count||0)-(a.count||0));
-      items.forEach(it=>{
+      (data.items || []).slice().sort((a,b)=>b.count-a.count).forEach(it=>{
         const pct = total ? Math.round((it.count/total)*100) : 0;
         const row = document.createElement('div');
         row.className = 'summary-row';
@@ -142,23 +124,17 @@
         `;
         wrap.appendChild(row);
       });
-
-      if (!items.length){
+      if (!(data.items||[]).length){
         const empty = document.createElement('div');
-        empty.className = 'muted';
-        empty.textContent = 'Пока нет голосов.';
-        wrap.appendChild(empty);
+        empty.className='muted'; empty.textContent='Пока нет голосов.'; wrap.appendChild(empty);
       }
-
-      summaryBox.innerHTML = '';
-      summaryBox.appendChild(wrap);
+      summaryBox.innerHTML=''; summaryBox.appendChild(wrap);
     }catch(e){
-      console.error('Ошибка сводки:', e);
       summaryBox.innerHTML = '<span class="muted">Не удалось загрузить сводку.</span>';
     }
   }
 
-  // ================== POLL (multi-select) ==================
+  // ===== POLL =====
   pollOptions.forEach(p=>{
     p.addEventListener('click', ()=>{
       p.classList.toggle('selected');
@@ -169,68 +145,51 @@
     });
   });
 
-  let isSendingPoll = false;
-
   btnSendPoll?.addEventListener('click', async ()=>{
-    if (isSendingPoll) return;
     const selected = $$('#screen-poll .poll-opt.selected').map(x=>x.dataset.topic);
     if (!selected.length){ toast('Выберите тему'); return; }
     const otherText = selected.includes('Другая тема') ? (pollOtherText?.value || '').trim() : '';
 
-    // Моментальный отклик
+    // мгновенный отклик
     toast('Голос учтён! Спасибо 🙌');
 
-    isSendingPoll = true;
-    const makePayload = (topic) => ({
-      type: 'poll',
-      poll: 'webinar_topic',
-      topic,
-      other: topic === 'Другая тема' ? otherText : '',
-      // прокинем Telegram-поля (если есть)
+    const base = {
+      type:'poll', poll:'webinar_topic',
       initData: TG_USER ? { user: TG_USER } : null,
-      user_id: TG_USER?.id || '',
-      username: TG_USER?.username || '',
-      first_name: TG_USER?.first_name || ''
+      user_id: TG_USER?.id || '', username: TG_USER?.username || '', first_name: TG_USER?.first_name || ''
+    };
+    const tasks = selected.map(topic=>{
+      const payload = { ...base, topic, other: topic==='Другая тема' ? otherText : '' };
+      return fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' }).catch(()=>null);
     });
-
-    // отправляем все выбранные темы параллельно
-    const tasks = selected.map(topic =>
-      fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(makePayload(topic))), {
-        method:'GET', cache:'no-store'
-      }).catch(()=> null)
-    );
-    Promise.allSettled(tasks).finally(()=> { isSendingPoll = false; });
+    Promise.allSettled(tasks);
 
     // очистка UI
     $$('#screen-poll .poll-opt.selected').forEach(x=>x.classList.remove('selected'));
-    if (pollOtherText) pollOtherText.value = '';
-    if (pollOtherBox)  pollOtherBox.style.display = 'none';
+    pollOtherText && (pollOtherText.value='');
+    pollOtherBox  && (pollOtherBox.style.display='none');
   });
 
-  // ================== AUDIT ==================
+  // ===== AUDIT logic =====
   const TOTAL_Q = 11;
-
   function getAuditAnswers(){
     const obj = {};
-    $$('#auditForm .pill.selected').forEach(p=>{
-      const q = p.dataset.q;
-      const score = Number(p.dataset.score || 0);
+    $$('#screen-audit .pill.selected').forEach(p=>{
+      const q = p.dataset.q; const score = Number(p.dataset.score || 0);
       obj[q] = { text: p.textContent.trim(), score };
     });
     return obj;
   }
-
   function updateAuditProgress(){
     const answered = Object.keys(getAuditAnswers()).length;
-    if (auditProgressEl) auditProgressEl.textContent = `Ответы: ${answered} / ${TOTAL_Q}`;
-    if (btnAuditSub)     btnAuditSub.textContent     = `(ответов ${answered} из ${TOTAL_Q})`;
+    auditProgressEl && (auditProgressEl.textContent = `Ответы: ${answered} / ${TOTAL_Q}`);
+    btnAuditSub && (btnAuditSub.textContent = `(ответов ${answered} из ${TOTAL_Q})`);
   }
-
   // одиночный выбор на вопрос
-  $$('#auditForm .pill').forEach(p=>{
+  $$('#screen-audit .pill').forEach(p=>{
     p.addEventListener('click', ()=>{
       const q = p.dataset.q;
-      $$('#auditForm .pill[data-q="'+q+'"]').forEach(x=>x.classList.remove('selected'));
+      $$('#screen-audit .pill[data-q="'+q+'"]').forEach(x=>x.classList.remove('selected'));
       p.classList.add('selected');
       updateAuditProgress();
     });
@@ -238,45 +197,33 @@
 
   let lastAuditResult = { score:0, verdict:'', advice:'', answers:{} };
 
-  btnAuditResult?.addEventListener('click', async ()=>{
+  $('#btnAuditResult')?.addEventListener('click', ()=>{
     const answers = getAuditAnswers();
-    const score = Object.values(answers).reduce((s,a)=> s + (a.score || 0), 0);
-
-    // Вердикт/рекомендация (учли «Требуется пересмотр...»)
+    const score = Object.values(answers).reduce((s,a)=> s + (a.score||0), 0);
     let verdict = 'Нужен аудит';
     let advice  = 'Требуется пересмотр парка и бюджета.';
-    if (score >= 9){       verdict='Зрелая практика';      advice='У вас всё под контролем, продолжайте.'; }
-    else if (score >= 6){  verdict='Частичный контроль';   advice='Рекомендуем уточнить бюджет и процессы.'; }
+    if (score >= 9){ verdict='Зрелая практика';    advice='У вас всё под контролем, продолжайте.'; }
+    else if (score >= 6){ verdict='Частичный контроль'; advice='Рекомендуем уточнить бюджет и процессы.'; }
 
     lastAuditResult = {
       score, verdict, advice,
       answers: Object.fromEntries(Object.entries(answers).map(([k,v])=>[k, v.text]))
     };
 
-    // Показ результата (без всплывашек)
-    if (resultText) {
-      resultText.innerHTML = `${score} ${pluralBall(score)} из ${TOTAL_Q}`;
-    }
-    if (resultVerdict){ resultVerdict.textContent = verdict; resultVerdict.style.display=''; }
-    if (resultAdvice){  resultAdvice.textContent  = advice;  resultAdvice.style.display=''; }
+    resultText      && (resultText.innerHTML = `${score} ${pluralBall(score)} из ${TOTAL_Q}`);
+    resultVerdict   && (resultVerdict.textContent = verdict, resultVerdict.style.display='');
+    resultAdvice    && (resultAdvice.textContent  = advice,  resultAdvice.style.display='');
 
-    // Шлём результат (молча)
-    try{
-      const payload = {
-        type: 'result',
-        score, verdict, advice,
-        answers: lastAuditResult.answers,
-        initData: TG_USER ? { user: TG_USER } : null,
-        user_id: TG_USER?.id || '',
-        username: TG_USER?.username || '',
-        first_name: TG_USER?.first_name || ''
-      };
-      fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' })
-        .catch(()=>null);
-    }catch(_){}
+    // тихая отправка
+    const payload = {
+      type:'result', score, verdict, advice, answers:lastAuditResult.answers,
+      initData: TG_USER ? { user: TG_USER } : null,
+      user_id: TG_USER?.id || '', username: TG_USER?.username || '', first_name: TG_USER?.first_name || ''
+    };
+    fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' }).catch(()=>null);
   });
 
-  // ================== EXPERT & LEAD ==================
+  // ===== Expert / Lead =====
   btnExpert?.addEventListener('click', async ()=>{
     const msg =
       `Добрый день! Хочу обсудить результаты самоаудита печати.\n`+
@@ -284,70 +231,111 @@
       `Вердикт: ${lastAuditResult.verdict}\n`+
       `Рекомендация: ${lastAuditResult.advice}`;
     try{ await navigator.clipboard.writeText(msg); }catch(_){}
-
-    toast(
-      'Текст сообщения скопирован.<br>Вставьте его в чат с Игорем Челебаевым, коммерческим директором ЛЕКОМ.',
-      true,
-      ()=> { window.open('https://t.me/chelebaev', '_blank'); }
-    );
+    toast('Текст сообщения скопирован.<br>Вставьте его в чат с Игорем Челебаевым, коммерческим директором ЛЕКОМ.', true,
+      ()=> window.open('https://t.me/chelebaev','_blank'));
   });
-
   btnLeadTgl?.addEventListener('click', ()=>{
-    if (!leadForm) return;
-    const shown = leadForm.style.display === 'block';
-    leadForm.style.display = shown ? 'none' : 'block';
-    if (!shown){ leadName?.focus(); }
+    const shown = leadForm && leadForm.style.display === 'block';
+    if (leadForm){ leadForm.style.display = shown ? 'none' : 'block'; }
+    if (!shown) leadName?.focus();
   });
-
-  let isSendingLead = false;
-
-  btnSendLead?.addEventListener('click', async ()=>{
-    if (isSendingLead) return;
+  btnSendLead?.addEventListener('click', ()=>{
     const name    = (leadName?.value || '').trim();
     const company = (leadCompany?.value || '').trim();
     const phone   = (leadPhone?.value || '').trim();
     if (!name || !phone){ toast('Укажите имя и контакт (телефон или email).'); return; }
-
-    // моментальный отклик
     toast('Спасибо! Мы свяжемся с вами.');
 
-    isSendingLead = true;
     const payload = {
-      type:'lead',
-      name, company, phone,
-      result: lastAuditResult,
-      consent: true,
-      policyUrl: 'https://lekom.ru/politika-konfidencialnosti/',
+      type:'lead', name, company, phone, result:lastAuditResult,
+      consent:true, policyUrl:'https://lekom.ru/politika-konfidencialnosti/',
       initData: TG_USER ? { user: TG_USER } : null,
-      user_id: TG_USER?.id || '',
-      username: TG_USER?.username || '',
-      first_name: TG_USER?.first_name || ''
+      user_id: TG_USER?.id || '', username: TG_USER?.username || '', first_name: TG_USER?.first_name || ''
     };
+    fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' }).catch(()=>null);
 
-    fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' })
-      .catch(()=> toast('Не удалось отправить. Попробуйте ещё раз.'))
-      .finally(()=> { isSendingLead = false; });
-
-    // очистка формы сразу
-    if (leadName)    leadName.value = '';
-    if (leadCompany) leadCompany.value = '';
-    if (leadPhone)   leadPhone.value = '';
-    if (leadForm)    leadForm.style.display = 'none';
+    // очистка
+    leadName && (leadName.value=''); leadCompany && (leadCompany.value=''); leadPhone && (leadPhone.value='');
+    leadForm && (leadForm.style.display='none');
   });
 
-  // ================== NAV ==================
-  btnGoAudit?.addEventListener('click', ()=> showScreen('audit'));
+  // ====== SWIPE CAROUSEL (AUDIT) ======
+  const track   = $('#auditTrack');
+  const dotsBox = $('#auditDots');
+  const btnPrev = $('#auditPrev');
+  const btnNext = $('#auditNext');
+
+  const slides = $$('#auditTrack .slide');
+  const SLIDES_COUNT = slides.length;
+  let current = 0;
+
+  // точки
+  function renderDots(){
+    dotsBox.innerHTML = '';
+    for (let i=0;i<SLIDES_COUNT;i++){
+      const d = document.createElement('div');
+      d.className = 'dot' + (i===current?' active':'');
+      d.dataset.idx = i;
+      d.addEventListener('click', ()=> goTo(i));
+      dotsBox.appendChild(d);
+    }
+  }
+  function goTo(idx){
+    current = Math.max(0, Math.min(SLIDES_COUNT-1, idx));
+    const x = -current * track.clientWidth;
+    track.style.transform = `translate3d(${x}px,0,0)`;
+    // активная точка
+    $$('#auditDots .dot').forEach((d,i)=> d.classList.toggle('active', i===current));
+    // листаем страницу наверх для фокуса на блоке
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function next(){ goTo(current+1); }
+  function prev(){ goTo(current-1); }
+
+  // ресайз (держим ширину шага)
+  function resetCarouselLayout(){ goTo(current); }
+
+  // свайп-жесты
+  let startX = 0, deltaX = 0, touching = false;
+  const SWIPE_T = 40; // порог пикселей
+  track.addEventListener('touchstart', (e)=>{
+    touching = true;
+    startX = e.touches[0].clientX;
+    deltaX = 0;
+  }, {passive:true});
+  track.addEventListener('touchmove', (e)=>{
+    if (!touching) return;
+    deltaX = e.touches[0].clientX - startX;
+  }, {passive:true});
+  track.addEventListener('touchend', ()=>{
+    if (!touching) return;
+    if (Math.abs(deltaX) > SWIPE_T){
+      if (deltaX < 0) next(); else prev();
+    } else {
+      goTo(current); // щелчок — остаёмся
+    }
+    touching = false; deltaX = 0;
+  });
+
+  // стрелки
+  btnPrev?.addEventListener('click', prev);
+  btnNext?.addEventListener('click', next);
+
+  // init dots
+  renderDots();
+  window.addEventListener('resize', resetCarouselLayout);
+
+  // ===== NAV =====
+  btnGoAudit?.addEventListener('click', ()=> { current = 0; showScreen('audit'); goTo(0); });
   btnGoPoll ?.addEventListener('click', ()=> showScreen('poll'));
   backFromAudit?.addEventListener('click', ()=> showScreen('start'));
   backFromPoll ?.addEventListener('click', ()=> showScreen('start'));
 
-  // ================== INIT ==================
-  (function ensureTheme(){
-    try{
-      const saved = localStorage.getItem('theme');
-      if (saved === 'light' || saved === 'dark') applyTheme(saved);
-    }catch(_){}
-  })();
+  // ===== INIT =====
+  (function ensureTheme(){ try{
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') applyTheme(saved);
+  }catch(_){}})();
 
   showScreen('start');
 })();
