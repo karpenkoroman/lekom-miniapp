@@ -12,13 +12,13 @@ const scrAudit  = $('#screen-audit');
 const scrResult = $('#screen-result');
 const scrPoll   = $('#screen-poll');
 
-/* Навигация */
-const btnGoAudit        = $('#goAudit');
-const btnGoPoll         = $('#goPoll');
-const backFromAudit     = $('#backFromAudit');
-const backFromResult    = $('#backFromResult');
-const backFromPoll      = $('#backFromPoll');
-const resumeCtaWrap     = $('#resumeCta');
+/* Навигация / CTA */
+const btnGoAudit  = $('#goAudit');
+const btnGoPoll   = $('#goPoll');
+const backFromAudit  = $('#backFromAudit');
+const backFromResult = $('#backFromResult');
+const backFromPoll   = $('#backFromPoll');
+const resumeCtaWrap  = $('#resumeCta');
 const showResultFromStart = $('#showResultFromStart');
 
 /* Тема */
@@ -27,7 +27,7 @@ const iconMoon = $('#iconMoon');
 const iconSun  = $('#iconSun');
 const themeLabel = $('#themeLabel');
 
-/* Сводка на старте */
+/* Сводка */
 const summaryBox = $('#summaryContent');
 
 /* Аудит */
@@ -62,7 +62,6 @@ function showOnly(el){
   show(el);
   window.scrollTo({top:0,behavior:'instant'});
 }
-
 function pluralBall(n){
   if (n % 100 >= 11 && n % 100 <= 14) return 'баллов';
   const m = n % 10;
@@ -70,35 +69,34 @@ function pluralBall(n){
   if (m >= 2 && m <= 4) return 'балла';
   return 'баллов';
 }
-
-function toast(html, withOk = true, onOk = null){
-  const wrap = document.createElement('div');
-  wrap.className = 'toast-overlay';
-  wrap.innerHTML = `<div class="toast-box"><div style="margin-bottom:10px">${html}</div>${withOk?'<button class="btn btn-primary" type="button">OK</button>':''}</div>`;
-  document.body.appendChild(wrap);
-  const btn = wrap.querySelector('button');
-  if (btn) btn.onclick = ()=>{ document.body.removeChild(wrap); onOk && onOk(); };
-  else wrap.onclick = ()=> document.body.removeChild(wrap);
+function toast(html, withOk=true, onOk=null){
+  const w=document.createElement('div');
+  w.className='toast-overlay';
+  w.innerHTML=`<div class="toast-box"><div style="margin-bottom:10px">${html}</div>${withOk?'<button class="btn btn-primary" type="button">OK</button>':''}</div>`;
+  document.body.appendChild(w);
+  const b=w.querySelector('button');
+  if(b){ b.onclick=()=>{ document.body.removeChild(w); onOk&&onOk(); }; }
+  else { w.onclick=()=>document.body.removeChild(w); }
 }
 
 /* Тема */
 function applyTheme(theme){
-  document.documentElement.classList.toggle('theme-light', theme === 'light');
+  document.documentElement.classList.toggle('theme-light', theme==='light');
   document.documentElement.setAttribute('data-theme', theme);
-  if (themeLabel){
-    if (theme === 'light'){ iconMoon.style.display='none'; iconSun.style.display=''; themeLabel.textContent='Светлая'; }
+  if(themeLabel){
+    if(theme==='light'){ iconMoon.style.display='none'; iconSun.style.display=''; themeLabel.textContent='Светлая'; }
     else { iconMoon.style.display=''; iconSun.style.display='none'; themeLabel.textContent='Тёмная'; }
   }
-  try{ localStorage.setItem('theme', theme); }catch(_){}
+  try{ localStorage.setItem('theme',theme); }catch(_){}
 }
-themeToggle?.addEventListener('click', ()=>{
-  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
-  applyTheme(cur === 'dark' ? 'light' : 'dark');
+themeToggle?.addEventListener('click',()=>{
+  const cur=document.documentElement.getAttribute('data-theme')||'dark';
+  applyTheme(cur==='dark'?'light':'dark');
 });
-(()=>{ const s=localStorage.getItem('theme'); if (s==='light'||s==='dark') applyTheme(s); })();
+(()=>{ const s=localStorage.getItem('theme'); if(s==='light'||s==='dark') applyTheme(s); })();
 
 /* Вопросы */
-const QUESTIONS = [
+const QUESTIONS=[
   { id:'q1', text:'Как вы оцениваете прозрачность учета расходов на печать в вашей организации?', options:[
     {t:'Мы ведем точный и полный учет всех расходов, включая капитальные.', s:1},
     {t:'Мы учитываем только расходные материалы (картриджи, бумагу и т.п.).', s:0},
@@ -167,127 +165,125 @@ const QUESTIONS = [
   ]},
 ];
 
-const answers = {};
-let currentIndex = 0;
-let lastAuditResult = { score:0, verdict:'', advice:'', answers:{} };
-let auditCompleted = false;
+const answers={};
+let currentIndex=0;
+let manualNav=false;          // появляется после первого «Назад»
+let auditCompleted=false;
+let lastAuditResult={score:0,verdict:'',advice:'',answers:{}};
 
 /* Рендер карточек */
 function renderCards(){
-  if (!qcardsWrap) return;
-  qcardsWrap.innerHTML = '';
-  QUESTIONS.forEach((q, idx)=>{
-    const card = document.createElement('div');
-    card.className = 'qcard';
-    card.dataset.idx = idx;
+  if(!qcardsWrap) return;
+  qcardsWrap.innerHTML='';
+  QUESTIONS.forEach((q,idx)=>{
+    const card=document.createElement('div');
+    card.className='qcard';
+    card.dataset.idx=idx;
 
-    const t = document.createElement('div');
-    t.className = 'qtext';
-    t.textContent = `${idx+1}. ${q.text}`;
-    card.appendChild(t);
+    const qtext=document.createElement('div');
+    qtext.className='qtext';
+    qtext.textContent=`${idx+1}. ${q.text}`;
+    card.appendChild(qtext);
 
-    const opts = document.createElement('div');
+    const opts=document.createElement('div');
     q.options.forEach(opt=>{
-      const pill = document.createElement('div');
-      pill.className = 'pill';
-      pill.textContent = opt.t;
-      if (answers[q.id]?.text === opt.t) pill.classList.add('selected');
-
-      pill.onclick = ()=>{
+      const pill=document.createElement('div');
+      pill.className='pill';
+      pill.textContent=opt.t;
+      if(answers[q.id]?.text===opt.t) pill.classList.add('selected');
+      pill.onclick=()=>{
         opts.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected'));
         pill.classList.add('selected');
-        answers[q.id] = { text: opt.t, score: opt.s };
+        answers[q.id]={text:opt.t,score:opt.s};
         updateAuditProgress();
-
+        // авто-переход, если пользователь не включил ручную навигацию
         setTimeout(()=>{
-          if (idx < QUESTIONS.length-1) {
-            goToIndex(idx+1);
-          } else {
-            showResultScreen();
+          if(!manualNav){
+            if(idx<QUESTIONS.length-1) goToIndex(idx+1);
+            else showResultScreen();
           }
-        }, 200);
+        },200);
       };
       opts.appendChild(pill);
     });
     card.appendChild(opts);
 
-    const nav = document.createElement('div');
-    nav.className = 'qnav';
-    const back = document.createElement('button');
-    back.className = 'btn btn-secondary';
-    back.textContent = 'Назад';
-    if (idx === 0) back.style.display = 'none';
-    back.onclick = ()=> goToIndex(idx-1);
+    const nav=document.createElement('div');
+    nav.className='qnav';
+    const back=document.createElement('button');
+    back.className='btn btn-secondary';
+    back.textContent='Назад';
+    if(idx===0) back.style.display='none';
+    back.onclick=()=>{ manualNav=true; goToIndex(idx-1); };
 
-    const next = document.createElement('button');
-    next.className = 'btn btn-primary';
-    next.textContent = (idx === QUESTIONS.length-1) ? 'К результату' : 'Далее';
-    next.disabled = !answers[q.id];
-    next.onclick = ()=>{
-      if (idx < QUESTIONS.length-1) goToIndex(idx+1);
+    const next=document.createElement('button');
+    next.className='btn btn-secondary';       // одинаковый стиль с «Назад»
+    next.textContent=(idx===QUESTIONS.length-1)?'К результату':'Далее';
+    next.disabled=!answers[q.id];
+    // видимость «Далее» — только после нажатия «Назад»
+    next.style.display = manualNav ? 'inline-flex' : 'none';
+    next.onclick=()=>{
+      if(idx<QUESTIONS.length-1) goToIndex(idx+1);
       else showResultScreen();
     };
 
-    nav.append(back, next);
+    nav.append(back,next);
     card.appendChild(nav);
-
     qcardsWrap.appendChild(card);
   });
   goToIndex(0);
 }
 
 function goToIndex(i){
-  currentIndex = Math.max(0, Math.min(QUESTIONS.length-1, i));
-  qcardsWrap.querySelectorAll('.qcard').forEach((c, idx)=>{
-    c.style.display = (idx===currentIndex) ? 'block' : 'none';
-    const q = QUESTIONS[idx];
-    const nextBtn = c.querySelector('.btn.btn-primary');
-    const backBtn = c.querySelector('.btn.btn-secondary');
-    if (backBtn) backBtn.style.display = (idx===0) ? 'none' : 'inline-flex';
-    if (nextBtn) nextBtn.disabled = !answers[q.id];
+  currentIndex=Math.max(0,Math.min(QUESTIONS.length-1,i));
+  qcardsWrap.querySelectorAll('.qcard').forEach((c,idx)=>{
+    c.style.display=(idx===currentIndex)?'block':'none';
+    const q=QUESTIONS[idx];
+    const nextBtn=c.querySelector('.btn.btn-secondary:nth-child(2)');
+    const backBtn=c.querySelector('.btn.btn-secondary:nth-child(1)');
+    if(backBtn) backBtn.style.display=(idx===0)?'none':'inline-flex';
+    if(nextBtn){
+      nextBtn.disabled=!answers[q.id];
+      nextBtn.style.display = manualNav ? 'inline-flex' : 'none';
+    }
   });
-  qcardsWrap.querySelector(`.qcard[data-idx="${currentIndex}"]`)?.scrollIntoView({behavior:'smooth', block:'start'});
+  qcardsWrap.querySelector(`.qcard[data-idx="${currentIndex}"]`)?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function updateAuditProgress(){
-  const answered = Object.keys(answers).length;
-  if (auditProgressEl) auditProgressEl.textContent = `Ответы: ${answered} / ${TOTAL_Q}`;
+  const answered=Object.keys(answers).length;
+  if(auditProgressEl) auditProgressEl.textContent=`Вопросы: ${answered} / ${TOTAL_Q}`;
 }
 
 /* Результат */
 async function showResultScreen(){
-  if (Object.keys(answers).length !== QUESTIONS.length){
-    toast('Ответьте на все вопросы'); return;
-  }
-  const score = Object.values(answers).reduce((s,a)=> s + (a.score || 0), 0);
+  if(Object.keys(answers).length!==QUESTIONS.length){ toast('Ответьте на все вопросы'); return; }
+  const score=Object.values(answers).reduce((s,a)=>s+(a.score||0),0);
   let verdict='Нужен аудит', advice='Требуется пересмотр парка и бюджета.';
-  if (score >= 9){ verdict='Зрелая практика'; advice='У вас всё под контролем, продолжайте.'; }
-  else if (score >= 6){ verdict='Частичный контроль'; advice='Рекомендуем уточнить бюджет и процессы.'; }
+  if(score>=9){ verdict='Зрелая практика'; advice='У вас всё под контролем, продолжайте.'; }
+  else if(score>=6){ verdict='Частичный контроль'; advice='Рекомендуем уточнить бюджет и процессы.'; }
 
-  lastAuditResult = {
-    score, verdict, advice,
-    answers: Object.fromEntries(Object.entries(answers).map(([k,v])=>[k, v.text]))
-  };
+  lastAuditResult={ score, verdict, advice,
+    answers:Object.fromEntries(Object.entries(answers).map(([k,v])=>[k,v.text])) };
 
-  if (resultText)    resultText.innerHTML    = `${score} ${pluralBall(score)} из ${TOTAL_Q}`;
-  if (resultVerdict) { resultVerdict.textContent = verdict; resultVerdict.style.display=''; }
-  if (resultAdvice)  { resultAdvice.textContent  = advice;  resultAdvice.style.display=''; }
+  resultText.innerHTML=`${score} ${pluralBall(score)} из ${TOTAL_Q}`;
+  resultVerdict.textContent=verdict; resultVerdict.style.display='';
+  resultAdvice.textContent=advice;   resultAdvice.style.display='';
 
-  auditCompleted = true;
-  updateStartResumeCta();     // покажем кнопку на старте
+  auditCompleted=true;
+  updateStartResumeCta();
   showOnly(scrResult);
 
   try{
-    await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
-      type:'result', score, verdict, advice,
-      answers: lastAuditResult.answers, initData: getInitData()
-    })), { method:'GET', cache:'no-store' });
+    await fetch(HOOK+'?q='+encodeURIComponent(JSON.stringify({
+      type:'result', score, verdict, advice, answers:lastAuditResult.answers, initData:getInitData()
+    })), {method:'GET', cache:'no-store'});
   }catch(_){}
 }
 
-/* CTA + лиды */
+/* CTA / Лиды */
 btnExpert?.addEventListener('click', async ()=>{
-  const msg =
+  const msg=
     `Добрый день! Хочу обсудить результаты самоаудита печати.\n`+
     `Итог: ${lastAuditResult.score} ${pluralBall(lastAuditResult.score)} из ${TOTAL_Q}\n`+
     `Вердикт: ${lastAuditResult.verdict}\n`+
@@ -297,103 +293,98 @@ btnExpert?.addEventListener('click', async ()=>{
     ()=> window.open('https://t.me/chelebaev','_blank'));
 });
 
+// «Оставить контакты» теперь просто скроллит к форме (форма уже видна)
 btnLeadTgl?.addEventListener('click', ()=>{
-  const shown = leadForm.style.display === 'block';
-  leadForm.style.display = shown ? 'none' : 'block';
-  if (!shown) leadName?.focus();
+  leadForm?.scrollIntoView({behavior:'smooth',block:'start'});
 });
 
 btnSendLead?.addEventListener('click', async ()=>{
-  const name    = (leadName?.value || '').trim();
-  const company = (leadCompany?.value || '').trim();
-  const phone   = (leadPhone?.value || '').trim();
-  if (!name || !phone){ toast('Укажите имя и контакт (телефон или email).'); return; }
+  const name=(leadName?.value||'').trim();
+  const company=(leadCompany?.value||'').trim();
+  const phone=(leadPhone?.value||'').trim();
+  if(!name||!phone){ toast('Укажите имя и контакт (телефон или email).'); return; }
 
   try{
-    await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
+    await fetch(HOOK+'?q='+encodeURIComponent(JSON.stringify({
       type:'lead', name, company, phone,
-      result: lastAuditResult, consent:true,
+      result:lastAuditResult, consent:true,
       policyUrl:'https://lekom.ru/politika-konfidencialnosti/', initData:getInitData()
-    })), { method:'GET', cache:'no-store' });
-
+    })), {method:'GET', cache:'no-store'});
     toast('Спасибо! Мы свяжемся с вами.');
-    leadName.value=''; leadCompany.value=''; leadPhone.value=''; leadForm.style.display='none';
+    leadName.value=''; leadCompany.value=''; leadPhone.value='';
   }catch(_){ toast('Не удалось отправить. Попробуйте ещё раз.'); }
 });
 
-/* Сводка на старте (сортировка) */
+/* Сводка (старт) — отсортирована по убыванию */
 async function loadSummaryToStart(){
-  if (!summaryBox) return;
-  summaryBox.innerHTML = '<div class="muted">Загрузка…</div>';
+  if(!summaryBox) return;
+  summaryBox.innerHTML='<div class="muted">Загрузка…</div>';
   try{
-    const r = await fetch(HOOK+'?summary=webinar', { cache:'no-store' });
-    const d = await r.json();
-    const wrap = document.createElement('div');
-    const total = d.total || 0;
-    const items = (d.items || []).slice().sort((a,b)=> b.count - a.count);
-    wrap.innerHTML = `<div class="muted" style="margin-bottom:6px">Всего голосов: ${total}</div>`;
+    const r=await fetch(HOOK+'?summary=webinar',{cache:'no-store'});
+    const d=await r.json();
+    const wrap=document.createElement('div');
+    const total=d.total||0;
+    const items=(d.items||[]).slice().sort((a,b)=>b.count-a.count);
+    wrap.innerHTML=`<div class="muted" style="margin-bottom:6px">Всего голосов: ${total}</div>`;
     items.forEach(it=>{
-      const pct = total ? Math.round(it.count/total*100) : 0;
-      wrap.insertAdjacentHTML('beforeend', `
+      const pct=total?Math.round(it.count/total*100):0;
+      wrap.insertAdjacentHTML('beforeend',`
         <div class="summary-row">
           <div class="summary-head">
             <div>${it.topic}</div>
             <div class="muted">${it.count} (${pct}%)</div>
           </div>
           <div class="summary-bar"><div class="summary-fill" style="width:${pct}%"></div></div>
-        </div>
-      `);
+        </div>`);
     });
-    if (!items.length) wrap.innerHTML += '<div class="muted">Пока нет голосов.</div>';
-    summaryBox.innerHTML = ''; summaryBox.appendChild(wrap);
+    if(!items.length) wrap.innerHTML+='<div class="muted">Пока нет голосов.</div>';
+    summaryBox.innerHTML=''; summaryBox.appendChild(wrap);
   }catch(_){
-    summaryBox.innerHTML = '<span class="muted">Не удалось загрузить сводку.</span>';
+    summaryBox.innerHTML='<span class="muted">Не удалось загрузить сводку.</span>';
   }
 }
 
 /* Опрос вебинара */
 pollOptionEls.forEach(p=>{
-  p.onclick = ()=>{
+  p.onclick=()=>{
     p.classList.toggle('selected');
-    if (p.dataset.topic === 'Другая тема'){
+    if(p.dataset.topic==='Другая тема'){
       pollOtherBox.style.display = p.classList.contains('selected') ? 'block' : 'none';
     }
   };
 });
-
 btnSendPoll?.addEventListener('click', async ()=>{
-  const selected = $$('#screen-poll .poll-opt.selected').map(x=>x.dataset.topic);
-  if (!selected.length){ toast('Выберите тему'); return; }
-  const otherText = selected.includes('Другая тема') ? (pollOtherText?.value || '').trim() : '';
+  const selected=$$('#screen-poll .poll-opt.selected').map(x=>x.dataset.topic);
+  if(!selected.length){ toast('Выберите тему'); return; }
+  const otherText=selected.includes('Другая тема')?(pollOtherText?.value||'').trim():'';
   try{
-    for (const topic of selected){
-      const payload = { type:'poll', poll:'webinar_topic', topic, other: topic==='Другая тема' ? otherText : '', initData: getInitData() };
-      await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' });
+    for(const topic of selected){
+      const payload={ type:'poll', poll:'webinar_topic', topic,
+        other: topic==='Другая тема'?otherText:'', initData:getInitData() };
+      await fetch(HOOK+'?q='+encodeURIComponent(JSON.stringify(payload)), {method:'GET', cache:'no-store'});
     }
     toast('Голос учтён! Спасибо 🙌');
     $$('#screen-poll .poll-opt.selected').forEach(x=>x.classList.remove('selected'));
-    if (pollOtherText) pollOtherText.value = '';
-    if (pollOtherBox)  pollOtherBox.style.display = 'none';
-  }catch(_){
-    toast('Не удалось отправить голос. Попробуйте ещё раз.');
-  }
+    if(pollOtherText) pollOtherText.value='';
+    if(pollOtherBox)  pollOtherBox.style.display='none';
+  }catch(_){ toast('Не удалось отправить голос. Попробуйте ещё раз.'); }
 });
 
-/* CTA «показать результат» на старте */
+/* Кнопка на старте «Показать результаты» */
 function updateStartResumeCta(){
-  if (!resumeCtaWrap) return;
+  if(!resumeCtaWrap) return;
   resumeCtaWrap.style.display = auditCompleted ? 'block' : 'none';
 }
 
 /* Навигация */
-btnGoAudit?.addEventListener('click', ()=> showOnly(scrAudit));
+btnGoAudit?.addEventListener('click', ()=> { manualNav=false; showOnly(scrAudit); });
 btnGoPoll ?.addEventListener('click', ()=> showOnly(scrPoll));
 backFromAudit ?.addEventListener('click', ()=> { updateStartResumeCta(); auditCompleted ? showOnly(scrResult) : showOnly(scrStart); loadSummaryToStart(); });
 backFromResult?.addEventListener('click', ()=> { updateStartResumeCta(); auditCompleted ? showOnly(scrResult) : showOnly(scrStart); loadSummaryToStart(); });
 backFromPoll  ?.addEventListener('click', ()=> { showOnly(scrStart); loadSummaryToStart(); });
 showResultFromStart?.addEventListener('click', ()=> showOnly(scrResult));
 
-/* Старт */
+/* Инициализация */
 function init(){
   renderCards();
   loadSummaryToStart();
