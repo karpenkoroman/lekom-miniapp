@@ -1,18 +1,71 @@
 (() => {
   'use strict';
 
-  // ===== CONFIG =====
   const HOOK = (window && window.LEKOM_HOOK) || '';
-
-  // ===== Helpers =====
   const $  = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
+  // Экранный роутинг
+  const scrStart  = $('#screen-start');
+  const scrAudit  = $('#screen-audit');
+  const scrResult = $('#screen-result');
+  const scrPoll   = $('#screen-poll');
   function showOnly(el){
     [scrStart, scrAudit, scrResult, scrPoll].forEach(x=> x.classList.remove('show'));
     el.classList.add('show');
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
+
+  // Тема
+  const themeToggle = $('#themeToggle');
+  const iconMoon = $('#iconMoon');
+  const iconSun  = $('#iconSun');
+  const themeLabel = $('#themeLabel');
+  function applyTheme(theme){
+    document.documentElement.classList.toggle('theme-light', theme === 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+    if (themeLabel){
+      if (theme === 'light'){ iconMoon.style.display='none'; iconSun.style.display=''; themeLabel.textContent='Светлая'; }
+      else { iconMoon.style.display=''; iconSun.style.display='none'; themeLabel.textContent='Тёмная'; }
+    }
+    try{ localStorage.setItem('theme', theme); }catch(_){}
+  }
+  themeToggle?.addEventListener('click', ()=>{
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+
+  // Старт
+  const btnGoAudit = $('#goAudit');
+  const btnGoPoll  = $('#goPoll');
+  const summaryBox = $('#summaryContent');
+  const resumeBox  = $('#resumeBox');
+  const openResultFromStart = $('#openResultFromStart');
+
+  // Аудит
+  const qContainer = $('#qContainer');
+  const auditProgressEl = $('#auditProgress');
+  const btnPrev = $('#btnPrev');
+  const btnNext = $('#btnNext');
+
+  // Результат
+  const resultText    = $('#resultText');
+  const resultVerdict = $('#resultVerdict');
+  const resultAdvice  = $('#resultAdvice');
+  const btnExpert     = $('#ctaExpert');
+  const btnScrollLead = $('#ctaScrollLead');
+  const leadName      = $('#leadName');
+  const leadCompany   = $('#leadCompany');
+  const leadPhone     = $('#leadPhone');
+  const btnSendLead   = $('#sendLead');
+  const backFromResult= $('#backFromResult');
+
+  // Опрос вебинара
+  const pollOptions   = $$('#screen-poll .poll-opt');
+  const pollOtherBox  = $('#pollOtherBox');
+  const pollOtherText = $('#pollOther');
+  const sendPoll      = $('#sendPoll');
+  const backFromPoll  = $('#backFromPoll');
 
   function toast(html, withOk = true, onOk = null){
     const wrap = document.createElement('div');
@@ -41,64 +94,7 @@
     catch(_) { return null; }
   }
 
-  // ===== Theme =====
-  const themeToggle = $('#themeToggle');
-  const iconMoon = $('#iconMoon');
-  const iconSun  = $('#iconSun');
-  const themeLabel = $('#themeLabel');
-  function applyTheme(theme){
-    document.documentElement.classList.toggle('theme-light', theme === 'light');
-    document.documentElement.setAttribute('data-theme', theme);
-    if (themeLabel){
-      if (theme === 'light'){ iconMoon.style.display='none'; iconSun.style.display=''; themeLabel.textContent='Светлая'; }
-      else { iconMoon.style.display=''; iconSun.style.display='none'; themeLabel.textContent='Тёмная'; }
-    }
-    try{ localStorage.setItem('theme', theme); }catch(_){}
-  }
-  themeToggle?.addEventListener('click', ()=>{
-    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
-    applyTheme(cur === 'dark' ? 'light' : 'dark');
-  });
-  document.documentElement.style.setProperty('--footer-h','84px'); // страховка
-
-  // ===== Screens =====
-  const scrStart  = $('#screen-start');
-  const scrAudit  = $('#screen-audit');
-  const scrResult = $('#screen-result');
-  const scrPoll   = $('#screen-poll');
-
-  // Start
-  const btnGoAudit = $('#goAudit');
-  const btnGoPoll  = $('#goPoll');
-  const summaryBox = $('#summaryContent');
-  const resumeBox  = $('#resumeBox');
-  const openResultFromStart = $('#openResultFromStart');
-
-  // Audit
-  const qContainer = $('#qContainer');
-  const auditProgressEl = $('#auditProgress');
-  const btnPrev = $('#btnPrev');
-  const btnNext = $('#btnNext');
-
-  // Result
-  const resultText    = $('#resultText');
-  const resultVerdict = $('#resultVerdict');
-  const resultAdvice  = $('#resultAdvice');
-  const btnExpert     = $('#ctaExpert');
-  const leadName      = $('#leadName');
-  const leadCompany   = $('#leadCompany');
-  const leadPhone     = $('#leadPhone');
-  const btnSendLead   = $('#sendLead');
-  const backFromResult= $('#backFromResult');
-
-  // Poll
-  const pollOptions   = $$('#screen-poll .poll-opt');
-  const pollOtherBox  = $('#pollOtherBox');
-  const pollOtherText = $('#pollOther');
-  const sendPoll      = $('#sendPoll');
-  const backFromPoll  = $('#backFromPoll');
-
-  // ===== Questions =====
+  /* ===== Вопросы ===== */
   const QUESTIONS = [
     { id:'q1',  text:'Как вы оцениваете прозрачность учета расходов на печать в вашей организации?',
       opts:[
@@ -181,9 +177,15 @@
   const TOTAL_Q = QUESTIONS.length;
 
   let curIndex = 0;
-  let answers  = {};   // { qid: {text, score} }
+  let answers  = {};
+  let manualMode = false; // появляется после "Назад"
   let auditCompleted = false;
   let lastAuditResult = { score:0, verdict:'', advice:'', answers:{} };
+
+  const updateStartResumeCta = ()=> {
+    const box = $('#resumeBox');
+    if (box) box.style.display = auditCompleted ? 'block' : 'none';
+  };
 
   function updateAuditProgress(){
     const answered = Object.keys(answers).length;
@@ -192,13 +194,15 @@
 
   function renderQuestion(){
     const q = QUESTIONS[curIndex];
-    // progress & buttons state
     updateAuditProgress();
-    btnPrev.style.visibility = (curIndex === 0) ? 'hidden' : 'visible';
-    const hasAns = !!answers[q.id];
-    btnNext.disabled = !hasAns;
 
-    // html
+    // «Назад» только со 2-го экрана
+    btnPrev.style.visibility = (curIndex === 0) ? 'hidden' : 'visible';
+
+    // «Далее» показываем только в ручном режиме (после нажатия «Назад»)
+    btnNext.style.display = manualMode ? '' : 'none';
+    btnNext.disabled = !answers[q.id];
+
     const wrap = document.createElement('div');
     wrap.innerHTML = `
       <div class="q-title">${curIndex+1}. ${q.text}</div>
@@ -212,18 +216,17 @@
       d.textContent = opt.t;
       if (answers[q.id] && answers[q.id].text === opt.t) d.classList.add('selected');
       d.addEventListener('click', ()=>{
-        // single select for this q
         answers[q.id] = { text: opt.t, score: opt.s };
-        // re-render selection in this card
         $$('.pill', wrap).forEach(p=>p.classList.remove('selected'));
         d.classList.add('selected');
         btnNext.disabled = false;
 
-        // авто-переход через 300мс (кроме последнего вопроса)
-        setTimeout(()=>{
-          if (curIndex < TOTAL_Q - 1) { curIndex++; renderQuestion(); }
-          else { showResultScreen(); }
-        }, 300);
+        if (!manualMode) {
+          setTimeout(()=>{
+            if (curIndex < TOTAL_Q - 1) { curIndex++; renderQuestion(); }
+            else { showResultScreen(); }
+          }, 250);
+        }
         updateAuditProgress();
       });
       optsBox.appendChild(d);
@@ -234,8 +237,13 @@
   }
 
   btnPrev.addEventListener('click', ()=>{
-    if (curIndex > 0) { curIndex--; renderQuestion(); }
+    if (curIndex > 0) {
+      curIndex--;
+      manualMode = true;             // включаем ручной режим
+      renderQuestion();
+    }
   });
+
   btnNext.addEventListener('click', ()=>{
     if (curIndex < TOTAL_Q - 1) { curIndex++; renderQuestion(); }
     else { showResultScreen(); }
@@ -246,9 +254,7 @@
   }
 
   async function showResultScreen(){
-    if (Object.keys(answers).length !== TOTAL_Q){
-      toast('Ответьте на все вопросы'); return;
-    }
+    if (Object.keys(answers).length !== TOTAL_Q){ toast('Ответьте на все вопросы'); return; }
     const score = calcScore();
     let verdict = 'Нужен аудит';
     let advice  = 'Требуется пересмотр парка и бюджета.';
@@ -268,7 +274,6 @@
     updateStartResumeCta();
     showOnly(scrResult);
 
-    // отправка результата (без модалок)
     try{
       await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
         type:'result', score, verdict, advice, answers: lastAuditResult.answers, initData: getInitData()
@@ -276,18 +281,13 @@
     }catch(_){}
   }
 
-  function updateStartResumeCta(){
-    if (!resumeBox) return;
-    resumeBox.style.display = auditCompleted ? 'block' : 'none';
-  }
-
-  // ===== Poll (multi-select) =====
+  // ===== Poll =====
   pollOptions.forEach(p=>{
     p.addEventListener('click', ()=>{
       p.classList.toggle('selected');
       if (p.dataset.topic === 'Другая тема'){
         const on = p.classList.contains('selected');
-        if (pollOtherBox) pollOtherBox.style.display = on ? 'block' : 'none';
+        pollOtherBox.style.display = on ? 'block' : 'none';
         if (on) pollOtherText?.focus();
       }
     });
@@ -297,40 +297,32 @@
     const selected = $$('#screen-poll .poll-opt.selected').map(x=>x.dataset.topic);
     if (!selected.length){ toast('Выберите тему'); return; }
     const otherText = selected.includes('Другая тема') ? (pollOtherText?.value || '').trim() : '';
-
-    // оптимистично показываем сразу
     toast('Голос учтён! Спасибо 🙌');
-    // и шлём в фоне
     try{
       for (const topic of selected){
         const payload = { type:'poll', poll:'webinar_topic', topic, other: topic==='Другая тема' ? otherText : '', initData: getInitData() };
         fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' });
       }
     }catch(_){}
-    // очистка
     $$('#screen-poll .poll-opt.selected').forEach(x=>x.classList.remove('selected'));
     if (pollOtherText) pollOtherText.value = '';
     if (pollOtherBox)  pollOtherBox.style.display = 'none';
   });
 
-  // ===== Summary (start) =====
+  // ===== Summary на старте =====
   async function loadSummaryToStart(){
     if (!summaryBox) return;
     summaryBox.innerHTML = '<div class="muted">Загрузка…</div>';
     try{
       const res  = await fetch(HOOK + '?summary=webinar', { cache: 'no-store' });
-      const data = await res.json();  // { total, items:[{topic,count}] } — сервер может отдать другой формат; страхуемся ниже
-
-      const total = data.total ?? (data.reduce ? data.reduce((s,x)=>s + (x.count||0),0) : 0);
-      const items = data.items ? data.items.slice().sort((a,b)=> (b.count||0)-(a.count||0))
-                               : (Array.isArray(data) ? data.slice().sort((a,b)=> (b.count||0)-(a.count||0)) : []);
+      const data = await res.json();
+      const total = data.total ?? (Array.isArray(data) ? data.reduce((s,x)=>s+(x.count||0),0) : 0);
+      const items = (data.items || data || []).slice().sort((a,b)=> (b.count||0) - (a.count||0));
 
       const wrap = document.createElement('div');
       wrap.innerHTML = `<div class="muted" style="margin-bottom:6px">Всего голосов: ${total||0}</div>`;
-
       if (!items.length){
-        const empty = document.createElement('div'); empty.className='muted'; empty.textContent='Пока нет голосов.';
-        wrap.appendChild(empty);
+        const empty = document.createElement('div'); empty.className='muted'; empty.textContent='Пока нет голосов.'; wrap.appendChild(empty);
       } else {
         items.forEach(it=>{
           const cnt = it.count||0, pct = total ? Math.round((cnt/total)*100) : 0;
@@ -341,15 +333,14 @@
           wrap.appendChild(row);
         });
       }
-      summaryBox.innerHTML = '';
-      summaryBox.appendChild(wrap);
+      summaryBox.innerHTML = ''; summaryBox.appendChild(wrap);
     }catch(e){
       console.error(e);
       summaryBox.innerHTML = '<span class="muted">Не удалось загрузить сводку.</span>';
     }
   }
 
-  // ===== Expert & Lead =====
+  // ===== CTA «Обсудить сейчас» / Лиды =====
   btnExpert?.addEventListener('click', async ()=>{
     const msg =
       `Добрый день! Хочу обсудить результаты самоаудита печати.\n`+
@@ -361,11 +352,26 @@
       ()=> window.open('https://t.me/chelebaev','_blank'));
   });
 
+  // Скролл к форме
+  btnScrollLead?.addEventListener('click', ()=>{
+    document.getElementById('leadForm')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    leadName?.focus();
+  });
+
+  // Активность кнопки «Отправить» только при наличии телефона/email
+  function validateLead(){
+    const hasContact = (leadPhone?.value || '').trim().length > 0;
+    btnSendLead.disabled = !hasContact;
+  }
+  leadPhone?.addEventListener('input', validateLead);
+  validateLead();
+
   btnSendLead?.addEventListener('click', async ()=>{
     const name    = (leadName?.value || '').trim();
     const company = (leadCompany?.value || '').trim();
     const phone   = (leadPhone?.value || '').trim();
-    if (!name || !phone){ toast('Укажите имя и контакт (телефон или email).'); return; }
+    if (!phone){ return; } // защита, кнопка и так disabled
+
     try{
       await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
         type:'lead', name, company, phone,
@@ -374,13 +380,16 @@
         initData: getInitData()
       })), { method:'GET', cache:'no-store' });
       toast('Спасибо! Мы свяжемся с вами.');
-      leadName.value = ''; leadCompany.value=''; leadPhone.value='';
+      leadName.value=''; leadCompany.value=''; leadPhone.value='';
+      validateLead();
     }catch(_){ toast('Не удалось отправить. Попробуйте ещё раз.'); }
   });
 
-  // ===== Navigation =====
+  // ===== Навигация =====
   $('#goAudit')?.addEventListener('click', ()=>{
-    curIndex = 0; answers = {};
+    curIndex = 0;
+    answers = {};
+    manualMode = false;            // стартуем в авто-режиме (без кнопки «Далее»)
     renderQuestion();
     showOnly(scrAudit);
   });
