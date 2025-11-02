@@ -7,7 +7,7 @@
 
   <!-- Ранняя установка темы -->
   <script>
-    (function(){
+    (function () {
       const saved = localStorage.getItem('theme');
       const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
       const theme = saved || (prefersLight ? 'light' : 'dark');
@@ -16,81 +16,89 @@
     })();
   </script>
 
-  <!-- Актуальный EXEC-hook -->
+  <!-- Текущий EXEC-hook -->
   <script>
     window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
   </script>
 
   <style>
-  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
 
+  /* ===== Базовые переменные (тёмная тема по умолчанию) ===== */
   :root{
     --bg:#0e1015; --bg2:#171b25; --stroke:#293044;
     --text:#eaf0fa; --text-dim:#96a2c2;
-    --brand:#2a7de1; --brand2:#1db8aa;
+    --brand:#2a7de1; --brand2:#10b3a3;
     --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.25);
-    --pill:#101625; --pill-hover:#141b2b; --pill-sel:rgba(29,184,170,.22); --pill-outline:rgba(29,184,170,.5);
+    --pill:#101625; --pill-hover:#141b2b; --pill-sel:rgba(16,179,163,.18);
     --res-bg:#0f1623; --res-stroke:#22314d; --bar-bg:#101625;
-    --footer-h:66px;
+    --footer-h:84px;
   }
   html.theme-light{
     --bg:#f6f8fb; --bg2:#ffffff; --stroke:#e2e8f0;
     --text:#0f172a; --text-dim:#4b5563;
     --brand:#2a7de1; --brand2:#10b3a3;
     --shadow:0 8px 24px rgba(15,23,42,.08);
-    --pill:#ffffff; --pill-hover:#f3f7fb; --pill-sel:rgba(16,179,163,.14); --pill-outline:rgba(16,179,163,.45);
+    --pill:#ffffff; --pill-hover:#f3f7fb; --pill-sel:rgba(16,179,163,.18);
     --res-bg:#ffffff; --res-stroke:#d7e0ef; --bar-bg:#edf2f7;
   }
 
+  /* ===== Глобальные ===== */
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-    font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
-  body{overflow-x:hidden;}
-  /* +80px чтобы формы не упирались в фикс-футер */
-  .app{max-width:720px;margin:0 auto;padding:20px 16px calc(var(--footer-h) + 80px);box-sizing:border-box;}
+    font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif; -webkit-font-smoothing:antialiased;}
+  .app{max-width:720px;margin:0 auto;padding:20px 16px calc(var(--footer-h) + 16px); box-sizing:border-box;}
+  h1{font-size:26px;margin:0 0 12px;} h2{font-size:22px;margin:0 0 10px;} h3{font-size:18px;margin:0 0 8px;}
+  .muted{color:var(--text-dim);} hr{border:0;height:1px;background:var(--stroke);opacity:.6;margin:14px 0;}
+  .card{background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
 
-  /* Шапка */
+  /* ===== Шапка ===== */
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
   .brand{display:flex;align-items:center;gap:10px;}
   .logo{height:28px;display:none}
   .logo-dark{display:inline}
   html.theme-light .logo-dark{display:none}
   html.theme-light .logo-light{display:inline}
+  .theme-toggle{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:var(--bg2);border:1px solid var(--stroke);cursor:pointer;}
+  .theme-toggle svg{width:18px;height:18px} .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
 
-  .theme-toggle{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;
-    background:var(--bg2);border:1px solid var(--stroke);cursor:pointer;user-select:none;}
-  .theme-toggle svg{width:18px;height:18px}
-  .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
-
-  /* Экраны */
-  .screen.card{
-    background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);
-    padding:16px;box-shadow:var(--shadow);
-    display:flex;flex-direction:column;min-height:60vh;
-  }
-  .card{background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
-  h1{font-size:26px;margin:0 0 12px;} h2{font-size:22px;margin:0 0 10px;} h3{font-size:18px;margin:0 0 8px;}
-  .muted{color:var(--text-dim);} hr{border:0;height:1px;background:var(--stroke);opacity:.6;margin:14px 0;}
-
+  /* ===== Кнопки ===== */
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
-    min-height:46px;padding:12px 16px;font-size:16px;font-weight:700;line-height:1.15;
-    border-radius:12px;border:1px solid transparent;cursor:pointer;transition:filter .12s,transform .06s;
-    user-select:none;text-align:center;flex-direction:column;}
-  .btn:active{transform:translateY(1px);} .btn:disabled{opacity:.6;cursor:not-allowed;}
-  .btn + .btn{margin-top:10px;}
+    min-height:48px;padding:12px 16px;font-size:16px;font-weight:800;line-height:1.15;letter-spacing:.2px;
+    border-radius:12px;border:1px solid transparent;cursor:pointer;transition:filter .12s,transform .06s;user-select:none;text-align:center;}
+  .btn:active{transform:translateY(1px);} .btn:disabled{opacity:.5;cursor:not-allowed;}
   .btn-primary{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 10px 28px rgba(42,125,225,.18);}
-  .btn-primary:hover{filter:brightness(1.06);}
   .btn-secondary{color:var(--text);background:var(--bg2);border:1px solid var(--stroke);}
-  .btn-secondary:hover{filter:brightness(1.03);}
   .btn-sub{display:block;font-weight:600;font-size:13px;opacity:.9;margin-top:2px;color:inherit;}
   .btn-row{display:flex;gap:12px;flex-wrap:wrap;} .btn-row .btn{flex:1 1 220px;}
 
-  /* Ответы */
-  .q{margin-top:18px;}
-  .q b{display:block;margin-bottom:10px;font-size:17px;}
-  .pill{display:block;width:100%;text-align:left;font-size:16px;line-height:1.45;padding:14px 16px;margin-top:8px;
-    border-radius:12px;border:1px solid var(--stroke);background:var(--pill);color:var(--text);cursor:pointer;box-sizing:border-box;
-    word-break:break-word;overflow-wrap:anywhere;}
-  .pill:hover{background:var(--pill-hover);} .pill.selected{background:var(--pill-sel);border-color:var(--brand2);outline:2px solid var(--pill-outline);}
+  /* ===== Сводка ===== */
+  .summary-row{margin:8px 0;}
+  .summary-head{display:flex;justify-content:space-between;gap:8px;}
+  .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
+  .summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
+
+  /* ===== Экран старта ===== */
+  .screen{display:none;flex-direction:column;min-height:60vh;}
+  .screen.show{display:flex;}
+
+  /* ===== Аудит: карточки ===== */
+  .q-progress{font-size:14px;color:var(--text-dim);margin:4px 0 12px;}
+  .q-card{background:var(--bg2);border:1px solid var(--stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow);}
+  .q-title{font-size:20px;font-weight:900;margin:0 0 12px;}
+  .pill{display:block;width:100%;text-align:left;font-size:16px;line-height:1.45;padding:14px 16px;margin-top:10px;border-radius:12px;
+        border:1px solid var(--stroke);background:var(--pill);color:var(--text);cursor:pointer;box-sizing:border-box;}
+  .pill:hover{background:var(--pill-hover);} .pill.selected{background:var(--pill-sel);border-color:var(--brand2);}
+
+  .qnav{display:flex;gap:12px;margin-top:16px;}
+  .qnav .btn{flex:1 1 0;}
+
+  /* ===== Экран результата ===== */
+  #resultBox .result-card{background:var(--res-bg);border:1px solid var(--res-stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow);position:relative;z-index:20;}
+  .result-score{font-size:24px;font-weight:900;text-align:center;margin:0 0 6px;}
+  .result-verdict{font-size:18px;font-weight:800;text-align:center;margin-top:6px;}
+  .result-advice{margin-top:6px;color:var(--text-dim);text-align:center;}
+  #resultBox .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
+  #resultBox .btn{flex:1 1 220px;}
 
   input[type=text], textarea{
     width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);background:var(--bg2);color:var(--text);
@@ -98,54 +106,28 @@
   }
   input::placeholder, textarea::placeholder{color:var(--text-dim);}
 
-  /* Сводка (старт) */
-  .summary-row{margin:8px 0;}
-  .summary-head{display:flex;justify-content:space-between;gap:8px;}
-  .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
-  .summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
-
-  /* Карточки вопросов */
-  #qcards{display:flex;flex-direction:column;gap:14px;}
-  .qcard{border:1px solid var(--stroke);border-radius:14px;background:var(--bg2);padding:14px;}
-  .qtext{font-size:17px;font-weight:600;margin-bottom:10px;}
-  .qnav{display:flex;gap:12px;margin-top:12px;}
-  .qnav .btn{flex:1 1 0;}
-
-  /* Прогресс */
-  #auditProgress{margin:6px 0 12px;font-size:14px;color:var(--text-dim);}
-
-  /* Экран результата */
-  .result-card{background:var(--res-bg);border:1px solid var(--res-stroke);border-radius:16px;padding:18px;box-shadow:var(--shadow);}
-  .result-score{font-size:28px;font-weight:800;text-align:center;margin-bottom:6px;}
-  .result-verdict{font-size:18px;font-weight:700;text-align:center;margin-top:6px;}
-  .result-advice{margin-top:6px;color:var(--text-dim);text-align:center;}
-  .result-disclaimer{margin-top:10px;color:var(--text-dim);font-size:13px;text-align:center;}
-  #resultCTAs{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;}
-  #resultCTAs .btn{flex:1 1 220px;}
-
-  /* Тост */
+  /* ===== Тост ===== */
   .toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;}
   .toast-box{background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:var(--shadow);}
   .toast-box .btn{width:100%;margin-top:10px;}
 
-  /* Футер фиксированный */
+  /* ===== Глобальный футер (фиксированный) ===== */
   .global-footer{
-    position:fixed;left:0;right:0;bottom:0;height:var(--footer-h);
+    position:fixed;left:0;right:0;bottom:0;z-index:10;
     background:var(--bg2);border-top:1px solid var(--stroke);
-    display:flex;align-items:center;justify-content:center;gap:14px;
-    color:var(--text-dim);z-index:5000;
   }
-  .global-footer a{color:var(--brand2);text-decoration:none;font-weight:500;}
-  .footer-icons{display:flex;gap:14px;align-items:center;}
+  .footer-inner{max-width:720px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:16px;justify-content:center;}
+  .footer-icons{display:flex;gap:16px;}
   .footer-icons svg{width:22px;height:22px;}
   </style>
 </head>
 <body>
   <div class="app">
+
     <!-- Шапка -->
     <div class="topbar">
       <div class="brand">
-        <img src="img/logo-dark.png"  alt="LEKOM" class="logo logo-dark" />
+        <img src="img/logo-dark.png" alt="LEKOM" class="logo logo-dark" />
         <img src="img/logo-light.png" alt="LEKOM" class="logo logo-light" />
       </div>
       <button id="themeToggle" class="theme-toggle" type="button" aria-label="Сменить тему">
@@ -155,9 +137,9 @@
       </button>
     </div>
 
-    <!-- Старт -->
-    <div id="screen-start" class="screen card">
-      <div>
+    <!-- ========== ЭКРАН: старт ========== -->
+    <div id="screen-start" class="screen show">
+      <div class="card">
         <div class="btn-row">
           <button id="goAudit" class="btn btn-primary">
             Пройдите быстрый аудит печати
@@ -166,9 +148,8 @@
           <button id="goPoll" class="btn btn-secondary">Выберите тему вебинара</button>
         </div>
 
-        <!-- CTA «Показать результаты» появится после прохождения аудита -->
-        <div id="resumeCta" class="section" style="display:none;margin-top:12px;">
-          <button id="showResultFromStart" class="btn btn-secondary">Показать результаты самоаудита</button>
+        <div id="resumeBox" style="display:none;margin-top:12px">
+          <button id="openResultFromStart" class="btn btn-secondary">Показать результаты самоаудита</button>
         </div>
 
         <hr>
@@ -177,64 +158,66 @@
       </div>
     </div>
 
-    <!-- Аудит (карточки) -->
-    <div id="screen-audit" class="screen card" style="display:none">
-      <div>
+    <!-- ========== ЭКРАН: аудит (карточки) ========== -->
+    <div id="screen-audit" class="screen">
+      <div class="card">
         <h1>
           Аудит печатной инфраструктуры
           <span class="muted" style="display:block;font-size:14px;font-weight:500;margin-top:6px;">
             Неудобные вопросы, которые нужно задать самим себе
           </span>
         </h1>
-        <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
-        <div id="qcards"></div>
-      </div>
+        <div id="auditProgress" class="q-progress">Вопросы: 0 из 11</div>
 
-      <div class="footer-actions" style="margin-top:12px;text-align:center;">
-        <button id="backFromAudit" class="btn btn-secondary" type="button" style="width:auto;min-height:auto;padding:8px 14px;display:inline-flex;align-items:center;gap:6px;">
-          <span aria-hidden="true">↩︎</span> Вернуться
-        </button>
+        <div id="qContainer" class="q-card"><!-- сюда рендерится карточка вопроса --></div>
+
+        <div class="qnav">
+          <button id="btnPrev" class="btn btn-secondary">Назад</button>
+          <button id="btnNext" class="btn btn-primary" disabled>Далее</button>
+        </div>
       </div>
     </div>
 
-    <!-- Результаты -->
-    <div id="screen-result" class="screen card" style="display:none">
-      <div class="result-card">
-        <div class="result-score" id="resultText">0 баллов из 11</div>
-        <div class="result-verdict" id="resultVerdict" style="display:none"></div>
-        <div class="result-advice" id="resultAdvice" style="display:none"></div>
-        <div class="result-disclaimer">
-          Предварительная оценка. Для детального аудита — оставьте контакт или&nbsp;обсудите с экспертом прямо сейчас.
-        </div>
+    <!-- ========== ЭКРАН: результат ========== -->
+    <div id="screen-result" class="screen">
+      <div class="card" id="resultBox">
+        <div class="result-card">
+          <div class="result-score" id="resultText">—</div>
+          <div class="result-verdict" id="resultVerdict" style="display:none"></div>
+          <div class="result-advice" id="resultAdvice"  style="display:none"></div>
+          <div class="result-advice" id="resultHint" style="margin-top:10px">
+            Предварительная оценка.<br>
+            Для детального аудита — оставьте контакт или&nbsp;обсудите с экспертом прямо сейчас.
+          </div>
 
-        <div id="resultCTAs">
-          <button id="ctaExpert" class="btn btn-secondary">💬 Обсудить сейчас</button>
-          <button id="toggleLead" class="btn btn-secondary">📩 Оставить контакты</button>
-        </div>
+          <div class="cta-row" style="margin-top:12px">
+            <button id="ctaExpert" class="btn btn-secondary">💬 Обсудить сейчас</button>
+            <!-- Форма контактов сразу видна -->
+          </div>
 
-        <div id="leadForm" style="display:none; margin-top:10px">
-          <input id="leadName"    type="text" placeholder="Ваше имя" style="margin-top:8px" />
-          <input id="leadCompany" type="text" placeholder="Компания" style="margin-top:8px" />
-          <input id="leadPhone"   type="text" placeholder="Телефон или email" style="margin-top:8px" />
-          <button id="sendLead" class="btn btn-primary" style="margin-top:10px">Отправить</button>
-          <div class="muted" style="margin-top:8px;text-align:center;">
-            Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.
+          <div id="leadForm" style="margin-top:10px">
+            <input id="leadName"    type="text" placeholder="Ваше имя" style="margin-top:8px" />
+            <input id="leadCompany" type="text" placeholder="Компания" style="margin-top:8px" />
+            <input id="leadPhone"   type="text" placeholder="Телефон или email" style="margin-top:8px" />
+            <button id="sendLead" class="btn btn-primary" style="margin-top:10px">Отправить</button>
+            <div class="muted" style="margin-top:8px;text-align:center;">
+              Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.
+            </div>
+          </div>
+
+          <div class="qnav" style="margin-top:14px">
+            <button id="backFromResult" class="btn btn-secondary">↩︎ Вернуться</button>
           </div>
         </div>
       </div>
-
-      <div class="footer-actions" style="margin-top:12px;text-align:center;">
-        <button id="backFromResult" class="btn btn-secondary" type="button" style="width:auto;min-height:auto;padding:8px 14px;display:inline-flex;align-items:center;gap:6px;">
-          <span aria-hidden="true">↩︎</span> Вернуться
-        </button>
-      </div>
     </div>
 
-    <!-- Голосование -->
-    <div id="screen-poll" class="screen card" style="display:none">
-      <div>
+    <!-- ========== ЭКРАН: выбор темы вебинара ========== -->
+    <div id="screen-poll" class="screen">
+      <div class="card">
         <h1>Выбор темы вебинара</h1>
         <p class="muted" style="margin:14px 0 6px">Выберите одну или несколько тем:</p>
+
         <div class="q" id="pollOptions">
           <div class="pill poll-opt" data-topic="Обзор рынка и тренды 2025">Обзор рынка и тренды 2025</div>
           <div class="pill poll-opt" data-topic="Закупки по 44-ФЗ / 223-ФЗ">Закупки по 44-ФЗ / 223-ФЗ</div>
@@ -247,31 +230,29 @@
           </div>
         </div>
 
-        <div class="section">
+        <div class="qnav">
+          <button id="backFromPoll" class="btn btn-secondary">↩︎ Вернуться</button>
           <button id="sendPoll" class="btn btn-primary">Проголосовать</button>
         </div>
       </div>
-
-      <div class="footer-actions" style="margin-top:12px;text-align:center;">
-        <button id="backFromPoll" class="btn btn-secondary" type="button" style="width:auto;min-height:auto;padding:8px 14px;display:inline-flex;align-items:center;gap:6px;">
-          <span aria-hidden="true">↩︎</span> Вернуться
-        </button>
-      </div>
     </div>
-  </div>
 
-  <!-- Футер (только иконки) -->
+  </div><!-- /app -->
+
+  <!-- Фикс-футер -->
   <div class="global-footer">
-    <div class="footer-icons">
-      <a href="https://lekomIT.t.me" target="_blank" title="Telegram">
-        <svg viewBox="0 0 24 24" fill="none"><path fill="var(--brand2)" d="M21.6 5.6a1 1 0 0 0-1.1-.1L3.5 12.9a.9.9 0 0 0 .1 1.7l4.4 1.4 1.7 5a1 1 0 0 0 1.7.4l2.3-2.3 4.5 3.2a1 1 0 0 0 1.6-.6l2.8-14.5a1 1 0 0 0-.4-1zM9.6 15l8.6-7-10.6 6 2 1z"/></svg>
-      </a>
-      <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
-        <svg viewBox="0 0 24 24">
-          <path style="fill:transparent;stroke:var(--brand2);stroke-width:1.2" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
-          <path style="fill:var(--brand2)" d="M10 15V9л5 3-5 3z"/>
-        </svg>
-      </a>
+    <div class="footer-inner">
+      <div class="footer-icons">
+        <a href="https://lekomIT.t.me" target="_blank" title="Telegram">
+          <svg viewBox="0 0 24 24" fill="none"><path fill="var(--brand2)" d="M21.6 5.6a1 1 0 0 0-1.1-.1L3.5 12.9a.9.9 0 0 0 .1 1.7l4.4 1.4 1.7 5a1 1 0 0 0 1.7.4l2.3-2.3 4.5 3.2a1 1 0 0 0 1.6-.6l2.8-14.5a1 1 0 0 0-.4-1zM9.6 15l8.6-7-10.6 6 2 1z"/></svg>
+        </a>
+        <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
+          <svg viewBox="0 0 24 24">
+            <path style="fill:transparent;stroke:var(--brand2);stroke-width:1.2" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
+            <path style="fill:var(--brand2)" d="M10 15V9l5 3-5 3z"/>
+          </svg>
+        </a>
+      </div>
     </div>
   </div>
 
