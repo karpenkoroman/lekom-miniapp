@@ -16,9 +16,9 @@
     })();
   </script>
 
-  <!-- Актуальный EXEC-hook -->
+  <!-- EXEC hook -->
   <script>
-    window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
+    window.LEKOM_HOOK='https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
   </script>
 
   <style>
@@ -43,18 +43,13 @@
     --res-bg:#ffffff; --res-stroke:#d7e0ef; --bar-bg:#edf2f7;
   }
 
-  /* базовые */
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
     font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
-  /* фикс «отскока» и скролла на мобилках */
-  html, body { height: 100svh; }
-  body{
-    overflow: hidden;
-    overscroll-behavior: none;
-    touch-action: pan-y;
-  }
+  /* вернул обычный скролл, чтобы глобальный футер был виден */
+  body{overflow:auto;}
 
   .app{max-width:720px;margin:0 auto;padding:20px 16px 28px;box-sizing:border-box;}
+
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
   .brand{display:flex;align-items:center;gap:10px;}
   .logo{height:28px;display:none}
@@ -67,12 +62,11 @@
   .theme-toggle svg{width:18px;height:18px}
   .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
 
-  /* экраны */
+  /* общий каркас экранов */
   .screen.card{
     background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);
     padding:16px;box-shadow:var(--shadow);
-    display:flex;flex-direction:column;min-height:calc(100svh - 32px);
-    overflow:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+    display:flex;flex-direction:column;min-height:60vh;
   }
   .card{background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
 
@@ -94,9 +88,7 @@
   .btn-sub{display:block;font-weight:600;font-size:13px;opacity:.9;margin-top:2px;color:inherit;}
   .btn-row{display:flex;gap:12px;flex-wrap:wrap;} .btn-row .btn{flex:1 1 220px;}
 
-  /* ответы */
-  .q{margin-top:18px; scroll-margin-top:12px;}
-  .q b{display:block;margin-bottom:10px;font-size:17px;}
+  /* Пиллы */
   .pill{display:block;width:100%;text-align:left;font-size:16px;line-height:1.45;padding:14px 16px;margin-top:8px;
     border-radius:12px;border:1px solid var(--stroke);background:var(--pill);color:var(--text);cursor:pointer;box-sizing:border-box;word-break:break-word;overflow-wrap:anywhere;}
   .pill:hover{background:var(--pill-hover);} .pill.selected{background:var(--pill-sel);border-color:var(--brand2);outline:2px solid var(--pill-outline);}
@@ -107,13 +99,13 @@
   }
   input::placeholder, textarea::placeholder{color:var(--text-dim);}
 
-  /* сводка (старт) */
+  /* Сводка (старт) */
   .summary-row{margin:8px 0;}
   .summary-head{display:flex;justify-content:space-between;gap:8px;}
   .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
   .summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
 
-  /* результат */
+  /* Результат */
   #auditProgress{margin:6px 0 12px;font-size:14px;color:var(--text-dim);}
   #resultBox{margin-top:16px;}
   .result-card{background:var(--res-bg);border:1px solid var(--res-stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow);}
@@ -123,20 +115,43 @@
   #resultBox .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
   #resultBox .btn{flex:1 1 220px;}
 
-  /* тост */
+  /* Тост */
   .toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;}
   .toast-box{background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:var(--shadow);}
   .toast-box .btn{width:100%;margin-top:10px;}
 
-  /* кнопка «Вернуться» внизу экрана */
-  .footer-actions{margin-top:auto;text-align:center;}
+  /* ===== КАРТОЧКИ ВОПРОСОВ (1 вопрос = 1 карточка) ===== */
+  .qcards{
+    display:flex;flex-direction:column;gap:0; /* внутри показываем одну карточку */
+  }
+  .qcard{
+    display:none; /* только активная = flex */
+    flex-direction:column;
+    min-height:52vh; /* чтобы карточка была ощутимой по высоте */
+  }
+  .qcard.active{display:flex;}
+  .qcard .qtext{font-size:17px;font-weight:700;margin:0 0 10px;}
+  .qcard .options{margin-top:6px;}
+  .qnav{
+    margin-top:auto; /* кнопки прижаты вниз внутри карточки */
+    display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;
+  }
+  .qnav .btn{flex:1 1 48%;}
+  .qnav .btn.back{flex:1 1 40%;}
+  .qnav .btn.next{flex:1 1 58%;}
+  @media (max-width:420px){
+    .qnav .btn{flex:1 1 100%;}
+  }
+
+  /* Кнопка «Вернуться» внизу экрана (экраны audit/poll) */
+  .footer-actions{margin-top:16px;text-align:center;}
   .back-btn {
     display:inline-flex;align-items:center;justify-content:center;gap:6px;
     padding:8px 14px;font-size:15px;font-weight:600;border-radius:10px;width:auto;min-height:auto;line-height:1.2;margin:0 auto;
   }
   .back-btn .icon-back { width:14px; height:14px; flex:0 0 14px; }
 
-  /* глобальный футер */
+  /* Глобальный футер (внизу всей страницы) */
   .global-footer{
     margin-top:16px;padding-top:12px;border-top:1px solid var(--stroke);
     text-align:center;font-size:14px;color:var(--text-dim);
@@ -182,7 +197,7 @@
       <div class="footer-actions" style="display:none"></div>
     </div>
 
-    <!-- Аудит -->
+    <!-- Аудит (карточки вопросов) -->
     <div id="screen-audit" class="screen card" style="display:none">
       <div>
         <h1>
@@ -191,102 +206,13 @@
             Неудобные вопросы, которые нужно задать самим себе
           </span>
         </h1>
+
         <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
 
-        <form id="auditForm">
-          <!-- Блок 1 -->
-          <h3 style="margin-top:12px">Блок 1. Иллюзия контроля</h3>
-          <div class="q">
-            <b>1. Как вы оцениваете прозрачность учета расходов на печать в вашей организации?</b>
-            <div class="pill" data-q="q1" data-score="1">Мы ведем точный и полный учет всех расходов, включая капитальные.</div>
-            <div class="pill" data-q="q1" data-score="0">Мы учитываем только расходные материалы (картриджи, бумагу и т.п.).</div>
-            <div class="pill" data-q="q1" data-score="0">Учет ведется частично, по запросу или в разных подразделениях по-разному.</div>
-            <div class="pill" data-q="q1" data-score="0">Точных данных нет, расходы оцениваются «на глаз».</div>
-          </div>
-          <div class="q">
-            <b>2. Включены ли в ваш расчет стоимости печати капитальные затраты (амортизация, обновление парка)?</b>
-            <div class="pill" data-q="q2" data-score="1">Да, мы учитываем полную стоимость владения (TCO).</div>
-            <div class="pill" data-q="q2" data-score="0">Частично, только при крупных закупках.</div>
-            <div class="pill" data-q="q2" data-score="0">Нет, считаем только текущие затраты.</div>
-            <div class="pill" data-q="q2" data-score="0">Не знаю / этим занимается другой отдел.</div>
-          </div>
+        <!-- Контейнер карточек -->
+        <div id="qcards" class="qcards"></div>
 
-          <!-- Блок 2 -->
-          <h3 style="margin-top:12px">Блок 2. Ловушка старых цен</h3>
-          <div class="q">
-            <b>3. При планировании бюджета на обновление техники вы опираетесь на:</b>
-            <div class="pill" data-q="q3" data-score="1">Актуальные рыночные данные и котировки поставщиков.</div>
-            <div class="pill" data-q="q3" data-score="0">Внутренние шаблоны или цифры прошлых лет.</div>
-            <div class="pill" data-q="q3" data-score="0">Субъективные ожидания («примерно столько, сколько раньше»).</div>
-            <div class="pill" data-q="q3" data-score="0">Не выделяем отдельный бюджет на обновление парка.</div>
-          </div>
-          <div class="q">
-            <b>4. Проверяли ли вы соответствие текущего бюджета реальной стоимости оборудования в последние 12 месяцев?</b>
-            <div class="pill" data-q="q4" data-score="1">Да, проводим регулярный пересмотр цен.</div>
-            <div class="pill" data-q="q4" data-score="0">Один раз давно, цены могут быть неактуальны.</div>
-            <div class="pill" data-q="q4" data-score="0">Нет, не пересматривали.</div>
-            <div class="pill" data-q="q4" data-score="0">Не знаю.</div>
-          </div>
-
-          <!-- Блок 3 -->
-          <h3 style="margin-top:12px">Блок 3. «Патриотическая» наценка</h3>
-          <div class="q">
-            <b>5. Учтено ли в вашем бюджете требование закупать оборудование из реестра отечественного ПО (ПП №185, ПП №878 и др.)?</b>
-            <div class="pill" data-q="q5" data-score="1">Да, бюджет сформирован с учетом реестровых решений.</div>
-            <div class="pill" data-q="q5" data-score="0">Частично, только для критичных закупок.</div>
-            <div class="pill" data-q="q5" data-score="0">Нет, закупаем по остаточному принципу.</div>
-            <div class="pill" data-q="q5" data-score="0">Не применимо (мы не попадаем под эти требования).</div>
-          </div>
-          <div class="q">
-            <b>6. Готов ли ваш бюджет к сценарию, где стоимость принтера увеличивается в 3–5 раз из-за регуляторных требований?</b>
-            <div class="pill" data-q="q6" data-score="1">Да, предусмотрен резерв или гибкий бюджет.</div>
-            <div class="pill" data-q="q6" data-score="0">Нет, это стало бы серьезной проблемой.</div>
-            <div class="pill" data-q="q6" data-score="0">Пока не анализировали.</div>
-            <div class="pill" data-q="q6" data-score="0">Не знаю.</div>
-          </div>
-
-          <!-- Блок 4 -->
-          <h3 style="margin-top:12px">Блок 4. Опасность делегирования</h3>
-          <div class="q">
-            <b>7. Кто в вашей компании фактически принимает решения по закупке и обслуживанию печатной техники?</b>
-            <div class="pill" data-q="q7" data-score="1">IT-директор / руководитель департамента.</div>
-            <div class="pill" data-q="q7" data-score="0">Системный администратор или инженер.</div>
-            <div class="pill" data-q="q7" data-score="0">Закупочный отдел.</div>
-            <div class="pill" data-q="q7" data-score="0">Несколько лиц, без четкой ответственности.</div>
-          </div>
-          <div class="q">
-            <b>8. На чем основаны текущие решения по обслуживанию и эксплуатации печати?</b>
-            <div class="pill" data-q="q8" data-score="1">На данных TCO-анализа и объективных метриках.</div>
-            <div class="pill" data-q="q8" data-score="0">На личном опыте исполнителей («всегда так делали»).</div>
-            <div class="pill" data-q="q8" data-score="0">На внешних рекомендациях поставщиков.</div>
-            <div class="pill" data-q="q8" data-score="0">На попытке минимизировать расходы «здесь и сейчас».</div>
-          </div>
-          <div class="q">
-            <b>9. Используете ли совместимые картриджи или заправку картриджей?</b>
-            <div class="pill" data-q="q9" data-score="1">Нет, только оригинальные расходники.</div>
-            <div class="pill" data-q="q9" data-score="0">Да, массово.</div>
-            <div class="pill" data-q="q9" data-score="0">Да, но только в отдельных случаях.</div>
-            <div class="pill" data-q="q9" data-score="0">Не знаю / не контролирую этот процесс.</div>
-          </div>
-
-          <!-- Блок 5 -->
-          <h3 style="margin-top:12px">Блок 5. Итоговая самооценка</h3>
-          <div class="q">
-            <b>10. Как вы оцениваете уровень зрелости управления печатью в вашей организации?</b>
-            <div class="pill" data-q="q10" data-score="1">Стратегический уровень — есть политика, метрики, аналитика, бюджетирование.</div>
-            <div class="pill" data-q="q10" data-score="0">Тактический уровень — решаем по мере возникновения задач.</div>
-            <div class="pill" data-q="q10" data-score="0">Реактивный уровень — действуем при сбоях и запросах пользователей.</div>
-            <div class="pill" data-q="q10" data-score="0">Нет системы управления, процесс стихийный.</div>
-          </div>
-          <div class="q">
-            <b>11. Насколько вы уверены, что ваш бюджет по печати не содержит «слепых зон»?</b>
-            <div class="pill" data-q="q11" data-score="1">Полностью уверен.</div>
-            <div class="pill" data-q="q11" data-score="0">Скорее уверен.</div>
-            <div class="pill" data-q="q11" data-score="0">Есть сомнения.</div>
-            <div class="pill" data-q="q11" data-score="0">Бюджет определенно требует пересмотра.</div>
-          </div>
-        </form>
-
+        <!-- Кнопка «Посмотреть результат» (только после 11/11) -->
         <div class="section" id="auditActionRow" style="display:none">
           <button id="btnAuditResult" class="btn btn-primary">
             <span>Посмотреть результат</span>
@@ -294,6 +220,7 @@
           </button>
         </div>
 
+        <!-- Блок результата -->
         <div id="resultBox" class="section" style="display:block">
           <div class="result-card" id="resultCard">
             <div class="result-score" id="resultText">
@@ -326,7 +253,7 @@
         </div>
       </div>
 
-      <!-- Футер-кнопка всегда внизу -->
+      <!-- Футер-кнопка внизу экрана -->
       <div class="footer-actions">
         <button id="backFromAudit" class="btn btn-secondary back-btn" type="button">
           <svg class="icon-back" viewBox="0 0 24 24" fill="none"
