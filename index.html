@@ -7,7 +7,7 @@
 
   <!-- Ранняя установка темы -->
   <script>
-    (function () {
+    (function(){
       const saved = localStorage.getItem('theme');
       const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
       const theme = saved || (prefersLight ? 'light' : 'dark');
@@ -16,15 +16,14 @@
     })();
   </script>
 
-  <!-- EXEC hook -->
+  <!-- Ваш актуальный EXEC-hook -->
   <script>
-    window.LEKOM_HOOK='https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
+    window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
   </script>
 
   <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-  /* ===== ТЁМНАЯ ТЕМА ===== */
   :root{
     --bg:#0e1015; --bg2:#171b25; --stroke:#293044;
     --text:#eaf0fa; --text-dim:#96a2c2;
@@ -32,8 +31,8 @@
     --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.25);
     --pill:#101625; --pill-hover:#141b2b; --pill-sel:rgba(29,184,170,.22); --pill-outline:rgba(29,184,170,.5);
     --res-bg:#0f1623; --res-stroke:#22314d; --bar-bg:#101625;
+    --footer-h:66px;
   }
-  /* ===== СВЕТЛАЯ ТЕМА ===== */
   html.theme-light{
     --bg:#f6f8fb; --bg2:#ffffff; --stroke:#e2e8f0;
     --text:#0f172a; --text-dim:#4b5563;
@@ -45,11 +44,10 @@
 
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
     font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
-  /* вернул обычный скролл, чтобы глобальный футер был виден */
-  body{overflow:auto;}
+  body{overflow-x:hidden;}
+  .app{max-width:720px;margin:0 auto;padding:20px 16px calc(var(--footer-h) + 24px);box-sizing:border-box;}
 
-  .app{max-width:720px;margin:0 auto;padding:20px 16px 28px;box-sizing:border-box;}
-
+  /* Шапка */
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
   .brand{display:flex;align-items:center;gap:10px;}
   .logo{height:28px;display:none}
@@ -62,23 +60,20 @@
   .theme-toggle svg{width:18px;height:18px}
   .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
 
-  /* общий каркас экранов */
+  /* Карточки-экраны */
   .screen.card{
     background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);
     padding:16px;box-shadow:var(--shadow);
     display:flex;flex-direction:column;min-height:60vh;
   }
   .card{background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
-
-  h1{font-size:26px;margin:0 0 12px;}
-  h2{font-size:22px;margin:0 0 10px;}
-  h3{font-size:18px;margin:0 0 8px;}
-  .muted{color:var(--text-dim);}
-  hr{border:0;height:1px;background:var(--stroke);opacity:.6;margin:14px 0;}
+  h1{font-size:26px;margin:0 0 12px;} h2{font-size:22px;margin:0 0 10px;} h3{font-size:18px;margin:0 0 8px;}
+  .muted{color:var(--text-dim);} hr{border:0;height:1px;background:var(--stroke);opacity:.6;margin:14px 0;}
 
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
-    min-height:46px;padding:12px 16px;font-size:16px;font-weight:700;line-height:1.15;letter-spacing:.2px;
-    border-radius:12px;border:1px solid transparent;cursor:pointer;transition:filter .12s,transform .06s;user-select:none;text-align:center;flex-direction:column;}
+    min-height:46px;padding:12px 16px;font-size:16px;font-weight:700;line-height:1.15;
+    border-radius:12px;border:1px solid transparent;cursor:pointer;transition:filter .12s,transform .06s;
+    user-select:none;text-align:center;flex-direction:column;}
   .btn:active{transform:translateY(1px);} .btn:disabled{opacity:.6;cursor:not-allowed;}
   .btn + .btn{margin-top:10px;}
   .btn-primary{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 10px 28px rgba(42,125,225,.18);}
@@ -88,9 +83,12 @@
   .btn-sub{display:block;font-weight:600;font-size:13px;opacity:.9;margin-top:2px;color:inherit;}
   .btn-row{display:flex;gap:12px;flex-wrap:wrap;} .btn-row .btn{flex:1 1 220px;}
 
-  /* Пиллы */
+  /* Плашки-ответы */
+  .q{margin-top:18px;}
+  .q b{display:block;margin-bottom:10px;font-size:17px;}
   .pill{display:block;width:100%;text-align:left;font-size:16px;line-height:1.45;padding:14px 16px;margin-top:8px;
-    border-radius:12px;border:1px solid var(--stroke);background:var(--pill);color:var(--text);cursor:pointer;box-sizing:border-box;word-break:break-word;overflow-wrap:anywhere;}
+    border-radius:12px;border:1px solid var(--stroke);background:var(--pill);color:var(--text);cursor:pointer;box-sizing:border-box;
+    word-break:break-word;overflow-wrap:anywhere;}
   .pill:hover{background:var(--pill-hover);} .pill.selected{background:var(--pill-sel);border-color:var(--brand2);outline:2px solid var(--pill-outline);}
 
   input[type=text], textarea{
@@ -105,60 +103,40 @@
   .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
   .summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
 
-  /* Результат */
+  /* Аудит — карточки вопросов (контейнер) */
+  #qcards{display:flex;flex-direction:column;gap:14px;}
+  .qcard{
+    border:1px solid var(--stroke);border-radius:14px;background:var(--bg2);padding:14px;
+  }
+  .qtext{font-size:17px;font-weight:600;margin-bottom:10px;}
+
+  /* Прогресс */
   #auditProgress{margin:6px 0 12px;font-size:14px;color:var(--text-dim);}
-  #resultBox{margin-top:16px;}
-  .result-card{background:var(--res-bg);border:1px solid var(--res-stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow);}
-  .result-score{font-size:22px;font-weight:800;text-align:center;margin-bottom:6px;}
+
+  /* Экран результата */
+  .result-card{background:var(--res-bg);border:1px solid var(--res-stroke);border-radius:16px;padding:18px;box-shadow:var(--shadow);}
+  .result-score{font-size:28px;font-weight:800;text-align:center;margin-bottom:6px;}
   .result-verdict{font-size:18px;font-weight:700;text-align:center;margin-top:6px;}
   .result-advice{margin-top:6px;color:var(--text-dim);text-align:center;}
-  #resultBox .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
-  #resultBox .btn{flex:1 1 220px;}
+  .result-disclaimer{margin-top:10px;color:var(--text-dim);font-size:13px;text-align:center;}
+  #resultCTAs{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;}
+  #resultCTAs .btn{flex:1 1 220px;}
 
   /* Тост */
   .toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;}
   .toast-box{background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:var(--shadow);}
   .toast-box .btn{width:100%;margin-top:10px;}
 
-  /* ===== КАРТОЧКИ ВОПРОСОВ (1 вопрос = 1 карточка) ===== */
-  .qcards{
-    display:flex;flex-direction:column;gap:0; /* внутри показываем одну карточку */
-  }
-  .qcard{
-    display:none; /* только активная = flex */
-    flex-direction:column;
-    min-height:52vh; /* чтобы карточка была ощутимой по высоте */
-  }
-  .qcard.active{display:flex;}
-  .qcard .qtext{font-size:17px;font-weight:700;margin:0 0 10px;}
-  .qcard .options{margin-top:6px;}
-  .qnav{
-    margin-top:auto; /* кнопки прижаты вниз внутри карточки */
-    display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;
-  }
-  .qnav .btn{flex:1 1 48%;}
-  .qnav .btn.back{flex:1 1 40%;}
-  .qnav .btn.next{flex:1 1 58%;}
-  @media (max-width:420px){
-    .qnav .btn{flex:1 1 100%;}
-  }
-
-  /* Кнопка «Вернуться» внизу экрана (экраны audit/poll) */
-  .footer-actions{margin-top:16px;text-align:center;}
-  .back-btn {
-    display:inline-flex;align-items:center;justify-content:center;gap:6px;
-    padding:8px 14px;font-size:15px;font-weight:600;border-radius:10px;width:auto;min-height:auto;line-height:1.2;margin:0 auto;
-  }
-  .back-btn .icon-back { width:14px; height:14px; flex:0 0 14px; }
-
-  /* Глобальный футер (внизу всей страницы) */
+  /* Футер FIXED (всегда прижат) */
   .global-footer{
-    margin-top:16px;padding-top:12px;border-top:1px solid var(--stroke);
-    text-align:center;font-size:14px;color:var(--text-dim);
+    position:fixed;left:0;right:0;bottom:0;height:var(--footer-h);
+    background:var(--bg2);border-top:1px solid var(--stroke);
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    color:var(--text-dim);z-index:5000;
   }
   .global-footer a{color:var(--brand2);text-decoration:none;font-weight:500;}
   .global-footer a:hover{text-decoration:underline;}
-  .footer-icons{display:flex;justify-content:center;gap:14px;margin-bottom:6px;}
+  .footer-icons{display:flex;gap:14px;align-items:center;}
   .footer-icons svg{width:22px;height:22px;}
   </style>
 </head>
@@ -167,7 +145,7 @@
     <!-- Шапка -->
     <div class="topbar">
       <div class="brand">
-        <img src="img/logo-dark.png" alt="LEKOM" class="logo logo-dark" />
+        <img src="img/logo-dark.png"  alt="LEKOM" class="logo logo-dark" />
         <img src="img/logo-light.png" alt="LEKOM" class="logo logo-light" />
       </div>
       <button id="themeToggle" class="theme-toggle" type="button" aria-label="Сменить тему">
@@ -177,7 +155,7 @@
       </button>
     </div>
 
-    <!-- Стартовый экран -->
+    <!-- Старт -->
     <div id="screen-start" class="screen card">
       <div>
         <div class="btn-row">
@@ -189,15 +167,12 @@
         </div>
 
         <hr>
-
         <h3>Сводка голосования по темам</h3>
         <div id="summaryContent"><div class="muted">Загрузка…</div></div>
       </div>
-
-      <div class="footer-actions" style="display:none"></div>
     </div>
 
-    <!-- Аудит (карточки вопросов) -->
+    <!-- Аудит (вопросы карточками) -->
     <div id="screen-audit" class="screen card" style="display:none">
       <div>
         <h1>
@@ -206,71 +181,54 @@
             Неудобные вопросы, которые нужно задать самим себе
           </span>
         </h1>
-
         <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
-
-        <!-- Контейнер карточек -->
-        <div id="qcards" class="qcards"></div>
-
-        <!-- Кнопка «Посмотреть результат» (только после 11/11) -->
-        <div class="section" id="auditActionRow" style="display:none">
-          <button id="btnAuditResult" class="btn btn-primary">
-            <span>Посмотреть результат</span>
-            <span class="btn-sub" id="btnAuditSub">(ответов 11 из 11)</span>
-          </button>
-        </div>
-
-        <!-- Блок результата -->
-        <div id="resultBox" class="section" style="display:block">
-          <div class="result-card" id="resultCard">
-            <div class="result-score" id="resultText">
-              Ответьте на вопросы&nbsp;и&nbsp;нажмите кнопку выше.
-            </div>
-
-            <div class="result-verdict" id="resultVerdict" style="display:none"></div>
-            <div class="result-advice" id="resultAdvice" style="display:none"></div>
-
-            <div class="result-advice" id="resultHint">
-              Предварительная оценка.<br>
-              Для детального аудита — оставьте контакт или&nbsp;обсудите с экспертом.
-            </div>
-
-            <div class="cta-row">
-              <button id="ctaExpert" class="btn btn-secondary">💬 Обсудить с экспертом</button>
-              <button id="toggleLead" class="btn btn-secondary">📩 Оставить контакты</button>
-            </div>
-
-            <div id="leadForm" style="display:none; margin-top:10px">
-              <input id="leadName"    type="text" placeholder="Ваше имя" style="margin-top:8px" />
-              <input id="leadCompany" type="text" placeholder="Компания" style="margin-top:8px" />
-              <input id="leadPhone"   type="text" placeholder="Телефон или email" style="margin-top:8px" />
-              <button id="sendLead" class="btn btn-primary" style="margin-top:10px">Отправить</button>
-              <div class="muted" style="margin-top:8px;text-align:center;">
-                Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.
-              </div>
-            </div>
-          </div>
-        </div>
+        <div id="qcards"></div>
       </div>
 
-      <!-- Футер-кнопка внизу экрана -->
-      <div class="footer-actions">
-        <button id="backFromAudit" class="btn btn-secondary back-btn" type="button">
-          <svg class="icon-back" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-            <line x1="9" y1="12" x2="21" y2="12"></line>
-          </svg>
-          Вернуться
+      <div class="footer-actions" style="margin-top:12px;text-align:center;">
+        <button id="backFromAudit" class="btn btn-secondary" type="button" style="width:auto;min-height:auto;padding:8px 14px;display:inline-flex;align-items:center;gap:6px;">
+          <span aria-hidden="true">↩︎</span> Вернуться
         </button>
       </div>
     </div>
 
-    <!-- Выбор темы вебинара -->
+    <!-- Экран результатов -->
+    <div id="screen-result" class="screen card" style="display:none">
+      <div class="result-card">
+        <div class="result-score" id="resultText">0 баллов из 11</div>
+        <div class="result-verdict" id="resultVerdict" style="display:none"></div>
+        <div class="result-advice" id="resultAdvice" style="display:none"></div>
+        <div class="result-disclaimer">
+          Предварительная оценка. Для детального аудита — оставьте контакт или&nbsp;обсудите с экспертом прямо сейчас.
+        </div>
+
+        <div id="resultCTAs">
+          <button id="ctaExpert" class="btn btn-secondary">💬 Обсудить с экспертом</button>
+          <button id="toggleLead" class="btn btn-secondary">📩 Оставить контакты</button>
+        </div>
+
+        <div id="leadForm" style="display:none; margin-top:10px">
+          <input id="leadName"    type="text" placeholder="Ваше имя" style="margin-top:8px" />
+          <input id="leadCompany" type="text" placeholder="Компания" style="margin-top:8px" />
+          <input id="leadPhone"   type="text" placeholder="Телефон или email" style="margin-top:8px" />
+          <button id="sendLead" class="btn btn-primary" style="margin-top:10px">Отправить</button>
+          <div class="muted" style="margin-top:8px;text-align:center;">
+            Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-actions" style="margin-top:12px;text-align:center;">
+        <button id="backFromResult" class="btn btn-secondary" type="button" style="width:auto;min-height:auto;padding:8px 14px;display:inline-flex;align-items:center;gap:6px;">
+          <span aria-hidden="true">↩︎</span> Вернуться
+        </button>
+      </div>
+    </div>
+
+    <!-- Экран голосования (без итогов) -->
     <div id="screen-poll" class="screen card" style="display:none">
       <div>
         <h1>Выбор темы вебинара</h1>
-
         <p class="muted" style="margin:14px 0 6px">Выберите одну или несколько тем:</p>
         <div class="q" id="pollOptions">
           <div class="pill poll-opt" data-topic="Обзор рынка и тренды 2025">Обзор рынка и тренды 2025</div>
@@ -289,35 +247,28 @@
         </div>
       </div>
 
-      <div class="footer-actions">
-        <button id="backFromPoll" class="btn btn-secondary back-btn" type="button">
-          <svg class="icon-back" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-            <line x1="9" y1="12" x2="21" y2="12"></line>
-          </svg>
-          Вернуться
+      <div class="footer-actions" style="margin-top:12px;text-align:center;">
+        <button id="backFromPoll" class="btn btn-secondary" type="button" style="width:auto;min-height:auto;padding:8px 14px;display:inline-flex;align-items:center;gap:6px;">
+          <span aria-hidden="true">↩︎</span> Вернуться
         </button>
       </div>
     </div>
+  </div>
 
-    <!-- Глобальный футер -->
-    <div class="global-footer">
-      <div class="footer-icons">
-        <!-- Telegram -->
-        <a href="https://lekomIT.t.me" target="_blank" title="Telegram">
-          <svg viewBox="0 0 24 24" fill="none"><path fill="var(--brand2)" d="M21.6 5.6a1 1 0 0 0-1.1-.1L3.5 12.9a.9.9 0 0 0 .1 1.7l4.4 1.4 1.7 5a1 1 0 0 0 1.7.4l2.3-2.3 4.5 3.2a1 1 0 0 0 1.6-.6l2.8-14.5a1 1 0 0 0-.4-1zM9.6 15l8.6-7-10.6 6 2 1z"/></svg>
-        </a>
-        <!-- YouTube -->
-        <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
-          <svg viewBox="0 0 24 24">
-            <path style="fill:transparent;stroke:var(--brand2);stroke-width:1.2" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
-            <path style="fill:var(--brand2)" d="M10 15V9l5 3-5 3z"/>
-          </svg>
-        </a>
-      </div>
-      Присоединяйтесь к нам: <a href="https://lekomIT.t.me" target="_blank">@LekomIT</a>
+  <!-- Футер фиксированный -->
+  <div class="global-footer">
+    <div class="footer-icons">
+      <a href="https://lekomIT.t.me" target="_blank" title="Telegram">
+        <svg viewBox="0 0 24 24" fill="none"><path fill="var(--brand2)" d="M21.6 5.6a1 1 0 0 0-1.1-.1L3.5 12.9a.9.9 0 0 0 .1 1.7l4.4 1.4 1.7 5a1 1 0 0 0 1.7.4l2.3-2.3 4.5 3.2a1 1 0 0 0 1.6-.6l2.8-14.5a1 1 0 0 0-.4-1zM9.6 15l8.6-7-10.6 6 2 1z"/></svg>
+      </a>
+      <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
+        <svg viewBox="0 0 24 24">
+          <path style="fill:transparent;stroke:var(--brand2);stroke-width:1.2" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
+          <path style="fill:var(--brand2)" d="M10 15V9l5 3-5 3z"/>
+        </svg>
+      </a>
     </div>
+    Присоединяйтесь к нам: <a href="https://lekomIT.t.me" target="_blank">@LekomIT</a>
   </div>
 
   <script defer src="/app.js"></script>
