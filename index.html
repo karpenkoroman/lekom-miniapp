@@ -113,6 +113,34 @@
 
   .global-footer { pointer-events: none; }
   .global-footer a, .global-footer svg { pointer-events: auto; }
+
+  /* ===== Улучшенные стили ссылок ===== */
+a {
+  color: var(--link);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+/* Цвета ссылок по темам */
+:root {
+  --link: #37c0b6;        /* мягкий бирюзовый на тёмном фоне */
+  --link-hover: #48d4c9;
+}
+html.theme-light {
+  --link: #1c8ea3;        /* приглушённо-синий для светлой темы */
+  --link-hover: #0e6f7e;
+}
+
+/* Лёгкое свечение ссылок в тёмной теме */
+html:not(.theme-light) a:hover {
+  text-shadow: 0 0 6px rgba(29,184,170,.4);
+}
+
     
   </style>
 </head>
