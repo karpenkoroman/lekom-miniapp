@@ -1,11 +1,9 @@
 (()=>{'use strict';
 
-  // ========= CONFIG =========
   const HOOK = (window && window.LEKOM_HOOK) || '';
   const TOTAL_Q = 11;
 
-  // ========= SAFE DOM =========
-  const $ = s=>document.querySelector(s);
+  const $  = s=>document.querySelector(s);
   const $$ = s=>Array.from(document.querySelectorAll(s));
 
   // Screens
@@ -28,8 +26,8 @@
   // Start summary
   const summaryBox = $('#summaryContent');
 
-  // Audit
-  const auditForm       = $('#auditForm');
+  // Audit (cards)
+  const qcardsWrap      = $('#qcards');
   const auditProgressEl = $('#auditProgress');
   const auditActionRow  = $('#auditActionRow');
   const btnAuditResult  = $('#btnAuditResult');
@@ -53,7 +51,7 @@
   const pollOtherText = $('#pollOther');
   const btnSendPoll   = $('#sendPoll');
 
-  // ========= Telegram initData (если есть) =========
+  // Telegram initData
   function getInitData(){
     try{
       const wa = window.Telegram && window.Telegram.WebApp;
@@ -61,20 +59,23 @@
     }catch(_){ return null; }
   }
 
-  // ========= UI helpers =========
+  // Utils
   function show(el){ if(el) el.style.display='flex'; }
   function hide(el){ if(el) el.style.display='none'; }
 
   function showScreen(name){
     hide(scrStart); hide(scrAudit); hide(scrPoll);
     if (name==='start'){ show(scrStart); loadSummaryToStart(); }
-    if (name==='audit'){ show(scrAudit); updateAuditProgress(); }
+    if (name==='audit'){ show(scrAudit); updateAuditProgress(); focusActiveCardTop(); }
     if (name==='poll') { show(scrPoll); }
-    // прокрутка к началу внутри текущего экрана
-    try {
-      const current = document.querySelector('.screen.card[style*="display: flex"]');
-      current && current.scrollTo({ top: 0, behavior: 'instant' });
-    } catch(_){}
+    window.scrollTo({ top:0, behavior:'instant' });
+  }
+
+  function focusActiveCardTop(){
+    try{
+      const active = qcardsWrap && qcardsWrap.querySelector('.qcard.active');
+      active && active.scrollIntoView({ block:'start', behavior:'instant' });
+    }catch(_){}
   }
 
   function pluralBall(n){
@@ -85,7 +86,6 @@
     return 'баллов';
   }
 
-  // Тост
   function toast(html, withOk=true, onOk=null){
     const wrap = document.createElement('div');
     wrap.className = 'toast-overlay';
@@ -100,7 +100,7 @@
     else wrap.addEventListener('click', () => document.body.removeChild(wrap));
   }
 
-  // ========= Theme =========
+  // Theme
   function applyTheme(theme){
     document.documentElement.classList.toggle('theme-light', theme==='light');
     document.documentElement.setAttribute('data-theme', theme);
@@ -121,8 +121,260 @@
     const cur = document.documentElement.getAttribute('data-theme') || 'dark';
     applyTheme(cur==='dark'?'light':'dark');
   });
+  (function ensureTheme(){
+    try{
+      const saved = localStorage.getItem('theme');
+      if (saved==='light' || saved==='dark') applyTheme(saved);
+    }catch(_){}
+  })();
 
-  // ========= Summary (start) =========
+  // ====== DATA: вопросы ======
+  const QUESTIONS = [
+    {
+      id:'q1',
+      text:'1. Как вы оцениваете прозрачность учета расходов на печать в вашей организации?',
+      options:[
+        {t:'Мы ведем точный и полный учет всех расходов, включая капитальные.', s:1},
+        {t:'Мы учитываем только расходные материалы (картриджи, бумагу и т.п.).', s:0},
+        {t:'Учет ведется частично, по запросу или в разных подразделениях по-разному.', s:0},
+        {t:'Точных данных нет, расходы оцениваются «на глаз».', s:0},
+      ]
+    },
+    {
+      id:'q2',
+      text:'2. Включены ли в ваш расчет стоимости печати капитальные затраты (амортизация, обновление парка)?',
+      options:[
+        {t:'Да, мы учитываем полную стоимость владения (TCO).', s:1},
+        {t:'Частично, только при крупных закупках.', s:0},
+        {t:'Нет, считаем только текущие затраты.', s:0},
+        {t:'Не знаю / этим занимается другой отдел.', s:0},
+      ]
+    },
+    {
+      id:'q3',
+      text:'3. При планировании бюджета на обновление техники вы опираетесь на:',
+      options:[
+        {t:'Актуальные рыночные данные и котировки поставщиков.', s:1},
+        {t:'Внутренние шаблоны или цифры прошлых лет.', s:0},
+        {t:'Субъективные ожидания («примерно столько, сколько раньше»).', s:0},
+        {t:'Не выделяем отдельный бюджет на обновление парка.', s:0},
+      ]
+    },
+    {
+      id:'q4',
+      text:'4. Проверяли ли вы соответствие текущего бюджета реальной стоимости оборудования в последние 12 месяцев?',
+      options:[
+        {t:'Да, проводим регулярный пересмотр цен.', s:1},
+        {t:'Один раз давно, цены могут быть неактуальны.', s:0},
+        {t:'Нет, не пересматривали.', s:0},
+        {t:'Не знаю.', s:0},
+      ]
+    },
+    {
+      id:'q5',
+      text:'5. Учтено ли в вашем бюджете требование закупать оборудование из реестра отечественного ПО (ПП №185, ПП №878 и др.)?',
+      options:[
+        {t:'Да, бюджет сформирован с учетом реестровых решений.', s:1},
+        {t:'Частично, только для критичных закупок.', s:0},
+        {t:'Нет, закупаем по остаточному принципу.', s:0},
+        {t:'Не применимо (мы не попадаем под эти требования).', s:0},
+      ]
+    },
+    {
+      id:'q6',
+      text:'6. Готов ли ваш бюджет к сценарию, где стоимость принтера увеличивается в 3–5 раз из-за регуляторных требований?',
+      options:[
+        {t:'Да, предусмотрен резерв или гибкий бюджет.', s:1},
+        {t:'Нет, это стало бы серьезной проблемой.', s:0},
+        {t:'Пока не анализировали.', s:0},
+        {t:'Не знаю.', s:0},
+      ]
+    },
+    {
+      id:'q7',
+      text:'7. Кто в вашей компании фактически принимает решения по закупке и обслуживанию печатной техники?',
+      options:[
+        {t:'IT-директор / руководитель департамента.', s:1},
+        {t:'Системный администратор или инженер.', s:0},
+        {t:'Закупочный отдел.', s:0},
+        {t:'Несколько лиц, без четкой ответственности.', s:0},
+      ]
+    },
+    {
+      id:'q8',
+      text:'8. На чем основаны текущие решения по обслуживанию и эксплуатации печати?',
+      options:[
+        {t:'На данных TCO-анализа и объективных метриках.', s:1},
+        {t:'На личном опыте исполнителей («всегда так делали»).', s:0},
+        {t:'На внешних рекомендациях поставщиков.', s:0},
+        {t:'На попытке минимизировать расходы «здесь и сейчас».', s:0},
+      ]
+    },
+    {
+      id:'q9',
+      text:'9. Используете ли совместимые картриджи или заправку картриджей?',
+      options:[
+        {t:'Нет, только оригинальные расходники.', s:1},
+        {t:'Да, массово.', s:0},
+        {t:'Да, но только в отдельных случаях.', s:0},
+        {t:'Не знаю / не контролирую этот процесс.', s:0},
+      ]
+    },
+    {
+      id:'q10',
+      text:'10. Как вы оцениваете уровень зрелости управления печатью в вашей организации?',
+      options:[
+        {t:'Стратегический уровень — есть политика, метрики, аналитика, бюджетирование.', s:1},
+        {t:'Тактический уровень — решаем по мере возникновения задач.', s:0},
+        {t:'Реактивный уровень — действуем при сбоях и запросах пользователей.', s:0},
+        {t:'Нет системы управления, процесс стихийный.', s:0},
+      ]
+    },
+    {
+      id:'q11',
+      text:'11. Насколько вы уверены, что ваш бюджет по печати не содержит «слепых зон»?',
+      options:[
+        {t:'Полностью уверен.', s:1},
+        {t:'Скорее уверен.', s:0},
+        {t:'Есть сомнения.', s:0},
+        {t:'Бюджет определенно требует пересмотра.', s:0},
+      ]
+    },
+  ];
+
+  // answers state: { qid: { text, score } }
+  const answers = {};
+  let currentIndex = 0;
+
+  function renderCards(){
+    if (!qcardsWrap) return;
+    qcardsWrap.innerHTML = '';
+
+    QUESTIONS.forEach((q, idx)=>{
+      const card = document.createElement('div');
+      card.className = 'qcard' + (idx===0 ? ' active' : '');
+      card.dataset.idx = idx;
+
+      // текст
+      const title = document.createElement('div');
+      title.className = 'qtext';
+      title.textContent = q.text;
+      card.appendChild(title);
+
+      // варианты
+      const opts = document.createElement('div');
+      opts.className = 'options';
+      q.options.forEach(opt=>{
+        const pill = document.createElement('div');
+        pill.className = 'pill';
+        pill.textContent = opt.t;
+        pill.dataset.q = q.id;
+        pill.dataset.score = String(opt.s);
+        // если уже выбран — подсветим
+        if (answers[q.id]?.text === opt.t) pill.classList.add('selected');
+
+        pill.addEventListener('click', ()=>{
+          // снять выбор у других
+          Array.from(opts.querySelectorAll('.pill')).forEach(x=>x.classList.remove('selected'));
+          pill.classList.add('selected');
+          answers[q.id] = { text: opt.t, score: opt.s };
+          updateAuditProgress();
+        });
+
+        opts.appendChild(pill);
+      });
+      card.appendChild(opts);
+
+      // навигация карточки
+      const nav = document.createElement('div');
+      nav.className = 'qnav';
+
+      const btnBack = document.createElement('button');
+      btnBack.type = 'button';
+      btnBack.className = 'btn btn-secondary back';
+      btnBack.innerHTML = 'Назад';
+      btnBack.disabled = (idx===0);
+      btnBack.addEventListener('click', ()=> goToCard(idx-1));
+
+      const btnNext = document.createElement('button');
+      btnNext.type = 'button';
+      btnNext.className = 'btn btn-primary next';
+      btnNext.innerHTML = (idx===QUESTIONS.length-1) ? 'К финалу' : 'Далее';
+      btnNext.addEventListener('click', ()=>{
+        if (idx < QUESTIONS.length-1) goToCard(idx+1);
+        else scrollToResultAction(); // на последней — прокрутка к кнопке «Посмотреть результат» (когда будет доступна)
+      });
+
+      nav.appendChild(btnBack);
+      nav.appendChild(btnNext);
+      card.appendChild(nav);
+
+      qcardsWrap.appendChild(card);
+    });
+  }
+
+  function goToCard(idx){
+    if (idx<0 || idx>=QUESTIONS.length) return;
+    const prev = qcardsWrap.querySelector('.qcard.active');
+    if (prev) prev.classList.remove('active');
+    const next = qcardsWrap.querySelector(`.qcard[data-idx="${idx}"]`);
+    if (next){
+      next.classList.add('active');
+      currentIndex = idx;
+      // прокрутка к началу области карточек (без «отскока»)
+      next.scrollIntoView({ block:'start', behavior:'smooth' });
+    }
+  }
+
+  function updateAuditProgress(){
+    const answered = Object.keys(answers).length;
+    if (auditProgressEl) auditProgressEl.textContent = `Ответы: ${answered} / ${TOTAL_Q}`;
+    if (btnAuditSub)     btnAuditSub.textContent     = `(ответов ${answered} из ${TOTAL_Q})`;
+    // показать кнопку результата только когда все 11/11
+    if (auditActionRow)  auditActionRow.style.display = (answered===TOTAL_Q) ? 'block' : 'none';
+  }
+
+  function scrollToResultAction(){
+    const row = auditActionRow;
+    if (!row) return;
+    row.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  // результат аудита
+  let lastAuditResult = { score:0, verdict:'', advice:'', answers:{} };
+
+  btnAuditResult?.addEventListener('click', async ()=>{
+    // убедимся, что все отвечены
+    if (Object.keys(answers).length !== QUESTIONS.length){
+      toast('Ответьте на все вопросы.');
+      return;
+    }
+    const initData = getInitData();
+    const score = Object.values(answers).reduce((s,a)=> s + (a.score||0), 0);
+
+    let verdict = 'Нужен аудит';
+    let advice  = 'Требуется пересмотр парка и бюджета.';
+    if (score >= 9){ verdict='Зрелая практика';      advice='У вас всё под контролем, продолжайте.'; }
+    else if (score >= 6){ verdict='Частичный контроль'; advice='Рекомендуем уточнить бюджет и процессы.'; }
+
+    lastAuditResult = {
+      score, verdict, advice,
+      answers: Object.fromEntries(Object.entries(answers).map(([k,v])=>[k, v.text]))
+    };
+
+    if (resultText)     resultText.innerHTML   = `${score} ${pluralBall(score)} из ${TOTAL_Q}`;
+    if (resultVerdict){ resultVerdict.textContent = verdict; resultVerdict.style.display=''; }
+    if (resultAdvice){  resultAdvice.textContent  = advice;  resultAdvice.style.display=''; }
+
+    // отправка
+    try{
+      await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
+        type:'result', score, verdict, advice, answers:lastAuditResult.answers, initData
+      })), { method:'GET', cache:'no-store' });
+    }catch(_){}
+  });
+
+  // ======= SUMMARY (start) =======
   async function loadSummaryToStart(){
     if (!summaryBox) return;
     summaryBox.innerHTML = '<div class="muted">Загрузка…</div>';
@@ -159,12 +411,11 @@
       summaryBox.innerHTML='';
       summaryBox.appendChild(wrap);
     }catch(e){
-      console.error('summary error', e);
       summaryBox.innerHTML = '<span class="muted">Не удалось загрузить сводку.</span>';
     }
   }
 
-  // ========= Poll =========
+  // ======= POLL =======
   pollOptions.forEach(p=>{
     p.addEventListener('click', ()=>{
       p.classList.toggle('selected');
@@ -187,7 +438,6 @@
         await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' });
       }
       toast('Голос учтён! Спасибо 🙌');
-      // очистка
       $$('#screen-poll .poll-opt.selected').forEach(x=>x.classList.remove('selected'));
       if (pollOtherText) pollOtherText.value='';
       if (pollOtherBox)  pollOtherBox.style.display='none';
@@ -196,74 +446,16 @@
     }
   });
 
-  // ========= Audit =========
-  function getAuditAnswers(){
-    const obj={};
-    $$('#auditForm .pill.selected').forEach(p=>{
-      const q = p.dataset.q;
-      const score = Number(p.dataset.score || 0);
-      obj[q] = { text:p.textContent.trim(), score };
-    });
-    return obj;
+  // ======= Expert & Lead =======
+  function msgForExpert(){
+    return `Добрый день! Хочу обсудить результаты самоаудита печати.
+Итог: ${lastAuditResult.score} ${pluralBall(lastAuditResult.score)} из ${TOTAL_Q}
+Вердикт: ${lastAuditResult.verdict}
+Рекомендация: ${lastAuditResult.advice}`;
   }
 
-  function updateAuditProgress(){
-    const answered = Object.keys(getAuditAnswers()).length;
-    if (auditProgressEl) auditProgressEl.textContent = `Ответы: ${answered} / ${TOTAL_Q}`;
-    // показываем кнопку только при 11/11
-    if (auditActionRow) auditActionRow.style.display = (answered===TOTAL_Q) ? 'block' : 'none';
-    if (btnAuditSub)     btnAuditSub.textContent     = `(ответов ${answered} из ${TOTAL_Q})`;
-  }
-
-  // одиночный выбор на вопрос
-  $$('#auditForm .pill').forEach(p=>{
-    p.addEventListener('click', ()=>{
-      const q = p.dataset.q;
-      $$('#auditForm .pill[data-q="'+q+'"]').forEach(x=>x.classList.remove('selected'));
-      p.classList.add('selected');
-      updateAuditProgress();
-    });
-  });
-
-  let lastAuditResult = { score:0, verdict:'', advice:'', answers:{} };
-
-  btnAuditResult?.addEventListener('click', async ()=>{
-    const initData = getInitData();
-    const answers  = getAuditAnswers();
-    const score    = Object.values(answers).reduce((s,a)=> s + (a.score||0), 0);
-
-    // Вердикт и рекомендация (обновлённые формулировки)
-    let verdict = 'Нужен аудит';
-    let advice  = 'Требуется пересмотр парка и бюджета.';
-    if (score >= 9){ verdict='Зрелая практика';      advice='У вас всё под контролем, продолжайте.'; }
-    else if (score >= 6){ verdict='Частичный контроль'; advice='Рекомендуем уточнить бюджет и процессы.'; }
-
-    lastAuditResult = {
-      score, verdict, advice,
-      answers: Object.fromEntries(Object.entries(answers).map(([k,v])=>[k, v.text]))
-    };
-
-    // Показ результата
-    if (resultText)     resultText.innerHTML   = `${score} ${pluralBall(score)} из ${TOTAL_Q}`;
-    if (resultVerdict){ resultVerdict.textContent = verdict; resultVerdict.style.display=''; }
-    if (resultAdvice){  resultAdvice.textContent  = advice;  resultAdvice.style.display=''; }
-
-    // Отправка результата
-    try{
-      await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
-        type:'result', score, verdict, advice, answers:lastAuditResult.answers, initData
-      })), { method:'GET', cache:'no-store' });
-    }catch(_){}
-  });
-
-  // ========= Expert & Lead =========
-  btnExpert?.addEventListener('click', async ()=>{
-    const msg =
-      `Добрый день! Хочу обсудить результаты самоаудита печати.\n`+
-      `Итог: ${lastAuditResult.score} ${pluralBall(lastAuditResult.score)} из ${TOTAL_Q}\n`+
-      `Вердикт: ${lastAuditResult.verdict}\n`+
-      `Рекомендация: ${lastAuditResult.advice}`;
-    try{ await navigator.clipboard.writeText(msg); }catch(_){}
+  $('#ctaExpert')?.addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText(msgForExpert()); }catch(_){}
     toast(
       'Текст сообщения скопирован.<br>Вставьте его в чат с Игорем Челебаевым, коммерческим директором ЛЕКОМ.',
       true,
@@ -300,24 +492,20 @@
       if (leadCompany) leadCompany.value='';
       if (leadPhone)   leadPhone.value='';
       if (leadForm)    leadForm.style.display='none';
-    }catch(e){
+    }catch(_){
       toast('Не удалось отправить. Попробуйте ещё раз.');
     }
   });
 
-  // ========= NAV =========
-  btnGoAudit ?.addEventListener('click', ()=> showScreen('audit'));
-  btnGoPoll  ?.addEventListener('click', ()=> showScreen('poll'));
+  // ======= NAV =======
+  btnGoAudit ?.addEventListener('click', ()=> { showScreen('audit'); });
+  btnGoPoll  ?.addEventListener('click', ()=> { showScreen('poll');  });
   backFromAudit?.addEventListener('click', ()=> showScreen('start'));
   backFromPoll ?.addEventListener('click', ()=> showScreen('start'));
 
-  // ========= INIT =========
-  (function ensureTheme(){
-    try{
-      const saved = localStorage.getItem('theme');
-      if (saved==='light' || saved==='dark') applyTheme(saved);
-    }catch(_){}
-  })();
-
+  // init
+  renderCards();
+  updateAuditProgress();
   showScreen('start');
+
 })();
