@@ -18,13 +18,13 @@
 
   <!-- EXEC-hook -->
   <script>
-    window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
+    window.LEKOM_HOOK='https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
   </script>
 
   <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-  /* ===== ТЁМНАЯ ТЕМА ===== */
+  /* ===== ТЁМНАЯ ===== */
   :root{
     --bg:#0e1015; --bg2:#171b25; --stroke:#293044;
     --text:#eaf0fa; --text-dim:#96a2c2;
@@ -33,7 +33,7 @@
     --pill:#101625; --pill-hover:#141b2b; --pill-sel:rgba(29,184,170,.22); --pill-outline:rgba(29,184,170,.5);
     --res-bg:#0f1623; --res-stroke:#22314d; --bar-bg:#101625;
   }
-  /* ===== СВЕТЛАЯ ТЕМА ===== */
+  /* ===== СВЕТЛАЯ ===== */
   html.theme-light{
     --bg:#f6f8fb; --bg2:#ffffff; --stroke:#e2e8f0;
     --text:#0f172a; --text-dim:#4b5563;
@@ -61,7 +61,7 @@
   .theme-toggle svg{width:18px;height:18px}
   .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
 
-  /* Карточки экранов */
+  /* Экран/карточка */
   .screen.card{
     background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);
     padding:16px;box-shadow:var(--shadow);
@@ -87,8 +87,8 @@
   .btn-sub{display:block;font-weight:600;font-size:13px;opacity:.9;margin-top:2px;color:inherit;}
   .btn-row{display:flex;gap:12px;flex-wrap:wrap;} .btn-row .btn{flex:1 1 220px;}
 
-  /* Плашки ответов */
-  .q{margin-top:18px;}
+  /* Пилюли ответов */
+  .q{margin-top:6px;}
   .q b{display:block;margin-bottom:12px;font-size:18px;}
   .pill{display:block;width:100%;text-align:left;font-size:16px;line-height:1.5;padding:16px 18px;margin-top:10px;
     border-radius:12px;border:1px solid var(--stroke);background:var(--pill);color:var(--text);cursor:pointer;box-sizing:border-box;word-break:break-word;overflow-wrap:anywhere;}
@@ -100,7 +100,7 @@
   }
   input::placeholder, textarea::placeholder{color:var(--text-dim);}
 
-  /* Сводка (на старте) */
+  /* Сводка */
   .summary-row{margin:8px 0;}
   .summary-head{display:flex;justify-content:space-between;gap:8px;}
   .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
@@ -121,11 +121,13 @@
   .toast-box{background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:var(--shadow);}
   .toast-box .btn{width:100%;margin-top:10px;}
 
-  /* Footer actions (кнопка Вернуться всегда внизу) */
+  /* Footer actions */
   .footer-actions{margin-top:auto;text-align:center;}
+
   .back-btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    padding:10px 16px;font-size:15px;font-weight:700;border-radius:12px;width:auto;min-height:auto;line-height:1.2;margin:0 auto;
+    padding:10px 16px;font-size:15px;font-weight:700;border-radius:12px;width:auto;min-height:auto;line-height:1;white-space:nowrap;
+    flex-direction:row;
   }
   .icon-back{width:16px;height:16px;display:block;}
 
@@ -139,31 +141,21 @@
   .footer-icons{display:flex;justify-content:center;gap:14px;margin-bottom:6px;}
   .footer-icons svg{width:22px;height:22px;}
 
-  /* ======== SWIPE CARDS (AUDIT) ======== */
-  .audit-header{margin-bottom:10px;}
-  .carousel{
-    position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid var(--stroke);
-    background:var(--bg2);
-  }
-  .track{
-    display:flex;transition:transform .28s ease;will-change:transform;
-  }
-  .slide{
-    min-width:100%;box-sizing:border-box;padding:16px 16px 24px;
-  }
-  .slide h3{font-size:19px;margin:0 0 12px;}
+  /* ===== SWIPE: вопрос = слайд ===== */
+  .carousel{position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid var(--stroke);background:var(--bg2);}
+  .track{display:flex;transition:transform .28s ease;will-change:transform;}
+  .slide{min-width:100%;box-sizing:border-box;padding:18px 16px 24px;}
+  .slide h3{font-size:17px;margin:0 0 10px;color:var(--text-dim);font-weight:600;}
   .slide .q b{font-size:18px;}
-  .dots{
-    display:flex;gap:6px;justify-content:center;margin-top:10px;
-  }
-  .dot{
-    width:8px;height:8px;border-radius:50%;background:#566081;opacity:.6;
-  }
+  .dots{display:flex;gap:6px;justify-content:center;margin-top:12px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:#566081;opacity:.6;}
   .dot.active{opacity:1;background:var(--brand2);}
-  .nav-arrows{
-    display:flex;justify-content:space-between;gap:12px;margin-top:12px;
-  }
+  .nav-arrows{display:flex;justify-content:space-between;gap:14px;margin-top:16px;margin-bottom:14px;}
   .nav-arrows .btn{flex:1 1 48%;}
+  /* отступ между блоком стрелок и кнопкой результата на мобиле */
+  @media (max-width: 480px){
+    .nav-arrows{gap:12px;margin-top:18px;margin-bottom:16px;}
+  }
   </style>
 </head>
 <body>
@@ -181,7 +173,7 @@
       </button>
     </div>
 
-    <!-- Стартовый экран -->
+    <!-- Старт -->
     <div id="screen-start" class="screen card">
       <div>
         <div class="btn-row">
@@ -200,7 +192,7 @@
       <div class="footer-actions" style="display:none"></div>
     </div>
 
-    <!-- Аудит (с свайп-карточками) -->
+    <!-- Аудит: 11 карточек-вопросов -->
     <div id="screen-audit" class="screen card" style="display:none">
       <div class="audit-header">
         <h1>
@@ -212,12 +204,11 @@
         <div id="auditProgress" class="muted">Ответы: 0 / 11</div>
       </div>
 
-      <!-- Карусель блоков -->
       <div class="carousel" id="auditCarousel">
         <div class="track" id="auditTrack">
-          <!-- Slide 1 -->
-          <section class="slide" data-slide="0">
-            <h3>Блок 1. Иллюзия контроля</h3>
+          <!-- 1 -->
+          <section class="slide">
+            <h3>Иллюзия контроля</h3>
             <div class="q">
               <b>1. Как вы оцениваете прозрачность учета расходов на печать в вашей организации?</b>
               <div class="pill" data-q="q1" data-score="1">Мы ведем точный и полный учет всех расходов, включая капитальные.</div>
@@ -225,6 +216,10 @@
               <div class="pill" data-q="q1" data-score="0">Учет ведется частично, по запросу или в разных подразделениях по-разному.</div>
               <div class="pill" data-q="q1" data-score="0">Точных данных нет, расходы оцениваются «на глаз».</div>
             </div>
+          </section>
+          <!-- 2 -->
+          <section class="slide">
+            <h3>Иллюзия контроля</h3>
             <div class="q">
               <b>2. Включены ли в ваш расчет стоимости печати капитальные затраты (амортизация, обновление парка)?</b>
               <div class="pill" data-q="q2" data-score="1">Да, мы учитываем полную стоимость владения (TCO).</div>
@@ -233,10 +228,9 @@
               <div class="pill" data-q="q2" data-score="0">Не знаю / этим занимается другой отдел.</div>
             </div>
           </section>
-
-          <!-- Slide 2 -->
-          <section class="slide" data-slide="1">
-            <h3>Блок 2. Ловушка старых цен</h3>
+          <!-- 3 -->
+          <section class="slide">
+            <h3>Ловушка старых цен</h3>
             <div class="q">
               <b>3. При планировании бюджета на обновление техники вы опираетесь на:</b>
               <div class="pill" data-q="q3" data-score="1">Актуальные рыночные данные и котировки поставщиков.</div>
@@ -244,6 +238,10 @@
               <div class="pill" data-q="q3" data-score="0">Субъективные ожидания («примерно столько, сколько раньше»).</div>
               <div class="pill" data-q="q3" data-score="0">Не выделяем отдельный бюджет на обновление парка.</div>
             </div>
+          </section>
+          <!-- 4 -->
+          <section class="slide">
+            <h3>Ловушка старых цен</h3>
             <div class="q">
               <b>4. Проверяли ли вы соответствие текущего бюджета реальной стоимости оборудования в последние 12 месяцев?</b>
               <div class="pill" data-q="q4" data-score="1">Да, проводим регулярный пересмотр цен.</div>
@@ -252,10 +250,9 @@
               <div class="pill" data-q="q4" data-score="0">Не знаю.</div>
             </div>
           </section>
-
-          <!-- Slide 3 -->
-          <section class="slide" data-slide="2">
-            <h3>Блок 3. «Патриотическая» наценка</h3>
+          <!-- 5 -->
+          <section class="slide">
+            <h3>«Патриотическая» наценка</h3>
             <div class="q">
               <b>5. Учтено ли в вашем бюджете требование закупать оборудование из реестра отечественного ПО (ПП №185, ПП №878 и др.)?</b>
               <div class="pill" data-q="q5" data-score="1">Да, бюджет сформирован с учетом реестровых решений.</div>
@@ -263,6 +260,10 @@
               <div class="pill" data-q="q5" data-score="0">Нет, закупаем по остаточному принципу.</div>
               <div class="pill" data-q="q5" data-score="0">Не применимо (мы не попадаем под эти требования).</div>
             </div>
+          </section>
+          <!-- 6 -->
+          <section class="slide">
+            <h3>«Патриотическая» наценка</h3>
             <div class="q">
               <b>6. Готов ли ваш бюджет к сценарию, где стоимость принтера увеличивается в 3–5 раз из-за регуляторных требований?</b>
               <div class="pill" data-q="q6" data-score="1">Да, предусмотрен резерв или гибкий бюджет.</div>
@@ -271,10 +272,9 @@
               <div class="pill" data-q="q6" data-score="0">Не знаю.</div>
             </div>
           </section>
-
-          <!-- Slide 4 -->
-          <section class="slide" data-slide="3">
-            <h3>Блок 4. Опасность делегирования</h3>
+          <!-- 7 -->
+          <section class="slide">
+            <h3>Опасность делегирования</h3>
             <div class="q">
               <b>7. Кто в вашей компании фактически принимает решения по закупке и обслуживанию печатной техники?</b>
               <div class="pill" data-q="q7" data-score="1">IT-директор / руководитель департамента.</div>
@@ -282,6 +282,10 @@
               <div class="pill" data-q="q7" data-score="0">Закупочный отдел.</div>
               <div class="pill" data-q="q7" data-score="0">Несколько лиц, без четкой ответственности.</div>
             </div>
+          </section>
+          <!-- 8 -->
+          <section class="slide">
+            <h3>Опасность делегирования</h3>
             <div class="q">
               <b>8. На чем основаны текущие решения по обслуживанию и эксплуатации печати?</b>
               <div class="pill" data-q="q8" data-score="1">На данных TCO-анализа и объективных метриках.</div>
@@ -289,6 +293,10 @@
               <div class="pill" data-q="q8" data-score="0">На внешних рекомендациях поставщиков.</div>
               <div class="pill" data-q="q8" data-score="0">На попытке минимизировать расходы «здесь и сейчас».</div>
             </div>
+          </section>
+          <!-- 9 -->
+          <section class="slide">
+            <h3>Опасность делегирования</h3>
             <div class="q">
               <b>9. Используете ли совместимые картриджи или заправку картриджей?</b>
               <div class="pill" data-q="q9" data-score="1">Нет, только оригинальные расходники.</div>
@@ -297,10 +305,9 @@
               <div class="pill" data-q="q9" data-score="0">Не знаю / не контролирую этот процесс.</div>
             </div>
           </section>
-
-          <!-- Slide 5 -->
-          <section class="slide" data-slide="4">
-            <h3>Блок 5. Итоговая самооценка</h3>
+          <!-- 10 -->
+          <section class="slide">
+            <h3>Итоговая самооценка</h3>
             <div class="q">
               <b>10. Как вы оцениваете уровень зрелости управления печатью в вашей организации?</b>
               <div class="pill" data-q="q10" data-score="1">Стратегический уровень — есть политика, метрики, аналитика, бюджетирование.</div>
@@ -308,6 +315,10 @@
               <div class="pill" data-q="q10" data-score="0">Реактивный уровень — действуем при сбоях и запросах пользователей.</div>
               <div class="pill" data-q="q10" data-score="0">Нет системы управления, процесс стихийный.</div>
             </div>
+          </section>
+          <!-- 11 -->
+          <section class="slide">
+            <h3>Итоговая самооценка</h3>
             <div class="q">
               <b>11. Насколько вы уверены, что ваш бюджет по печати не содержит «слепых зон»?</b>
               <div class="pill" data-q="q11" data-score="1">Полностью уверен.</div>
@@ -319,26 +330,27 @@
         </div>
       </div>
 
-      <!-- точки и стрелки -->
       <div class="dots" id="auditDots"></div>
+
+      <!-- стрелки — увеличил зазоры снизу/сверху -->
       <div class="nav-arrows">
         <button id="auditPrev" class="btn btn-secondary" type="button">← Назад</button>
         <button id="auditNext" class="btn btn-primary"   type="button">Дальше →</button>
       </div>
 
-      <!-- Результат -->
-      <div class="section">
+      <!-- отдельно стоящая кнопка результата с большим отступом сверху -->
+      <div class="section" style="margin-top:4px;margin-bottom:4px;">
         <button id="btnAuditResult" class="btn btn-primary">
           <span>Посмотреть результат</span>
           <span class="btn-sub" id="btnAuditSub">(ответов 0 из 11)</span>
         </button>
       </div>
 
-      <div id="resultBox" class="section" style="display:block">
+      <div id="resultBox" class="section" style="margin-top:8px">
         <div class="result-card" id="resultCard">
           <div class="result-score" id="resultText">Ответьте на вопросы&nbsp;и нажмите кнопку выше.</div>
           <div class="result-verdict" id="resultVerdict" style="display:none"></div>
-          <div class="result-advice" id="resultAdvice" style="display:none"></div>
+          <div class="result-advice"  id="resultAdvice"  style="display:none"></div>
           <div class="result-advice" id="resultHint">
             Предварительная оценка.<br>
             Для детального аудита — оставьте контакт или&nbsp;обсудите с экспертом.
@@ -359,7 +371,7 @@
         </div>
       </div>
 
-      <!-- Кнопка Вернуться внизу -->
+      <!-- Кнопка Вернуться всегда внизу, в одну строку -->
       <div class="footer-actions">
         <button id="backFromAudit" class="btn btn-secondary back-btn" type="button">
           <svg class="icon-back" viewBox="0 0 24 24" fill="none"
@@ -372,7 +384,7 @@
       </div>
     </div>
 
-    <!-- Выбор темы вебинара -->
+    <!-- Вебинар (без итогов) -->
     <div id="screen-poll" class="screen card" style="display:none">
       <div>
         <h1>Выбор темы вебинара</h1>
@@ -387,7 +399,7 @@
             <textarea id="pollOther" rows="4" placeholder="Предложите свою тему"></textarea>
           </div>
         </div>
-        <div class="section">
+        <div class="section" style="margin-top:16px">
           <button id="sendPoll" class="btn btn-primary">Проголосовать</button>
         </div>
       </div>
@@ -413,7 +425,7 @@
         <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
           <svg viewBox="0 0 24 24">
             <path style="fill:transparent;stroke:var(--brand2);stroke-width:1.2" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
-            <path style="fill:var(--brand2)" d="M10 15V9l5 3-5 3z"/>
+            <path style="fill:var(--brand2)" d="M10 15V9л5 3-5 3z"/>
           </svg>
         </a>
       </div>
