@@ -255,13 +255,11 @@
       card.className = 'qcard' + (idx===0 ? ' active' : '');
       card.dataset.idx = idx;
 
-      // текст
       const title = document.createElement('div');
       title.className = 'qtext';
       title.textContent = q.text;
       card.appendChild(title);
 
-      // варианты
       const opts = document.createElement('div');
       opts.className = 'options';
       q.options.forEach(opt=>{
@@ -270,15 +268,18 @@
         pill.textContent = opt.t;
         pill.dataset.q = q.id;
         pill.dataset.score = String(opt.s);
-        // если уже выбран — подсветим
+
         if (answers[q.id]?.text === opt.t) pill.classList.add('selected');
 
         pill.addEventListener('click', ()=>{
-          // снять выбор у других
           Array.from(opts.querySelectorAll('.pill')).forEach(x=>x.classList.remove('selected'));
           pill.classList.add('selected');
           answers[q.id] = { text: opt.t, score: opt.s };
           updateAuditProgress();
+          // активировать кнопку «Далее» на этой карточке
+          const nav = card.querySelector('.qnav');
+          const nextBtn = nav && nav.querySelector('.next');
+          if (nextBtn) nextBtn.disabled = false;
         });
 
         opts.appendChild(pill);
@@ -292,17 +293,20 @@
       const btnBack = document.createElement('button');
       btnBack.type = 'button';
       btnBack.className = 'btn btn-secondary back';
-      btnBack.innerHTML = 'Назад';
-      btnBack.disabled = (idx===0);
+      btnBack.textContent = 'Назад';
+      // скрываем кнопку «Назад» на первой карточке
+      if (idx===0) btnBack.style.display = 'none';
       btnBack.addEventListener('click', ()=> goToCard(idx-1));
 
       const btnNext = document.createElement('button');
       btnNext.type = 'button';
       btnNext.className = 'btn btn-primary next';
-      btnNext.innerHTML = (idx===QUESTIONS.length-1) ? 'К финалу' : 'Далее';
+      btnNext.textContent = (idx===QUESTIONS.length-1) ? 'К финалу' : 'Далее';
+      // «Далее» активно только при наличии ответа на этот вопрос
+      btnNext.disabled = !answers[q.id];
       btnNext.addEventListener('click', ()=>{
         if (idx < QUESTIONS.length-1) goToCard(idx+1);
-        else scrollToResultAction(); // на последней — прокрутка к кнопке «Посмотреть результат» (когда будет доступна)
+        else scrollToResultAction();
       });
 
       nav.appendChild(btnBack);
@@ -313,16 +317,31 @@
     });
   }
 
+  function syncNavForIndex(idx){
+    const card = qcardsWrap && qcardsWrap.querySelector(`.qcard[data-idx="${idx}"]`);
+    const q = QUESTIONS[idx];
+    if (!card || !q) return;
+    const nav = card.querySelector('.qnav');
+    const back = nav && nav.querySelector('.back');
+    const next = nav && nav.querySelector('.next');
+
+    // появление/скрытие «Назад»
+    if (back) back.style.display = (idx===0) ? 'none' : '';
+
+    // активность «Далее»
+    if (next) next.disabled = !answers[q.id];
+  }
+
   function goToCard(idx){
     if (idx<0 || idx>=QUESTIONS.length) return;
     const prev = qcardsWrap.querySelector('.qcard.active');
     if (prev) prev.classList.remove('active');
-    const next = qcardsWrap.querySelector(`.qcard[data-idx="${idx}"]`);
-    if (next){
-      next.classList.add('active');
+    const nextCard = qcardsWrap.querySelector(`.qcard[data-idx="${idx}"]`);
+    if (nextCard){
+      nextCard.classList.add('active');
       currentIndex = idx;
-      // прокрутка к началу области карточек (без «отскока»)
-      next.scrollIntoView({ block:'start', behavior:'smooth' });
+      syncNavForIndex(idx);
+      nextCard.scrollIntoView({ block:'start', behavior:'smooth' });
     }
   }
 
@@ -330,7 +349,6 @@
     const answered = Object.keys(answers).length;
     if (auditProgressEl) auditProgressEl.textContent = `Ответы: ${answered} / ${TOTAL_Q}`;
     if (btnAuditSub)     btnAuditSub.textContent     = `(ответов ${answered} из ${TOTAL_Q})`;
-    // показать кнопку результата только когда все 11/11
     if (auditActionRow)  auditActionRow.style.display = (answered===TOTAL_Q) ? 'block' : 'none';
   }
 
@@ -344,7 +362,6 @@
   let lastAuditResult = { score:0, verdict:'', advice:'', answers:{} };
 
   btnAuditResult?.addEventListener('click', async ()=>{
-    // убедимся, что все отвечены
     if (Object.keys(answers).length !== QUESTIONS.length){
       toast('Ответьте на все вопросы.');
       return;
@@ -366,7 +383,6 @@
     if (resultVerdict){ resultVerdict.textContent = verdict; resultVerdict.style.display=''; }
     if (resultAdvice){  resultAdvice.textContent  = advice;  resultAdvice.style.display=''; }
 
-    // отправка
     try{
       await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
         type:'result', score, verdict, advice, answers:lastAuditResult.answers, initData
@@ -505,6 +521,8 @@
 
   // init
   renderCards();
+  // после рендера синхронизируем состояние навигации для первой карточки
+  syncNavForIndex(0);
   updateAuditProgress();
   showScreen('start');
 
