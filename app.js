@@ -167,7 +167,7 @@ const QUESTIONS=[
 
 const answers={};
 let currentIndex=0;
-let manualNav=false;          // появляется после первого «Назад»
+let manualNav=false;          // включается после нажатия «Назад»
 let auditCompleted=false;
 let lastAuditResult={score:0,verdict:'',advice:'',answers:{}};
 
@@ -192,40 +192,59 @@ function renderCards(){
       pill.textContent=opt.t;
       if(answers[q.id]?.text===opt.t) pill.classList.add('selected');
       pill.onclick=()=>{
+        // отметить выбор
         opts.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected'));
         pill.classList.add('selected');
         answers[q.id]={text:opt.t,score:opt.s};
         updateAuditProgress();
-        // авто-переход, если пользователь не включил ручную навигацию
+
+        // если ручной режим включён — разблокируем «Далее» на этой карточке
+        if(manualNav){
+          const nextBtn = card.querySelector('.qnav .btn.next-btn');
+          if(nextBtn) nextBtn.disabled = false;
+        }
+
+        // АВТОПЕРЕХОД ВСЕГДА (в т.ч. после «Назад»)
         setTimeout(()=>{
-          if(!manualNav){
-            if(idx<QUESTIONS.length-1) goToIndex(idx+1);
-            else showResultScreen();
-          }
+          if(idx<QUESTIONS.length-1) goToIndex(idx+1);
+          else showResultScreen();
         },200);
       };
       opts.appendChild(pill);
     });
     card.appendChild(opts);
 
+    // NAV — всегда одна строка, кнопки одинаковые
     const nav=document.createElement('div');
     nav.className='qnav';
+    // inline стили, чтобы не зависеть от внешнего CSS
+    nav.style.display='flex';
+    nav.style.gap='12px';
+    nav.style.flexWrap='nowrap';
+
     const back=document.createElement('button');
-    back.className='btn btn-secondary';
+    back.className='btn btn-secondary back-btn';
     back.textContent='Назад';
+    back.style.flex='1 1 0';
+    back.style.minHeight='48px';
+    back.style.flexDirection='row';
+    back.style.alignItems='center';
+    back.style.justifyContent='center';
     if(idx===0) back.style.display='none';
     back.onclick=()=>{ manualNav=true; goToIndex(idx-1); };
 
     const next=document.createElement('button');
-    next.className='btn btn-secondary';       // одинаковый стиль с «Назад»
+    next.className='btn btn-secondary next-btn';
     next.textContent=(idx===QUESTIONS.length-1)?'К результату':'Далее';
+    next.style.flex='1 1 0';
+    next.style.minHeight='48px';
+    next.style.flexDirection='row';
+    next.style.alignItems='center';
+    next.style.justifyContent='center';
     next.disabled=!answers[q.id];
-    // видимость «Далее» — только после нажатия «Назад»
+    // «Далее» видно только если человек уже нажимал «Назад»
     next.style.display = manualNav ? 'inline-flex' : 'none';
-    next.onclick=()=>{
-      if(idx<QUESTIONS.length-1) goToIndex(idx+1);
-      else showResultScreen();
-    };
+    next.onclick=()=>{ if(idx<QUESTIONS.length-1) goToIndex(idx+1); else showResultScreen(); };
 
     nav.append(back,next);
     card.appendChild(nav);
@@ -239,8 +258,8 @@ function goToIndex(i){
   qcardsWrap.querySelectorAll('.qcard').forEach((c,idx)=>{
     c.style.display=(idx===currentIndex)?'block':'none';
     const q=QUESTIONS[idx];
-    const nextBtn=c.querySelector('.btn.btn-secondary:nth-child(2)');
-    const backBtn=c.querySelector('.btn.btn-secondary:nth-child(1)');
+    const backBtn=c.querySelector('.qnav .back-btn');
+    const nextBtn=c.querySelector('.qnav .next-btn');
     if(backBtn) backBtn.style.display=(idx===0)?'none':'inline-flex';
     if(nextBtn){
       nextBtn.disabled=!answers[q.id];
@@ -293,7 +312,7 @@ btnExpert?.addEventListener('click', async ()=>{
     ()=> window.open('https://t.me/chelebaev','_blank'));
 });
 
-// «Оставить контакты» теперь просто скроллит к форме (форма уже видна)
+// «Оставить контакты» — скролл к форме
 btnLeadTgl?.addEventListener('click', ()=>{
   leadForm?.scrollIntoView({behavior:'smooth',block:'start'});
 });
@@ -388,6 +407,7 @@ showResultFromStart?.addEventListener('click', ()=> showOnly(scrResult));
 function init(){
   renderCards();
   loadSummaryToStart();
+  updateAuditProgress();
   updateStartResumeCta();
   showOnly(scrStart);
 }
