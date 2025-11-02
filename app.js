@@ -13,11 +13,13 @@ const scrResult = $('#screen-result');
 const scrPoll   = $('#screen-poll');
 
 /* Навигация */
-const btnGoAudit     = $('#goAudit');
-const btnGoPoll      = $('#goPoll');
-const backFromAudit  = $('#backFromAudit');
-const backFromResult = $('#backFromResult');
-const backFromPoll   = $('#backFromPoll');
+const btnGoAudit        = $('#goAudit');
+const btnGoPoll         = $('#goPoll');
+const backFromAudit     = $('#backFromAudit');
+const backFromResult    = $('#backFromResult');
+const backFromPoll      = $('#backFromPoll');
+const resumeCtaWrap     = $('#resumeCta');
+const showResultFromStart = $('#showResultFromStart');
 
 /* Тема */
 const themeToggle = $('#themeToggle');
@@ -50,14 +52,16 @@ const pollOtherBox   = $('#pollOtherBox');
 const pollOtherText  = $('#pollOther');
 const btnSendPoll    = $('#sendPoll');
 
-function getInitData(){
-  try{ return window.Telegram?.WebApp?.initDataUnsafe || null; }catch(_){ return null; }
-}
+function getInitData(){ try{ return window.Telegram?.WebApp?.initDataUnsafe || null; }catch(_){ return null; } }
 
 /* Утилиты */
 function show(el){ if(el) el.style.display='flex'; }
 function hide(el){ if(el) el.style.display='none'; }
-function showOnly(el){ [scrStart,scrAudit,scrResult,scrPoll].forEach(x=>hide(x)); show(el); window.scrollTo({top:0,behavior:'instant'}); }
+function showOnly(el){
+  [scrStart,scrAudit,scrResult,scrPoll].forEach(x=>hide(x));
+  show(el);
+  window.scrollTo({top:0,behavior:'instant'});
+}
 
 function pluralBall(n){
   if (n % 100 >= 11 && n % 100 <= 14) return 'баллов';
@@ -93,7 +97,7 @@ themeToggle?.addEventListener('click', ()=>{
 });
 (()=>{ const s=localStorage.getItem('theme'); if (s==='light'||s==='dark') applyTheme(s); })();
 
-/* Вопросы (11) */
+/* Вопросы */
 const QUESTIONS = [
   { id:'q1', text:'Как вы оцениваете прозрачность учета расходов на печать в вашей организации?', options:[
     {t:'Мы ведем точный и полный учет всех расходов, включая капитальные.', s:1},
@@ -166,8 +170,9 @@ const QUESTIONS = [
 const answers = {};
 let currentIndex = 0;
 let lastAuditResult = { score:0, verdict:'', advice:'', answers:{} };
+let auditCompleted = false;
 
-/* Рендер карточек вопросов */
+/* Рендер карточек */
 function renderCards(){
   if (!qcardsWrap) return;
   qcardsWrap.innerHTML = '';
@@ -189,18 +194,15 @@ function renderCards(){
       if (answers[q.id]?.text === opt.t) pill.classList.add('selected');
 
       pill.onclick = ()=>{
-        // выбрать один вариант
         opts.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected'));
         pill.classList.add('selected');
         answers[q.id] = { text: opt.t, score: opt.s };
         updateAuditProgress();
 
-        // авто-переход
         setTimeout(()=>{
           if (idx < QUESTIONS.length-1) {
             goToIndex(idx+1);
           } else {
-            // все отвечено -> показываем результат
             showResultScreen();
           }
         }, 200);
@@ -209,12 +211,8 @@ function renderCards(){
     });
     card.appendChild(opts);
 
-    // навигация под вопросом
     const nav = document.createElement('div');
-    nav.style.marginTop = '12px';
-    nav.style.display = 'flex';
-    nav.style.gap = '10px';
-
+    nav.className = 'qnav';
     const back = document.createElement('button');
     back.className = 'btn btn-secondary';
     back.textContent = 'Назад';
@@ -240,7 +238,6 @@ function renderCards(){
 
 function goToIndex(i){
   currentIndex = Math.max(0, Math.min(QUESTIONS.length-1, i));
-  // включить/выключить «Назад» и «Далее»
   qcardsWrap.querySelectorAll('.qcard').forEach((c, idx)=>{
     c.style.display = (idx===currentIndex) ? 'block' : 'none';
     const q = QUESTIONS[idx];
@@ -249,7 +246,6 @@ function goToIndex(i){
     if (backBtn) backBtn.style.display = (idx===0) ? 'none' : 'inline-flex';
     if (nextBtn) nextBtn.disabled = !answers[q.id];
   });
-  // скролл в начало карточки
   qcardsWrap.querySelector(`.qcard[data-idx="${currentIndex}"]`)?.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
@@ -258,12 +254,10 @@ function updateAuditProgress(){
   if (auditProgressEl) auditProgressEl.textContent = `Ответы: ${answered} / ${TOTAL_Q}`;
 }
 
-/* Переход к результатам, вычисление и отправка */
+/* Результат */
 async function showResultScreen(){
-  // если не на все — не уходим
   if (Object.keys(answers).length !== QUESTIONS.length){
-    toast('Ответьте на все вопросы');
-    return;
+    toast('Ответьте на все вопросы'); return;
   }
   const score = Object.values(answers).reduce((s,a)=> s + (a.score || 0), 0);
   let verdict='Нужен аудит', advice='Требуется пересмотр парка и бюджета.';
@@ -279,20 +273,19 @@ async function showResultScreen(){
   if (resultVerdict) { resultVerdict.textContent = verdict; resultVerdict.style.display=''; }
   if (resultAdvice)  { resultAdvice.textContent  = advice;  resultAdvice.style.display=''; }
 
+  auditCompleted = true;
+  updateStartResumeCta();     // покажем кнопку на старте
   showOnly(scrResult);
 
-  // отправляем в таблицу
   try{
     await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
-      type:'result',
-      score, verdict, advice,
-      answers: lastAuditResult.answers,
-      initData: getInitData()
+      type:'result', score, verdict, advice,
+      answers: lastAuditResult.answers, initData: getInitData()
     })), { method:'GET', cache:'no-store' });
   }catch(_){}
 }
 
-/* CTA — эксперт и лид */
+/* CTA + лиды */
 btnExpert?.addEventListener('click', async ()=>{
   const msg =
     `Добрый день! Хочу обсудить результаты самоаудита печати.\n`+
@@ -300,12 +293,8 @@ btnExpert?.addEventListener('click', async ()=>{
     `Вердикт: ${lastAuditResult.verdict}\n`+
     `Рекомендация: ${lastAuditResult.advice}`;
   try{ await navigator.clipboard.writeText(msg); }catch(_){}
-
-  toast(
-    'Текст сообщения скопирован.<br>Вставьте его в чат с Игорем Челебаевым, коммерческим директором ЛЕКОМ.',
-    true,
-    ()=> { window.open('https://t.me/chelebaev', '_blank'); }
-  );
+  toast('Текст сообщения скопирован.<br>Вставьте его в чат с Игорем Челебаевым, коммерческим директором ЛЕКОМ.', true,
+    ()=> window.open('https://t.me/chelebaev','_blank'));
 });
 
 btnLeadTgl?.addEventListener('click', ()=>{
@@ -322,25 +311,17 @@ btnSendLead?.addEventListener('click', async ()=>{
 
   try{
     await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
-      type:'lead',
-      name, company, phone,
-      result: lastAuditResult,
-      consent: true,
-      policyUrl: 'https://lekom.ru/politika-konfidencialnosti/',
-      initData: getInitData()
+      type:'lead', name, company, phone,
+      result: lastAuditResult, consent:true,
+      policyUrl:'https://lekom.ru/politika-konfidencialnosti/', initData:getInitData()
     })), { method:'GET', cache:'no-store' });
 
     toast('Спасибо! Мы свяжемся с вами.');
-    if (leadName)    leadName.value = '';
-    if (leadCompany) leadCompany.value = '';
-    if (leadPhone)   leadPhone.value = '';
-    leadForm.style.display = 'none';
-  }catch(_){
-    toast('Не удалось отправить. Попробуйте ещё раз.');
-  }
+    leadName.value=''; leadCompany.value=''; leadPhone.value=''; leadForm.style.display='none';
+  }catch(_){ toast('Не удалось отправить. Попробуйте ещё раз.'); }
 });
 
-/* Сводка на старте (отсортировано по убыванию) */
+/* Сводка на старте (сортировка) */
 async function loadSummaryToStart(){
   if (!summaryBox) return;
   summaryBox.innerHTML = '<div class="muted">Загрузка…</div>';
@@ -370,7 +351,7 @@ async function loadSummaryToStart(){
   }
 }
 
-/* Опрос вебинара (мультивыбор) */
+/* Опрос вебинара */
 pollOptionEls.forEach(p=>{
   p.onclick = ()=>{
     p.classList.toggle('selected');
@@ -390,7 +371,6 @@ btnSendPoll?.addEventListener('click', async ()=>{
       await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' });
     }
     toast('Голос учтён! Спасибо 🙌');
-    // очистка
     $$('#screen-poll .poll-opt.selected').forEach(x=>x.classList.remove('selected'));
     if (pollOtherText) pollOtherText.value = '';
     if (pollOtherBox)  pollOtherBox.style.display = 'none';
@@ -399,17 +379,25 @@ btnSendPoll?.addEventListener('click', async ()=>{
   }
 });
 
+/* CTA «показать результат» на старте */
+function updateStartResumeCta(){
+  if (!resumeCtaWrap) return;
+  resumeCtaWrap.style.display = auditCompleted ? 'block' : 'none';
+}
+
 /* Навигация */
-btnGoAudit?.addEventListener('click', ()=> { showOnly(scrAudit); });
-btnGoPoll ?.addEventListener('click', ()=> { showOnly(scrPoll); });
-backFromAudit ?.addEventListener('click', ()=> { showOnly(scrStart); loadSummaryToStart(); });
-backFromResult?.addEventListener('click', ()=> { showOnly(scrStart); loadSummaryToStart(); });
+btnGoAudit?.addEventListener('click', ()=> showOnly(scrAudit));
+btnGoPoll ?.addEventListener('click', ()=> showOnly(scrPoll));
+backFromAudit ?.addEventListener('click', ()=> { updateStartResumeCta(); auditCompleted ? showOnly(scrResult) : showOnly(scrStart); loadSummaryToStart(); });
+backFromResult?.addEventListener('click', ()=> { updateStartResumeCta(); auditCompleted ? showOnly(scrResult) : showOnly(scrStart); loadSummaryToStart(); });
 backFromPoll  ?.addEventListener('click', ()=> { showOnly(scrStart); loadSummaryToStart(); });
+showResultFromStart?.addEventListener('click', ()=> showOnly(scrResult));
 
 /* Старт */
 function init(){
   renderCards();
   loadSummaryToStart();
+  updateStartResumeCta();
   showOnly(scrStart);
 }
 init();
