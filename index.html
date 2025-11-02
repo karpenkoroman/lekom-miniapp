@@ -1,143 +1,251 @@
 <!doctype html>
-<html lang="ru" class="theme-light" data-theme="light">
+<html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport"
-        content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Леком — аудит печати</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ЛЕКОМ · Мини-апп</title>
+
+  <!-- Ранняя установка темы -->
+  <script>
+    (function () {
+      const saved = localStorage.getItem('theme');
+      const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      const theme = saved || (prefersLight ? 'light' : 'dark');
+      if (theme === 'light') document.documentElement.classList.add('theme-light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+
+  <!-- Текущий EXEC-hook -->
+  <script>
+    window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
+  </script>
+
   <style>
-    :root{
-      --bg:#f5f7fb;
-      --card:#ffffff;
-      --text:#0b1220;
-      --muted:#62748a;
-      --teal:#11b5b9;
-      --teal-pressed:#0aa0a4;
-      --radius:16px;
-      --pad:16px;
-    }
-    html,body{height:100%}
-    body{
-      margin:0; font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial;
-      background:var(--bg); color:var(--text);
-      -webkit-font-smoothing:antialiased;
-      padding-bottom:env(safe-area-inset-bottom);
-    }
-    .container{
-      max-width:760px; margin:0 auto; padding:12px var(--pad) 24px;
-    }
-    .card{
-      background:var(--card); border-radius:calc(var(--radius) + 4px);
-      box-shadow:0 4px 18px rgba(11,18,32,.06);
-      overflow:hidden; /* не позволяем контенту выходить за скругление */
-    }
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
 
-    /* Стартовый экран */
-    .hero{padding:20px var(--pad) 28px}
-    .cta-primary{
-      appearance:none; border:0; width:100%;
-      background:var(--teal); color:#fff; cursor:pointer;
-      border-radius:24px; padding:20px 18px;
-      display:flex; flex-direction:column; align-items:flex-start; gap:6px;
-      text-align:left;
-    }
-    .cta-primary:active{background:var(--teal-pressed)}
-    .cta-title{font-size:20px; line-height:1.2; font-weight:700}
-    .cta-subtitle{font-size:14px; line-height:1.35; opacity:.92}
+  :root{
+    --bg:#0e1015; --bg2:#171b25; --stroke:#293044;
+    --text:#eaf0fa; --text-dim:#96a2c2;
+    --brand:#2a7de1; --brand2:#10b3a3; /* бирюзовый */
+    --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.25);
+    --pill:#101625; --pill-hover:#141b2b; --pill-sel:rgba(16,179,163,.18);
+    --res-bg:#0f1623; --res-stroke:#22314d; --bar-bg:#101625;
+    --footer-h:84px;
+  }
+  html.theme-light{
+    --bg:#f6f8fb; --bg2:#ffffff; --stroke:#e2e8f0;
+    --text:#0f172a; --text-dim:#4b5563;
+    --brand:#2a7de1; --brand2:#10b3a3;
+    --shadow:0 8px 24px rgba(15,23,42,.08);
+    --pill:#ffffff; --pill-hover:#f3f7fb; --pill-sel:rgba(16,179,163,.18);
+    --res-bg:#ffffff; --res-stroke:#d7e0ef; --bar-bg:#edf2f7;
+  }
 
-    /* Шапка блока аудита */
-    .audit-header{padding:22px var(--pad) 10px}
-    .audit-title{font-size:28px; line-height:1.15; margin:0 0 4px 0}
-    .audit-sub{margin:0; color:var(--muted); font-size:14px}
-    .audit-progress{margin:10px 0 0; color:var(--muted); font-size:13px}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;}
+  .app{max-width:720px;margin:0 auto;padding:20px 16px calc(var(--footer-h) + 16px); box-sizing:border-box;}
+  h1{font-size:26px;margin:0 0 12px;} h2{font-size:22px;margin:0 0 10px;} h3{font-size:18px;margin:0 0 8px;}
+  .muted{color:var(--text-dim);} hr{border:0;height:1px;background:var(--stroke);opacity:.6;margin:14px 0;}
+  .card{background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
 
-    /* Карточка вопроса */
-    .q-card{margin:16px; padding:14px; border-radius:18px; background:#f8fbff}
-    .q-title{margin:0 0 12px 0; font-size:20px; line-height:1.25}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .logo{height:28px;display:none}
+  .logo-dark{display:inline}
+  html.theme-light .logo-dark{display:none}
+  html.theme-light .logo-light{display:inline}
+  .theme-toggle{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:var(--bg2);border:1px solid var(--stroke);cursor:pointer;}
+  .theme-toggle svg{width:18px;height:18px} .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
 
-    /* Список ответов */
-    .answers{
-      display:flex; flex-direction:column; gap:12px;
-    }
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
+    min-height:48px;padding:12px 16px;font-size:16px;font-weight:800;line-height:1.15;letter-spacing:.2px;
+    border-radius:12px;border:1px solid transparent;cursor:pointer;transition:filter .12s,transform .06s;user-select:none;text-align:center;}
+  .btn:active{transform:translateY(1px);} .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-primary{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 10px 28px rgba(42,125,225,.18);}
+  .btn-secondary{color:var(--text);background:var(--bg2);border:1px solid var(--stroke);}
+  .btn-sub{display:block;font-weight:600;font-size:13px;opacity:.9;margin-top:2px;color:inherit;}
+  .btn-row{display:flex;gap:12px;flex-wrap:wrap;} .btn-row .btn{flex:1 1 220px;}
 
-    /* Pill-кнопка ответа: безопасная вёрстка, не вылезает */
-    .pill{
-      display:block; width:100%; max-width:100%;
-      box-sizing:border-box;
-      padding:14px 14px;
-      border-radius:14px; border:1px solid rgba(11,18,32,.08);
-      background:#fff; color:var(--text); text-align:left;
-      font-size:16px; line-height:1.3; font-weight:500;
-      white-space:normal;          /* перенос строк */
-      word-break:break-word;       /* ломаем длинные слова */
-      overflow-wrap:anywhere;      /* и совсем длинные токены */
-      box-shadow:0 2px 10px rgba(11,18,32,.04);
-      transition:transform .04s ease, box-shadow .12s ease, border-color .12s ease;
-    }
-    .pill:active{transform:translateY(1px)}
-    .pill.selected{
-      border-color:var(--teal);
-      box-shadow:0 0 0 3px rgba(17,181,185,.18);
-      background:#f2fbfb;
-    }
+  .summary-row{margin:8px 0;}
+  .summary-head{display:flex;justify-content:space-between;gap:8px;}
+  .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
+  .summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
 
-    /* Нижние действия */
-    .footer-actions{
-      position:sticky; bottom:0; left:0; right:0;
-      padding:12px max(env(safe-area-inset-left), var(--pad)) calc(12px + env(safe-area-inset-bottom)) max(env(safe-area-inset-right), var(--pad));
-      background:linear-gradient(180deg, rgba(245,247,251,0) 0%, var(--bg) 32%);
-      display:flex; gap:12px; justify-content:space-between;
-      backdrop-filter:saturate(1.2) blur(6px);
-    }
-    .btn{
-      appearance:none; border:0; border-radius:12px; padding:14px 16px; font-weight:600;
-      cursor:pointer;
-    }
-    .btn-secondary{background:#e8eef6}
-    .btn-primary{background:var(--teal); color:#fff}
-    .btn:active{filter:saturate(.95)}
+  .screen{display:none;flex-direction:column;min-height:60vh;}
+  .screen.show{display:flex;}
 
-    @media (min-width:768px){
-      .cta-title{font-size:22px}
-      .cta-subtitle{font-size:15px}
-      .audit-title{font-size:32px}
-      .q-title{font-size:22px}
-      .pill{font-size:17px}
-    }
+  .q-progress{font-size:14px;color:var(--text-dim);margin:4px 0 12px;}
+  .q-card{background:var(--bg2);border:1px solid var(--stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow);}
+  .q-title{font-size:20px;font-weight:900;margin:0 0 12px;}
+  .pill{display:block;width:100%;text-align:left;font-size:16px;line-height:1.45;padding:14px 16px;margin-top:10px;border-radius:12px;
+        border:1px solid var(--stroke);background:var(--pill);color:var(--text);cursor:pointer;}
+  .pill:hover{background:var(--pill-hover);} .pill.selected{background:var(--pill-sel);border-color:var(--brand2);}
+
+  .qnav{display:flex;gap:12px;margin-top:16px;}
+  .qnav .btn{flex:1 1 0;}
+
+  #resultBox .result-card{background:var(--res-bg);border:1px solid var(--res-stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow);}
+  .result-score{font-size:24px;font-weight:900;text-align:center;margin:0 0 6px;}
+  .result-verdict{font-size:18px;font-weight:800;text-align:center;margin-top:6px;}
+  .result-advice{margin-top:6px;color:var(--text-dim);text-align:center;}
+  #resultBox .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
+  #resultBox .btn{flex:1 1 220px;}
+
+  input[type=text], textarea{
+    width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);background:var(--bg2);color:var(--text);
+    box-sizing:border-box;font-size:16px;
+  }
+  input::placeholder, textarea::placeholder{color:var(--text-dim);}
+
+  .toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;}
+  .toast-box{background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:var(--shadow);}
+  .toast-box .btn{width:100%;margin-top:10px;}
+
+  .global-footer{
+    position:fixed;left:0;right:0;bottom:0;z-index:10;
+    background:var(--bg2);border-top:1px solid var(--stroke);
+  }
+  .footer-inner{max-width:720px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:16px;justify-content:center;}
+  .footer-icons{display:flex;gap:16px;}
+  .footer-icons svg{width:22px;height:22px;}
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Стартовый экран -->
-    <section id="screen-start" class="card hero">
-      <button id="btn-start-audit" class="cta-primary">
-        <span class="cta-title">Пройдите быстрый аудит печати</span>
-        <span class="cta-subtitle">Выявите слабые места&nbsp;в управлении печатной инфраструктурой</span>
+  <div class="app">
+
+    <!-- Шапка -->
+    <div class="topbar">
+      <div class="brand">
+        <img src="img/logo-dark.png" alt="LEKOM" class="logo logo-dark" />
+        <img src="img/logo-light.png" alt="LEKOM" class="logo logo-light" />
+      </div>
+      <button id="themeToggle" class="theme-toggle" type="button" aria-label="Сменить тему">
+        <svg id="iconMoon" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg id="iconSun" viewBox="0 0 24 24" fill="none" style="display:none"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/><path d="M12 1v3m0 16v3M4.22 4.22 6.34 6.34m11.32 11.32 2.12 2.12M1 12h3m16 0h3M4.22 19.78 6.34 17.66m11.32-11.32 2.12-2.12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="theme-label" id="themeLabel">Тёмная</span>
       </button>
-    </section>
+    </div>
 
-    <!-- Экран аудита -->
-    <section id="screen-audit" class="card" style="display:none">
-      <header class="audit-header">
-        <h1 class="audit-title">Аудит печатной инфраструктуры</h1>
-        <p class="audit-sub">Неудобные вопросы, которые нужно задать самим себе</p>
-        <div id="progress" class="audit-progress">Вопросы: 1 из 11</div>
-      </header>
+    <!-- Старт -->
+    <div id="screen-start" class="screen show">
+      <div class="card">
+        <div class="btn-row">
+          <button id="goAudit" class="btn btn-primary">
+            Пройдите быстрый аудит печати
+            <span class="btn-sub">выявите слабые места в&nbsp;управлении печатной инфраструктурой</span>
+          </button>
+          <button id="goPoll" class="btn btn-secondary">Выберите тему вебинара</button>
+        </div>
 
-      <div class="q-card">
-        <h2 id="q-title" class="q-title">Вопрос</h2>
-        <div id="answers" class="answers"></div>
+        <div id="resumeBox" style="display:none;margin-top:12px">
+          <button id="openResultFromStart" class="btn btn-primary">Показать результаты самоаудита</button>
+        </div>
+
+        <hr>
+        <h3>Сводка голосования по темам</h3>
+        <div id="summaryContent"><div class="muted">Загрузка…</div></div>
       </div>
+    </div>
 
-      <div class="footer-actions">
-        <button id="btn-prev" class="btn btn-secondary">Назад</button>
-        <button id="btn-next" class="btn btn-primary">Далее</button>
+    <!-- Аудит (карточки) -->
+    <div id="screen-audit" class="screen">
+      <div class="card">
+        <h1>
+          Аудит печатной инфраструктуры
+          <span class="muted" style="display:block;font-size:14px;font-weight:500;margin-top:6px;">
+            Неудобные вопросы, которые нужно задать самим себе
+          </span>
+        </h1>
+        <div id="auditProgress" class="q-progress">Вопросы: 0 из 11</div>
+
+        <div id="qContainer" class="q-card"></div>
+
+        <div class="qnav">
+          <button id="btnPrev" class="btn btn-secondary">Назад</button>
+          <button id="btnNext" class="btn btn-primary" style="display:none" disabled>Далее</button>
+        </div>
       </div>
-    </section>
+    </div>
+
+    <!-- Результат -->
+    <div id="screen-result" class="screen">
+      <div class="card" id="resultBox">
+        <div class="result-card">
+          <div class="result-score" id="resultText">—</div>
+          <div class="result-verdict" id="resultVerdict" style="display:none"></div>
+          <div class="result-advice" id="resultAdvice"  style="display:none"></div>
+          <div class="result-advice" id="resultHint" style="margin-top:10px">
+            Предварительная оценка.<br>
+            Для детального аудита — оставьте контакт или&nbsp;обсудите с экспертом прямо сейчас.
+          </div>
+
+          <div class="cta-row" style="margin-top:12px">
+            <button id="ctaExpert" class="btn btn-primary">💬 Обсудить сейчас</button>
+            <button id="ctaScrollLead" class="btn btn-primary">📩 Отправить контакты</button>
+          </div>
+
+          <div id="leadForm" style="margin-top:10px">
+            <input id="leadName"    type="text" placeholder="Ваше имя" style="margin-top:8px" />
+            <input id="leadCompany" type="text" placeholder="Компания" style="margin-top:8px" />
+            <input id="leadPhone"   type="text" placeholder="Телефон или email" style="margin-top:8px" />
+            <button id="sendLead" class="btn btn-primary" style="margin-top:10px" disabled>Отправить</button>
+            <div class="muted" style="margin-top:8px;text-align:center;">
+              Отправляя данные, вы соглашаетесь с <a href="https://lekom.ru/politika-konfidencialnosti/" target="_blank">политикой конфиденциальности</a>.
+            </div>
+          </div>
+
+          <div class="qnav" style="margin-top:14px">
+            <button id="backFromResult" class="btn btn-secondary">↩︎ Вернуться</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Вебинар — выбор темы -->
+    <div id="screen-poll" class="screen">
+      <div class="card">
+        <h1>Выбор темы вебинара</h1>
+        <p class="muted" style="margin:14px 0 6px">Выберите одну или несколько тем:</p>
+
+        <div class="q" id="pollOptions">
+          <div class="pill poll-opt" data-topic="Обзор рынка и тренды 2025">Обзор рынка и тренды 2025</div>
+          <div class="pill poll-opt" data-topic="Закупки по 44-ФЗ / 223-ФЗ">Закупки по 44-ФЗ / 223-ФЗ</div>
+          <div class="pill poll-opt" data-topic="Импортозамещение (техника, софт, расходники)">Импортозамещение (техника, софт, расходники)</div>
+          <div class="pill poll-opt" data-topic="Рынок картриджей — есть ли жизнь после OEM?">Рынок картриджей — есть ли жизнь после OEM?</div>
+          <div class="pill poll-opt" data-topic="Другая тема">Другая тема</div>
+
+          <div id="pollOtherBox" style="display:none;margin-top:10px">
+            <textarea id="pollOther" rows="4" placeholder="Предложите свою тему"></textarea>
+          </div>
+        </div>
+
+        <div class="qnav">
+          <button id="backFromPoll" class="btn btn-secondary">↩︎ Вернуться</button>
+          <button id="sendPoll" class="btn btn-primary">Проголосовать</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <script src="./app.js"></script>
+  <!-- Фикс-футер -->
+  <div class="global-footer">
+    <div class="footer-inner">
+      <div class="footer-icons">
+        <a href="https://lekomIT.t.me" target="_blank" title="Telegram">
+          <svg viewBox="0 0 24 24" fill="none"><path fill="var(--brand2)" d="M21.6 5.6a1 1 0 0 0-1.1-.1L3.5 12.9a.9.9 0 0 0 .1 1.7l4.4 1.4 1.7 5a1 1 0 0 0 1.7.4l2.3-2.3 4.5 3.2a1 1 0 0 0 1.6-.6l2.8-14.5a1 1 0 0 0-.4-1zM9.6 15l8.6-7-10.6 6 2 1z"/></svg>
+        </a>
+        <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
+          <svg viewBox="0 0 24 24">
+            <path style="fill:transparent;stroke:var(--brand2);stroke-width:1.2" d="M3.2 8.3c.2-.9.9-1.6 1.8-1.8C7.8 6.2 12 6.2 12 6.2s4.2 0 7 .3c.9.2 1.6.9 1.8 1.8.3 1.9.3 3.7.3 3.7s0 1.8-.3 3.7c-.2.9-.9 1.6-1.8 1.8-2.8.3-7 .3-7 .3s-4.2 0-7-.3a2.2 2.2 0 0 1-1.8-1.8C3 13.8 3 12 3 12s0-1.8.2-3.7Z"/>
+            <path style="fill:var(--brand2)" d="M10 15V9л5 3-5 3z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script defer src="/app.js"></script>
 </body>
 </html>
