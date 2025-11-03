@@ -265,9 +265,13 @@
       optsBox.appendChild(d);
     });
 
-    // плавная замена карточки
-    qContainer.innerHTML = '';
-    qContainer.appendChild(wrap);
+    // плавная замена карточки: старая уезжает вниз, новая появляется
+const old = qContainer.firstElementChild;
+if (old){
+  old.classList.add('leave');
+  setTimeout(()=>{ if (old.parentNode === qContainer) qContainer.removeChild(old); }, 220);
+}
+qContainer.appendChild(wrap); // wrap уже с классом 'q-card enter'
 
     // ⇩ прокрутка к карточке со 2-го вопроса (и далее), чтобы заголовок+карточка были в зоне видимости
     if (curIndex > 0){
