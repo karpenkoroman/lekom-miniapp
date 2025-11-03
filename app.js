@@ -215,87 +215,127 @@
     if (auditProgressEl) auditProgressEl.textContent = `Вопросы: ${answered} из ${TOTAL_Q}`;
   }
 
-  function renderQuestion(){
-    const q = QUESTIONS[curIndex];
-    updateAuditProgress();
+  // Плавная замена карточек с фиксацией высоты контейнера
+function swapCard(newEl){
+  const cont = qContainer;
+  const old  = cont.firstElementChild;
 
-    // «Назад» только со 2-го экрана
-    if (btnPrev) btnPrev.style.visibility = (curIndex === 0) ? 'hidden' : 'visible';
+  // фиксируем высоту контейнера на время свопа (без скачков)
+  const startH = cont.offsetHeight || 0;
+  cont.classList.add('q-swap-lock');
 
-    // Если вопрос НЕотвечен — даже в ручном режиме прячем «Далее»
-    const hasAnswer = !!answers[q.id];
-    if (btnNext){
-      btnNext.style.display = (manualMode && hasAnswer) ? '' : 'none';
-      btnNext.disabled = !hasAnswer;
-    }
-
-    const wrap = document.createElement('div');
-    wrap.className = 'q-card enter';
-    wrap.innerHTML = `
-      <div class="q-title">${curIndex+1}. ${q.text}</div>
-      <div class="opts"></div>
-    `;
-    const optsBox = wrap.querySelector('.opts');
-
-    q.opts.forEach(opt=>{
-      const d = document.createElement('div');
-      d.className = 'pill';
-      d.textContent = opt.t;
-      if (answers[q.id] && answers[q.id].text === opt.t) d.classList.add('selected');
-      d.addEventListener('click', ()=>{
-        const wasAnswered = !!answers[q.id];
-        answers[q.id] = { text: opt.t, score: opt.s };
-        $$('.pill', wrap).forEach(p=>p.classList.remove('selected'));
-        d.classList.add('selected');
-        if (btnNext) btnNext.disabled = false;
-
-        // Если возвращались назад и этот вопрос был НЕотвечен — ведём себя как авто-режим
-        const shouldAuto = (!manualMode) || (manualMode && !wasAnswered);
-        if (shouldAuto){
-          setTimeout(()=>{
-            if (curIndex < TOTAL_Q - 1) { curIndex++; renderQuestion(); }
-            else { showResultScreen(); }
-          }, 220);
-        } else {
-          // В ручном режиме и уже был ответ — «Далее» видно
-          if (btnNext) btnNext.style.display = '';
-        }
-        updateAuditProgress();
-      });
-      optsBox.appendChild(d);
-    });
-
-    // плавная замена карточки: старая уезжает вниз, новая появляется
-const old = qContainer.firstElementChild;
-if (old){
-  old.classList.add('leave');
-  setTimeout(()=>{ if (old.parentNode === qContainer) qContainer.removeChild(old); }, 220);
-}
-qContainer.appendChild(wrap); // wrap уже с классом 'q-card enter'
-
-    // ⇩ прокрутка к карточке со 2-го вопроса (и далее), чтобы заголовок+карточка были в зоне видимости
-    if (curIndex > 0){
-      // даём DOM дорисоваться
-      setTimeout(()=>{
-        // если есть обёртка qContainer — скроллим к ней
-        qContainer.scrollIntoView({ behavior:'smooth', block:'start' });
-      }, 0);
-    }
+  // старая карточка: exit-анимация
+  if (old){
+    old.classList.remove('card-enter', 'card-enter-active');
+    old.classList.add('card-exit');
+    // форсим reflow, чтобы активировать transition
+    // eslint-disable-next-line no-unused-expressions
+    old.offsetHeight;
+    old.classList.add('card-exit-active');
+    // удаляем после завершения анимации
+    setTimeout(()=>{ if (old.parentNode === cont) cont.removeChild(old); }, 160);
   }
 
-  btnPrev?.addEventListener('click', ()=>{
-    if (curIndex > 0) {
-      curIndex--;
-      manualMode = true;            // включаем ручной режим
-      renderQuestion();
-    }
+  // новая карточка: enter-анимация
+  newEl.classList.add('q-card', 'card-enter');
+  cont.appendChild(newEl);
+  // reflow → активируем анимацию
+  // eslint-disable-next-line no-unused-expressions
+  newEl.offsetHeight;
+  newEl.classList.add('card-enter-active');
+
+  // аккуратно «перетекаем» к новой высоте и снимаем блокировку
+  const targetH = newEl.offsetHeight || startH;
+  cont.style.height = Math.max(startH, targetH) + 'px';
+  setTimeout(()=>{
+    cont.style.height = '';
+    cont.classList.remove('q-swap-lock');
+  }, 200);
+}
+
+function renderQuestion(){
+  const q = QUESTIONS[curIndex];
+  updateAuditProgress();
+
+  // «Назад» только со 2-го экрана
+  if (btnPrev) btnPrev.style.visibility = (curIndex === 0) ? 'hidden' : 'visible';
+
+  // Если вопрос НЕотвечен — «Далее» скрыта даже в ручном режиме
+  const hasAnswer = !!answers[q.id];
+  if (btnNext){
+    btnNext.style.display = (manualMode && hasAnswer) ? '' : 'none';
+    btnNext.disabled = !hasAnswer;
+  }
+
+  // собираем новую карточку
+  const wrap = document.createElement('div');
+  // класс q-card не задаём здесь — его добавит swapCard
+  wrap.innerHTML = `
+    <div class="q-title">${curIndex+1}. ${q.text}</div>
+    <div class="opts"></div>
+  `;
+  const optsBox = wrap.querySelector('.opts');
+
+  q.opts.forEach(opt=>{
+    const d = document.createElement('div');
+    d.className = 'pill';
+    d.textContent = opt.t;
+    if (answers[q.id] && answers[q.id].text === opt.t) d.classList.add('selected');
+
+    d.addEventListener('click', ()=>{
+      const wasAnswered = !!answers[q.id];
+      answers[q.id] = { text: opt.t, score: opt.s };
+      // одноответный режим
+      Array.from(optsBox.querySelectorAll('.pill')).forEach(p=>p.classList.remove('selected'));
+      d.classList.add('selected');
+      if (btnNext){
+        btnNext.disabled = false;
+        // если ручной режим и ответ уже был — показать «Далее»
+        if (manualMode && wasAnswered) btnNext.style.display = '';
+      }
+
+      updateAuditProgress();
+
+      // авто-переход (если не ручной режим, или ручной но вопрос был без ответа)
+      const shouldAuto = (!manualMode) || (manualMode && !wasAnswered);
+      if (shouldAuto){
+        setTimeout(()=>{
+          if (curIndex < TOTAL_Q - 1) { curIndex++; renderQuestion(); }
+          else { showResultScreen(); }
+        }, 200);
+      }
+    });
+
+    optsBox.appendChild(d);
   });
 
-  btnNext?.addEventListener('click', ()=>{
-    if (curIndex < TOTAL_Q - 1) { curIndex++; renderQuestion(); }
-    else { showResultScreen(); }
-  });
+  // плавная подмена карточки
+  swapCard(wrap);
 
+  // скроллим к карточке со 2-го вопроса и далее
+  if (curIndex > 0){
+    setTimeout(()=> qContainer.scrollIntoView({ behavior:'smooth', block:'start' }), 10);
+  }
+}
+
+// Навигация
+btnPrev?.addEventListener('click', ()=>{
+  if (curIndex > 0){
+    curIndex--;
+    manualMode = true;       // включаем ручной режим
+    renderQuestion();
+  }
+});
+
+btnNext?.addEventListener('click', ()=>{
+  if (curIndex < TOTAL_Q - 1){
+    curIndex++;
+    renderQuestion();
+  } else {
+    showResultScreen();
+  }
+});
+  
   function calcScore(){
     return Object.values(answers).reduce((s,a)=> s + (a.score || 0), 0);
   }
