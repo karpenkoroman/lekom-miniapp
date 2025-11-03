@@ -22,14 +22,25 @@
   const iconSun  = $('#iconSun');
   const themeLabel = $('#themeLabel');
   function applyTheme(theme){
-    document.documentElement.classList.toggle('theme-light', theme === 'light');
-    document.documentElement.setAttribute('data-theme', theme);
-    if (themeLabel){
-      if (theme === 'light'){ iconMoon.style.display='none'; iconSun.style.display=''; themeLabel.textContent='Светлая'; }
-      else { iconMoon.style.display=''; iconSun.style.display='none'; themeLabel.textContent='Тёмная'; }
+  document.documentElement.classList.toggle('theme-light', theme === 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+
+  if (themeLabel){
+    if (theme === 'light'){
+      // Светлая тема активна → показываем ЛУНУ (предлагаем перейти в тёмную)
+      if (iconMoon) iconMoon.style.display = '';
+      if (iconSun)  iconSun.style.display  = 'none';
+      themeLabel.textContent = 'Тёмная';
+    } else {
+      // Тёмная тема активна → показываем СОЛНЦЕ (предлагаем перейти в светлую)
+      if (iconMoon) iconMoon.style.display = 'none';
+      if (iconSun)  iconSun.style.display  = '';
+      themeLabel.textContent = 'Светлая';
     }
-    try{ localStorage.setItem('theme', theme); }catch(_){}
   }
+
+  try { localStorage.setItem('theme', theme); } catch(_){}
+}
   themeToggle?.addEventListener('click', ()=>{
     const cur = document.documentElement.getAttribute('data-theme') || 'dark';
     applyTheme(cur === 'dark' ? 'light' : 'dark');
