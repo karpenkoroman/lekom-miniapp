@@ -215,20 +215,24 @@
     if (auditProgressEl) auditProgressEl.textContent = `Вопросы: ${answered} из ${TOTAL_Q}`;
   }
 
-// --- БАЗА: подмена карточки без скролла и без анимации движения ---
+// --- БАЗА: подмена карточки без скролла и без движения, с мягким fade ---
 function swapCardNoAnim(newEl){
   const cont = qContainer;
 
-  // Снимаем фокус с любых элементов, чтобы не тянулся :active/:focus
+  // Снимаем фокус, чтобы :active/:focus не «переезжал» на новую плашку
   if (document.activeElement && typeof document.activeElement.blur === 'function') {
     document.activeElement.blur();
   }
 
-  // Коротко блокируем клики, чтобы тап не «попадал» в ту же точку на новой карточке
+  // Короткая блокировка кликов, чтобы тап не попал в ту же точку новой карточки
   cont.classList.add('guard');
   setTimeout(()=> cont.classList.remove('guard'), 140);
 
-  // Чистим контейнер и вставляем свежую карточку
+  // Фиксируем текущую высоту контейнера на время свопа (чтобы не было «подъёма»)
+  const startH = cont.offsetHeight;
+  if (startH > 0) cont.style.minHeight = startH + 'px';
+
+  // Полная замена содержимого
   cont.innerHTML = '';
   newEl.classList.add('q-card');
   cont.appendChild(newEl);
@@ -237,9 +241,14 @@ function swapCardNoAnim(newEl){
   const fade = document.createElement('div');
   fade.className = 'card-fade-overlay';
   cont.appendChild(fade);
+
+  // Плавно гасим оверлей, затем снимаем фиксацию высоты
   requestAnimationFrame(()=>{
-    fade.classList.add('fout');           // плавно к opacity:0
-    setTimeout(()=> fade.remove(), 600);  // убрать после затухания
+    fade.classList.add('fout');             // opacity → 0 (см. CSS .55s ease)
+    setTimeout(()=>{
+      fade.remove();
+      cont.style.minHeight = '';            // возвращаем естественную высоту
+    }, 560);                                // чуть больше, чем transition в CSS
   });
 }
 
