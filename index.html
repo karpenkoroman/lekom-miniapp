@@ -68,12 +68,10 @@ html.theme-light .logo-light{display:inline}
   display:inline-flex;align-items:center;gap:8px;
   padding:10px 12px;border-radius:12px;
   background:var(--bg2);border:1px solid var(--stroke);
-  cursor:pointer;user-select:none;
-  color:var(--text);
+  cursor:pointer;user-select:none;color:var(--text);
 }
 .theme-toggle svg{
-  width:18px;height:18px;color:inherit;
-  opacity:.95;
+  width:18px;height:18px;color:inherit;opacity:.95;
 }
 html:not(.theme-light) .theme-toggle svg{
   filter:drop-shadow(0 0 1px rgba(0,0,0,.65));
@@ -105,7 +103,14 @@ html:not(.theme-light) .theme-toggle svg{
 .screen{display:none;flex-direction:column;min-height:60vh;}
 .screen.show{display:flex;}
 .q-progress{font-size:14px;color:var(--text-dim);margin:4px 0 12px;}
-.q-card{background:var(--bg2);border:1px solid var(--stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow);}
+.q-card{
+  background:linear-gradient(180deg,rgba(16,179,163,.05),rgba(42,125,225,.05)) var(--bg2);
+  border:1px solid var(--stroke);border-radius:16px;padding:20px;box-shadow:var(--shadow);
+  transition:background .3s ease;
+}
+html.theme-light .q-card{
+  background:linear-gradient(180deg,rgba(16,179,163,.08),rgba(42,125,225,.06)) var(--bg2);
+}
 .q-title{font-size:20px;font-weight:900;margin:0 0 12px;}
 .opts{max-width:100%;}
 .pill{
@@ -156,8 +161,6 @@ input::placeholder, textarea::placeholder{color:var(--text-dim);}
 }
 .footer-icons{display:flex;gap:16px;}
 .footer-icons svg{width:22px;height:22px;}
-
-/* кликабельность только иконок */
 .global-footer { pointer-events: none; }
 .global-footer a, .global-footer svg { pointer-events: auto; }
 
@@ -166,6 +169,9 @@ a{color:var(--link);text-decoration:none;font-weight:500;transition:color .2s ea
 a:hover{color:var(--link-hover);text-decoration:underline;}
 html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
 </style>
+
+
+  
 </head>
 <body>
   <div class="app">
