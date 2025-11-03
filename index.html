@@ -21,188 +21,14 @@
     window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
   </script>
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
-
-/* === Переменные === */
-:root{
-  --bg:#0e1015; --bg2:#171b25; --stroke:#293044;
-  --text:#eaf0fa; --text-dim:#96a2c2;
-  --brand:#2a7de1; --brand2:#10b3a3;
-  --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.25);
-  --pill:#101625; --pill-hover:#141b2b; --pill-sel:rgba(16,179,163,.18);
-  --res-bg:#0f1623; --res-stroke:#22314d; --bar-bg:#101625;
-  --footer-h:84px;
-  --link:#37c0b6; --link-hover:#48d4c9;
-}
-html.theme-light{
-  --bg:#f6f8fb; --bg2:#ffffff; --stroke:#e2e8f0;
-  --text:#0f172a; --text-dim:#4b5563;
-  --brand:#2a7de1; --brand2:#10b3a3;
-  --shadow:0 8px 24px rgba(15,23,42,.08);
-  --pill:#ffffff; --pill-hover:#f3f7fb; --pill-sel:rgba(16,179,163,.18);
-  --res-bg:#ffffff; --res-stroke:#d7e0ef; --bar-bg:#edf2f7;
-  --link:#1c8ea3; --link-hover:#0e6f7e;
-}
-
-/* === База === */
-html,body{
-  margin:0; padding:0; background:var(--bg); color:var(--text);
-  font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;
-  -webkit-font-smoothing:antialiased;
-}
-.app{max-width:720px;margin:0 auto;padding:20px 16px calc(var(--footer-h) + 16px);box-sizing:border-box;}
-h1{font-size:26px;margin:0 0 12px;}
-h2{font-size:22px;margin:0 0 10px;}
-h3{font-size:18px;margin:0 0 8px;}
-.muted{color:var(--text-dim);}
-hr{border:0;height:1px;background:var(--stroke);opacity:.6;margin:14px 0;}
-.card{background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
-
-/* === Шапка / Тема === */
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
-.brand{display:flex;align-items:center;gap:10px;}
-.logo{height:28px;display:none}
-.logo-dark{display:inline}
-html.theme-light .logo-dark{display:none}
-html.theme-light .logo-light{display:inline}
-
-.theme-toggle{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:10px 12px;border-radius:12px;background:var(--bg2);
-  border:1px solid var(--stroke);cursor:pointer;user-select:none;color:var(--text);
-}
-.theme-toggle svg{width:18px;height:18px;opacity:.95;}
-html.theme-light .theme-toggle svg{filter:drop-shadow(0 0 1px rgba(0,0,0,.22));}
-.theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
-
-/* === Кнопки === */
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
-  min-height:48px;padding:12px 16px;font-size:16px;font-weight:800;line-height:1.15;letter-spacing:.2px;
-  border-radius:12px;border:1px solid transparent;cursor:pointer;transition:filter .12s,transform .06s;
-  user-select:none;text-align:center;flex-direction:column;box-sizing:border-box;
-}
-.btn:active{transform:translateY(1px);}
-.btn:disabled{opacity:.5;cursor:not-allowed;}
-.btn-primary{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 10px 28px rgba(42,125,225,.18);}
-.btn-primary:hover{filter:brightness(1.06);}
-.btn-secondary{color:var(--text);background:var(--bg2);border:1px solid var(--stroke);}
-.btn-secondary:hover{filter:brightness(1.03);}
-.btn-sub{display:block;font-weight:600;font-size:13px;opacity:.9;margin-top:2px;color:inherit;}
-.btn-row{display:flex;gap:12px;flex-wrap:wrap;}
-.btn-row .btn{flex:1 1 220px;}
-
-/* === Сводка голосов === */
-.summary-row{margin:8px 0;}
-.summary-head{display:flex;justify-content:space-between;gap:8px;}
-.summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
-.summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
-
-/* === Экраны === */
-.screen{display:none;flex-direction:column;min-height:60vh;}
-.screen.show{display:flex;}
-.q-progress{font-size:14px;color:var(--text-dim);margin:4px 0 12px;}
-
-/* Контейнер под карточку (фикс высоты на время fade) */
-.q-stage{position:relative;min-height:320px}
-
-/* Убираем вложенную рамку внутри экрана аудита */
-#screen-audit .card{background:transparent;border:0;box-shadow:none;padding:0;}
-
-/* Карточка вопроса — одна «рамка» через inset-тень */
-.q-card{
-  background:var(--bg2);
-  border:0;
-  box-shadow: inset 0 0 0 1px var(--stroke), var(--shadow);
-  border-radius:16px;
-  padding:20px;
-}
-
-/* Заголовок + счётчик */
-.q-title{font-size:20px;font-weight:900;margin:0 0 12px;line-height:1.35;}
-.q-title .q-count{
-  font-weight:900;
-  background:linear-gradient(90deg,var(--brand2),var(--brand));
-  -webkit-background-clip:text; background-clip:text;
-  color:transparent; margin-right:.25em;
-}
-
-/* Варианты ответа */
-.opts{max-width:100%;}
-.pill{
-  display:block;width:100%;max-width:100%;box-sizing:border-box;text-align:left;
-  font-size:16px;line-height:1.45;padding:14px 16px;margin-top:10px;border-radius:12px;
-  border:1px solid var(--stroke);background:var(--pill);color:var(--text);
-  cursor:pointer;word-break:break-word;overflow-wrap:anywhere;
-}
-.pill:hover{background:var(--pill-hover);}
-.pill.selected{background:var(--pill-sel);border-color:var(--brand2);}
-
-/* Навигация карточек — одинаковые кнопки */
-.qnav{display:flex;gap:12px;margin-top:16px;}
-.qnav .btn{flex:1 1 0;}
-.qnav .btn-secondary{border:1px solid var(--stroke);} /* равная высота/типографика */
-
-/* === Результаты === */
-#resultBox .result-card{background:var(--res-bg);border:1px solid var(--res-stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow);}
-.result-score{font-size:24px;font-weight:900;text-align:center;margin:0 0 6px;}
-.result-verdict{font-size:18px;font-weight:800;text-align:center;margin-top:6px;}
-.result-advice{margin-top:6px;color:var(--text-dim);text-align:center;}
-#resultBox .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
-#resultBox .btn{flex:1 1 220px;}
-
-/* Инпуты */
-input[type=text], textarea{
-  width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);
-  background:var(--bg2);color:var(--text);box-sizing:border-box;font-size:16px;
-}
-input::placeholder, textarea::placeholder{color:var(--text-dim);}
-#pollOther{min-height:112px}
-
-/* Тост */
-.toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;}
-.toast-box{background:var(--bg2);border:1px solid var(--stroke);padding:20px;border-radius:14px;max-width:320px;width:calc(100vw - 48px);text-align:center;line-height:1.5;box-shadow:var(--shadow);}
-.toast-box .btn{width:100%;margin-top:10px;}
-
-/* Футер */
-.global-footer{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--bg2);border-top:1px solid var(--stroke);}
-.footer-inner{max-width:720px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:16px;justify-content:center;}
-.footer-icons{display:flex;gap:16px;}
-.footer-icons svg{width:22px;height:22px;}
-.global-footer{pointer-events:none;}
-.global-footer a,.global-footer svg{pointer-events:auto;}
-
-/* Ссылки */
-a{color:var(--link);text-decoration:none;font-weight:500;transition:color .2s ease;}
-a:hover{color:var(--link-hover);text-decoration:underline;}
-html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
-
-/* === Плавная смена карточек: мягкий fade === */
-.card-enter{opacity:0;}
-.card-enter.card-enter-active{opacity:1;transition:opacity .18s ease;}
-.card-exit{opacity:1;position:absolute;left:0;right:0;}
-.card-exit.card-exit-active{opacity:0;transition:opacity .14s ease;}
-.q-swap-lock{overflow:hidden;position:relative;height:auto;}
-
-@media (prefers-reduced-motion: reduce){
-  .card-enter,.card-enter.card-enter-active,.card-exit,.card-exit.card-exit-active{
-    transition:none !important; opacity:1 !important;
-  }
-}
-
-  #auditProgress {
-  display: none !important;
-}
-  
-</style>
-
-
-  
+  <!-- Стили -->
+  <!-- ВСТАВЬ сюда твой последний CSS (он уже совместим с этой разметкой) -->
+  <style>
+    /* ... твой актуальный CSS из предыдущего шага ... */
+  </style>
 </head>
 <body>
   <div class="app">
-
     <!-- Шапка -->
     <div class="topbar">
       <div class="brand">
@@ -235,21 +61,24 @@ html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
 
     <!-- Аудит (карточки) -->
     <div id="screen-audit" class="screen">
-      <div class="card">
-        <h1>
-          Аудит печатной инфраструктуры
-          <span class="muted" style="display:block;font-size:14px;font-weight:500;margin-top:6px;">
-            Неудобные вопросы, которые нужно задать самим себе
-          </span>
-        </h1>
-        <div id="auditProgress" class="q-progress">Вопросы: 0 из 11</div>
+      <!-- без .card, чтобы не было «двойной рамки» -->
+      <h1>
+        Аудит печатной инфраструктуры
+        <span class="muted" style="display:block;font-size:14px;font-weight:500;margin-top:6px;">
+          Неудобные вопросы, которые нужно задать самим себе
+        </span>
+      </h1>
 
-        <div id="qContainer" class="q-card"></div>
+      <!-- прогресс убираем CSS-ом как и было -->
+      <div id="auditProgress" class="q-progress">Вопросы: 0 из 11</div>
 
-        <div class="qnav">
-          <button id="btnPrev" class="btn btn-secondary">Назад</button>
-          <button id="btnNext" class="btn btn-primary" style="display:none" disabled>Далее</button>
-        </div>
+      <!-- СЦЕНА ДЛЯ КАРТОЧЕК. Сюда JS вставляет .q-card -->
+      <div id="qContainer" class="q-stage"></div>
+
+      <!-- Навигация -->
+      <div class="qnav">
+        <button id="btnPrev" class="btn btn-secondary">Назад</button>
+        <button id="btnNext" class="btn btn-primary" style="display:none" disabled>Далее</button>
       </div>
     </div>
 
@@ -259,7 +88,7 @@ html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
         <div class="result-card">
           <div class="result-score" id="resultText">—</div>
           <div class="result-verdict" id="resultVerdict" style="display:none"></div>
-          <div class="result-advice" id="resultAdvice"  style="display:none"></div>
+          <div class="result-advice" id="resultAdvice" style="display:none"></div>
           <div class="result-advice" id="resultHint" style="margin-top:10px">
             Это предварительная оценка.<br>
             Для детального аудита — оставьте контакт или&nbsp;обсудите с экспертом прямо сейчас.
@@ -311,7 +140,6 @@ html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
         </div>
       </div>
     </div>
-
   </div>
 
   <!-- Фикс-футер -->
@@ -322,7 +150,7 @@ html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
         <a href="https://lekomIT.t.me" target="_blank" title="Telegram">
           <svg viewBox="0 0 24 24" fill="none"><path fill="var(--brand2)" d="M21.6 5.6a1 1 0 0 0-1.1-.1L3.5 12.9a.9.9 0 0 0 .1 1.7l4.4 1.4 1.7 5a1 1 0 0 0 1.7.4l2.3-2.3 4.5 3.2a1 1 0 0 0 1.6-.6l2.8-14.5a1 1 0 0 0-.4-1zM9.6 15l8.6-7-10.6 6 2 1z"/></svg>
         </a>
-        <!-- YouTube — «аутентичная» форма, в цвете приложения -->
+        <!-- YouTube -->
         <a href="https://www.youtube.com/@lekomIT" target="_blank" title="YouTube">
           <svg viewBox="0 0 24 24">
             <path d="M23 12s0-3-.4-4.5c-.2-.9-.9-1.6-1.8-1.8C18.9 5.2 12 5.2 12 5.2s-6.9 0-8.8.5c-.9.2-1.6.9-1.8 1.8C1 9 1 12 1 12s0 3 .4 4.5c.2.9.9 1.6 1.8 1.8 1.9.5 8.8.5 8.8.5s6.9 0 8.8-.5c.9-.2 1.6-.9 1.8-1.8.4-1.5.4-4.5.4-4.5Z" fill="var(--brand2)"/>
