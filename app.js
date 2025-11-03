@@ -5,18 +5,62 @@
   const $  = (sel) => document.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
-  // Экранный роутинг
+  /* ===== Telegram helpers ===== */
+  function initTelegram() {
+    try {
+      const WA = window.Telegram && window.Telegram.WebApp;
+      if (!WA) return false;
+      // корректная инициализация WebApp
+      WA.ready && WA.ready();
+      WA.expand && WA.expand();     // разворачиваем на всю высоту
+      // включим плавающую кнопку, если пригодится
+      WA.MainButton && (WA.MainButton.isVisible = false);
+      return true;
+    } catch(_) { return false; }
+  }
+
+  // Возвращает "сырые" initData и распарсенный объект
+  function getInitData() {
+    try {
+      const WA = window.Telegram && window.Telegram.WebApp;
+      if (!WA) return null;
+      // initData — это строка-подпись Telegram; initDataUnsafe — распарсенный объект (user, chat_type, и т.п.)
+      const unsafe = WA.initDataUnsafe || null;
+      return unsafe || null;
+    } catch(_) { return null; }
+  }
+
+  function getUserMeta() {
+    const unsafe = getInitData() || {};
+    const u = unsafe.user || {};
+    // отдаём ещё и строковые дубли — так твой GAS поймает их даже без initData
+    return {
+      user_id: String(u.id || ''),
+      username: String(u.username || ''),
+      first_name: String(u.first_name || '')
+    };
+  }
+
+  // Один раз попробуем инициализироваться
+  const tgOk = initTelegram();
+  // Если вдруг объект появится с задержкой (клиенты Telegram любят так делать) — попробуем ещё раз быстро
+  if (!tgOk) setTimeout(initTelegram, 50);
+
+  // Дебаг можно оставить/убрать
+  // console.log('[LEKOM] initDataUnsafe:', getInitData());
+
+  /* ===== Экранный роутинг ===== */
   const scrStart  = $('#screen-start');
   const scrAudit  = $('#screen-audit');
   const scrResult = $('#screen-result');
   const scrPoll   = $('#screen-poll');
   function showOnly(el){
-    [scrStart, scrAudit, scrResult, scrPoll].forEach(x=> x.classList.remove('show'));
-    el.classList.add('show');
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    [scrStart, scrAudit, scrResult, scrPoll].forEach(x=> x && x.classList.remove('show'));
+    el && el.classList.add('show');
+    try{ window.scrollTo({ top: 0, behavior: 'instant' }); }catch(_){}
   }
 
-  // Тема
+  /* ===== Тема ===== */
   const themeToggle = $('#themeToggle');
   const iconMoon = $('#iconMoon');
   const iconSun  = $('#iconSun');
@@ -27,12 +71,10 @@
 
     if (themeLabel){
       if (theme === 'light'){
-        // Светлая тема активна → показываем ЛУНУ (предлагаем перейти в тёмную)
         if (iconMoon) iconMoon.style.display = '';
         if (iconSun)  iconSun.style.display  = 'none';
         themeLabel.textContent = 'Тёмная';
       } else {
-        // Тёмная тема активна → показываем СОЛНЦЕ (предлагаем перейти в светлую)
         if (iconMoon) iconMoon.style.display = 'none';
         if (iconSun)  iconSun.style.display  = '';
         themeLabel.textContent = 'Светлая';
@@ -45,20 +87,20 @@
     applyTheme(cur === 'dark' ? 'light' : 'dark');
   });
 
-  // Старт
+  /* ===== Старт ===== */
   const btnGoAudit = $('#goAudit');
   const goAuditTitle = $('#goAuditTitle');
   const goAuditSub   = $('#goAuditSub');
   const btnGoPoll  = $('#goPoll');
   const summaryBox = $('#summaryContent');
 
-  // Аудит
+  /* ===== Аудит ===== */
   const qContainer = $('#qContainer');
   const auditProgressEl = $('#auditProgress');
   const btnPrev = $('#btnPrev');
   const btnNext = $('#btnNext');
 
-  // Результат
+  /* ===== Результат ===== */
   const resultText    = $('#resultText');
   const resultVerdict = $('#resultVerdict');
   const resultAdvice  = $('#resultAdvice');
@@ -70,7 +112,7 @@
   const btnSendLead   = $('#sendLead');
   const backFromResult= $('#backFromResult');
 
-  // Опрос вебинара
+  /* ===== Опрос вебинара ===== */
   const pollCard      = $('#pollCard');
   const pollOptions   = $$('#screen-poll .poll-opt');
   const pollOtherBox  = $('#pollOtherBox');
@@ -78,6 +120,7 @@
   const sendPoll      = $('#sendPoll');
   const backFromPoll  = $('#backFromPoll');
 
+  /* ===== UI helpers ===== */
   function toast(html, withOk = true, onOk = null){
     const wrap = document.createElement('div');
     wrap.className = 'toast-overlay';
@@ -98,11 +141,6 @@
     if (m === 1) return 'балл';
     if (m >= 2 && m <= 4) return 'балла';
     return 'баллов';
-  }
-
-  function getInitData(){
-    try { return (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) || null; }
-    catch(_) { return null; }
   }
 
   /* ===== Вопросы ===== */
@@ -189,7 +227,7 @@
 
   let curIndex = 0;
   let answers  = {};
-  let manualMode = false; // включается после "Назад", но на неотвеченном вопросе «Далее» скрываем
+  let manualMode = false;
   let auditCompleted = false;
   let lastAuditResult = { score:0, verdict:'', advice:'', answers:{} };
 
@@ -214,138 +252,117 @@
     if (auditProgressEl) auditProgressEl.textContent = `Вопросы: ${answered} из ${TOTAL_Q}`;
   }
 
-// --- БАЗА: подмена карточки без движения + мягкий двухшаговый fade ---
-function swapCardNoAnim(newEl){
-  const cont = qContainer;          // cont имеет класс q-stage в HTML
+  /* ===== Бездвижный swap карточки + мягкий оверлей ===== */
+  function swapCardNoAnim(newEl){
+    const cont = qContainer;
+    if (!cont) return;
 
-  // снимаем фокус, чтобы :active/:focus не переносился
-  if (document.activeElement && typeof document.activeElement.blur === 'function') {
-    document.activeElement.blur();
-  }
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
 
-  // очень коротко блокируем клики внутри сцены
-  cont.classList.add('guard');
-  setTimeout(()=> cont.classList.remove('guard'), 120);
+    cont.classList.add('guard');
+    setTimeout(()=> cont.classList.remove('guard'), 120);
 
-  // фиксируем текущую высоту на время подмены (чтобы ничего не «подъезжало»)
-  const h = cont.offsetHeight;
-  if (h > 0) cont.style.minHeight = h + 'px';
+    const h = cont.offsetHeight;
+    if (h > 0) cont.style.minHeight = h + 'px';
 
-  // заменяем карточку
-  cont.innerHTML = '';
-  newEl.classList.add('q-card');
-  cont.appendChild(newEl);
+    cont.innerHTML = '';
+    newEl.classList.add('q-card');
+    cont.appendChild(newEl);
 
-  // добавляем оверлей и делаем ДВУХШАГОВУЮ анимацию:
-  // 1) 0  -> 0.18  (мягкое затемнение)
-  // 2) 0.18 -> 0    (мягкое затухание)
-  const fade = document.createElement('div');
-  fade.className = 'card-fade-overlay';
-  cont.appendChild(fade);
-
-  // Шаг 1: на следующий кадр -> .show
-  requestAnimationFrame(()=>{
-    fade.classList.add('show');
-    // Шаг 2: ещё через кадр -> .hide
+    const fade = document.createElement('div');
+    fade.className = 'card-fade-overlay';
+    cont.appendChild(fade);
     requestAnimationFrame(()=>{
-      fade.classList.add('hide');
-      // убираем оверлей и фиксацию высоты после завершения
-      setTimeout(()=>{
-        if (fade.parentNode) fade.parentNode.removeChild(fade);
-        cont.style.minHeight = '';
-      }, 470); // чуть меньше, чем .45s + запас
-    });
-  });
-}
-
-  // Навигация между вопросами
-
-// Кнопка «Назад»
-btnPrev?.addEventListener('click', ()=>{
-  if (curIndex > 0){
-    curIndex--;
-    manualMode = true;       // включаем ручной режим
-    renderQuestion();
-  }
-});
-
-// Кнопка «Далее»
-btnNext?.addEventListener('click', ()=>{
-  if (curIndex < TOTAL_Q - 1){
-    curIndex++;
-    renderQuestion();
-  } else {
-    showResultScreen();
-  }
-});
-
-function renderQuestion(){
-  const q = QUESTIONS[curIndex];
-  updateAuditProgress();
-
-  // «Назад» только со 2-го экрана
-  if (btnPrev) btnPrev.style.visibility = (curIndex === 0) ? 'hidden' : 'visible';
-
-  // Если вопрос НЕотвечен — «Далее» скрыта даже в ручном режиме
-  const hasAnswer = !!answers[q.id];
-  if (btnNext){
-    btnNext.style.display = (manualMode && hasAnswer) ? '' : 'none';
-    btnNext.disabled = !hasAnswer;
-  }
-
-  // создаём новую карточку
-  const wrap = document.createElement('div');
-  wrap.innerHTML = `
-    <div class="q-title">
-      <span class="q-count">Вопрос ${curIndex + 1} из ${TOTAL_Q}<br></span> ${q.text}
-    </div>
-    <div class="opts"></div>
-  `;
-  const optsBox = wrap.querySelector('.opts');
-
-  q.opts.forEach(opt=>{
-    const d = document.createElement('div');
-    d.className = 'pill';
-    d.textContent = opt.t;
-    if (answers[q.id] && answers[q.id].text === opt.t) d.classList.add('selected');
-
-    d.addEventListener('click', ()=>{
-      const wasAnswered = !!answers[q.id];
-      answers[q.id] = { text: opt.t, score: opt.s };
-      Array.from(optsBox.querySelectorAll('.pill')).forEach(p=>p.classList.remove('selected'));
-      d.classList.add('selected');
-
-      if (btnNext){
-        btnNext.disabled = false;
-        if (manualMode && wasAnswered) btnNext.style.display = '';
-      }
-
-      updateAuditProgress();
-
-      // авто-переход (без скроллов и «съезда» экрана)
-      const shouldAuto = (!manualMode) || (manualMode && !wasAnswered);
-      if (shouldAuto){
+      fade.classList.add('show');
+      requestAnimationFrame(()=>{
+        fade.classList.add('hide');
         setTimeout(()=>{
-          if (curIndex < TOTAL_Q - 1) {
-            curIndex++;
-            renderQuestion();
-          } else {
-            showResultScreen();
-          }
-        }, 140); // короткая пауза, чтобы успел погаснуть :active
-      }
+          if (fade.parentNode) fade.parentNode.removeChild(fade);
+          cont.style.minHeight = '';
+        }, 480);
+      });
     });
+  }
 
-    optsBox.appendChild(d);
+  /* ===== Навигация между вопросами ===== */
+  btnPrev?.addEventListener('click', ()=>{
+    if (curIndex > 0){
+      curIndex--;
+      manualMode = true;
+      renderQuestion();
+    }
   });
 
-  // подмена карточки — без scrollIntoView
-  swapCardNoAnim(wrap);
+  btnNext?.addEventListener('click', ()=>{
+    if (curIndex < TOTAL_Q - 1){
+      curIndex++;
+      renderQuestion();
+    } else {
+      showResultScreen();
+    }
+  });
 
-  // ВАЖНО: никаких прокруток! Это и создавало «подъём снизу».
-  // Ни window.scrollTo({behavior:'smooth'}), ни qContainer.scrollIntoView(...)
-}
-  
+  function renderQuestion(){
+    const q = QUESTIONS[curIndex];
+    updateAuditProgress();
+
+    if (btnPrev) btnPrev.style.visibility = (curIndex === 0) ? 'hidden' : 'visible';
+
+    const hasAnswer = !!answers[q.id];
+    if (btnNext){
+      btnNext.style.display = (manualMode && hasAnswer) ? '' : 'none';
+      btnNext.disabled = !hasAnswer;
+    }
+
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="q-title">
+        <span class="q-count">Вопрос ${curIndex + 1} из ${TOTAL_Q}<br></span> ${q.text}
+      </div>
+      <div class="opts"></div>
+    `;
+    const optsBox = wrap.querySelector('.opts');
+
+    q.opts.forEach(opt=>{
+      const d = document.createElement('div');
+      d.className = 'pill';
+      d.textContent = opt.t;
+      if (answers[q.id] && answers[q.id].text === opt.t) d.classList.add('selected');
+
+      d.addEventListener('click', ()=>{
+        const wasAnswered = !!answers[q.id];
+        answers[q.id] = { text: opt.t, score: opt.s };
+        Array.from(optsBox.querySelectorAll('.pill')).forEach(p=>p.classList.remove('selected'));
+        d.classList.add('selected');
+
+        if (btnNext){
+          btnNext.disabled = false;
+          if (manualMode && wasAnswered) btnNext.style.display = '';
+        }
+
+        updateAuditProgress();
+
+        const shouldAuto = (!manualMode) || (manualMode && !wasAnswered);
+        if (shouldAuto){
+          setTimeout(()=>{
+            if (curIndex < TOTAL_Q - 1) {
+              curIndex++;
+              renderQuestion();
+            } else {
+              showResultScreen();
+            }
+          }, 140);
+        }
+      });
+
+      optsBox.appendChild(d);
+    });
+
+    swapCardNoAnim(wrap);
+  }
+
   function calcScore(){
     return Object.values(answers).reduce((s,a)=> s + (a.score || 0), 0);
   }
@@ -371,16 +388,23 @@ function renderQuestion(){
     updateStartButton();
     showOnly(scrResult);
 
+    // === ВАЖНО: пробрасываем user_id/username/first_name + initData ===
+    const meta = getUserMeta();
     try{
       fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
-        type:'result', score, verdict, advice, answers: lastAuditResult.answers, initData: getInitData()
+        type:'result',
+        score, verdict, advice,
+        answers: lastAuditResult.answers,
+        initData: getInitData(),           // объект initDataUnsafe, если есть
+        user_id: meta.user_id,             // дубли отдельными полями
+        username: meta.username,
+        first_name: meta.first_name
       })), { method:'GET', cache:'no-store' });
     }catch(_){}
   }
 
-  // ===== Poll =====
+  /* ===== Poll ===== */
   function bumpForKeyboard(on){
-    // нижний отступ карточки, чтобы textarea не пряталась за фикс-футер
     if (pollCard) pollCard.style.paddingBottom = on ? '140px' : '16px';
   }
 
@@ -408,20 +432,33 @@ function renderQuestion(){
     const selected = $$('#screen-poll .poll-opt.selected').map(x=>x.dataset.topic);
     if (!selected.length){ toast('Выберите тему'); return; }
     const otherText = selected.includes('Другая тема') ? (pollOtherText?.value || '').trim() : '';
+
     toast('Голос учтён! Спасибо 🙌');
+
+    const meta = getUserMeta();
     try{
       for (const topic of selected){
-        const payload = { type:'poll', poll:'webinar_topic', topic, other: topic==='Другая тема' ? otherText : '', initData: getInitData() };
+        const payload = {
+          type:'poll',
+          poll:'webinar_topic',
+          topic,
+          other: topic==='Другая тема' ? otherText : '',
+          initData: getInitData(),
+          user_id: meta.user_id,
+          username: meta.username,
+          first_name: meta.first_name
+        };
         fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify(payload)), { method:'GET', cache:'no-store' });
       }
     }catch(_){}
+
     $$('#screen-poll .poll-opt.selected').forEach(x=>x.classList.remove('selected'));
     if (pollOtherText) pollOtherText.value = '';
     if (pollOtherBox)  pollOtherBox.style.display = 'none';
     bumpForKeyboard(false);
   });
 
-  // ===== Summary на старте =====
+  /* ===== Summary на старте ===== */
   async function loadSummaryToStart(){
     if (!summaryBox) return;
     summaryBox.innerHTML = '<div class="muted">Загрузка…</div>';
@@ -452,7 +489,7 @@ function renderQuestion(){
     }
   }
 
-  // ===== CTA «Обсудить сейчас» / Лиды =====
+  /* ===== CTA / Лиды ===== */
   btnExpert?.addEventListener('click', async ()=>{
     const msg =
       `Добрый день! Хочу обсудить результаты самоаудита печати.\n`+
@@ -464,13 +501,11 @@ function renderQuestion(){
       ()=> window.open('https://t.me/chelebaev','_blank'));
   });
 
-  // Скролл к форме
   btnScrollLead?.addEventListener('click', ()=>{
     document.getElementById('leadForm')?.scrollIntoView({ behavior:'smooth', block:'start' });
     leadName?.focus();
   });
 
-  // Активность кнопки «Отправить» только при наличии телефона/email
   function validateLead(){
     const hasContact = (leadPhone?.value || '').trim().length > 0;
     if (btnSendLead) btnSendLead.disabled = !hasContact;
@@ -484,12 +519,16 @@ function renderQuestion(){
     const phone   = (leadPhone?.value || '').trim();
     if (!phone){ return; }
 
+    const meta = getUserMeta();
     try{
       await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
         type:'lead', name, company, phone,
         result: lastAuditResult, consent: true,
         policyUrl: 'https://lekom.ru/politika-konfidencialnosti/',
-        initData: getInitData()
+        initData: getInitData(),
+        user_id: meta.user_id,
+        username: meta.username,
+        first_name: meta.first_name
       })), { method:'GET', cache:'no-store' });
 
       toast('Спасибо! Мы свяжемся с вами.<br><br>Подпишитесь на наш Telegram — инсайты про печать, кейсы внедрений и полезные материалы: <a href="https://lekomIT.t.me" target="_blank">@LekomIT</a>');
@@ -501,13 +540,28 @@ function renderQuestion(){
     }catch(_){ toast('Не удалось отправить. Попробуйте ещё раз.'); }
   });
 
-  // ===== Навигация =====
+  /* ===== Навигация экранов ===== */
   btnGoPoll ?.addEventListener('click', ()=> showOnly(scrPoll));
   backFromPoll ?.addEventListener('click', ()=> showOnly(scrStart));
   backFromResult?.addEventListener('click', ()=> { updateStartButton(); showOnly(scrStart); });
 
-  // ===== Init =====
+  /* ===== Init ===== */
   applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
   loadSummaryToStart();
-  updateStartButton(); // инициализируем текст «Пройдите…»
+  updateStartButton();
+
+  // Доп. рукопожатие — чтобы на бэке убедиться, что ID прилетает даже без действий
+  try{
+    const meta = getUserMeta();
+    if (meta.user_id || meta.username) {
+      fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
+        type:'hello',
+        initData: getInitData(),
+        user_id: meta.user_id,
+        username: meta.username,
+        first_name: meta.first_name
+      })), { method:'GET', cache:'no-store' });
+    }
+  }catch(_){}
+
 })();
