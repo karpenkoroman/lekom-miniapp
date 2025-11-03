@@ -178,41 +178,33 @@ a{color:var(--link);text-decoration:none;font-weight:500;transition:color .2s ea
 a:hover{color:var(--link-hover);text-decoration:underline;}
 html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
 
-/* === Плавная смена карточек: чистый fade, без сдвига === */
-.q-stage{ position:relative; min-height:320px; } /* сцена для абсолютного позиционирования */
+/* === Карточка вопроса — статично, без анимаций === */
+.q-stage{ position:relative; min-height:320px; } /* можно оставить для устойчивости макета */
 
-.card-enter{
-  position:absolute;        /* новая карта поверх старой */
-  inset:0;                  /* top:0; right:0; bottom:0; left:0 */
-  opacity:0;
-}
-.card-enter.card-enter-active{
-  opacity:1;
-  transition: opacity .18s ease;
+#screen-audit .card{
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
 }
 
-.card-exit{
-  position:absolute; inset:0;  /* старая карта не толкает макет */
-  opacity:1;
-}
-.card-exit.card-exit-active{
-  opacity:0;
-  transition: opacity .14s ease;
-}
-
-/* контейнер на время свопа */
-.q-swap-lock{ overflow:hidden; position:relative; }
-
-/* уважение prefers-reduced-motion */
-@media (prefers-reduced-motion: reduce){
-  .card-enter,
-  .card-enter.card-enter-active,
-  .card-exit,
-  .card-exit.card-exit-active{
-    transition:none !important; opacity:1 !important;
-  }
+/* одна аккуратная «рамка» */
+.q-card{
+  background: var(--bg2);
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--stroke), var(--shadow);
+  border-radius: 16px;
+  padding: 20px;
 }
 
+/* убираем все ранее добавленные анимационные классы (на случай если остались в DOM) */
+.card-enter,
+.card-enter-active,
+.card-exit,
+.card-exit-active,
+.q-swap-lock {
+  all: unset;
+}
   #auditProgress {
   display: none !important;
 }
