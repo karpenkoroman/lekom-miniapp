@@ -105,7 +105,20 @@ html.theme-light .theme-toggle svg{filter:drop-shadow(0 0 1px rgba(0,0,0,.22));}
 .q-progress{font-size:14px;color:var(--text-dim);margin:4px 0 12px;}
 
 /* Контейнер под карточку (фикс высоты на время fade) */
-.q-stage{position:relative;min-height:320px}
+.q-stage{ position:relative; min-height:320px; } /* чтобы overlay лег поверх содержимого */
+
+.card-fade-overlay{
+  position:absolute; inset:0;
+  background:#000;           /* «черный» */
+  opacity:.15;               /* начинаем чуть затемнённым */
+  border-radius:16px;        /* как у .q-card */
+  pointer-events:none;
+  z-index:2;
+}
+.card-fade-overlay.fout{
+  opacity:0;                 /* мягко исчезает */
+  transition:opacity .18s ease;
+}
 
 /* Убираем вложенную рамку внутри экрана аудита */
 #screen-audit .card{background:transparent;border:0;box-shadow:none;padding:0;}
@@ -178,7 +191,7 @@ a{color:var(--link);text-decoration:none;font-weight:500;transition:color .2s ea
 a:hover{color:var(--link-hover);text-decoration:underline;}
 html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
 
-/* === Карточка вопроса — статично, без анимаций === */
+/* === Карточка вопроса — статично, без анимаций === 
 .q-stage{ position:relative; min-height:320px; } /* можно оставить для устойчивости макета */
 
 #screen-audit .card{
