@@ -229,7 +229,19 @@ html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
 .card-fade-overlay.on{ opacity:.15; } /* лёгкий «чёрный» */
 .q-stage{ position:relative; }        /* чтобы overlay лег корректно */
 
+/* убираем перенос фокуса/рамку у плашек */
+.pill:focus { outline: none; }
 
+/* короткая блокировка кликов на время свопа, чтобы не «переносился» тап */
+.q-stage.guard { pointer-events: none; }
+
+/* мягкое затемнение поверх новой карточки (fade-in-from-black) */
+.card-fade-overlay{
+  position:absolute; inset:0;
+  background:#000; opacity:.15;
+  border-radius:16px; pointer-events:none; z-index:2;
+}
+.card-fade-overlay.fout{ opacity:0; transition:opacity .18s ease; }
     
   
 </style>
