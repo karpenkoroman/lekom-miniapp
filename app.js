@@ -271,7 +271,7 @@ function renderQuestion(){
   const wrap = document.createElement('div');
   wrap.innerHTML = `
     <div class="q-title">
-      <span class="q-count">Вопрос ${curIndex + 1} из ${TOTAL_Q}.</span> ${q.text}
+      <span class="q-count">Вопрос ${curIndex + 1} из ${TOTAL_Q}<br></span> ${q.text}
     </div>
     <div class="opts"></div>
   `;
