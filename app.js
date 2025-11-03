@@ -196,7 +196,6 @@
   function updateStartButton(){
     if (!btnGoAudit) return;
     if (auditCompleted){
-      // (ты уже это менял — оставляю как есть)
       goAuditTitle && (goAuditTitle.textContent = 'Посмотреть результат самоаудита');
       goAuditSub && (goAuditSub.style.display = 'none');
       btnGoAudit.onclick = () => showOnly(scrResult);
@@ -259,6 +258,26 @@ function swapCardNoAnim(newEl){
   });
 }
 
+  // Навигация между вопросами
+
+// Кнопка «Назад»
+btnPrev?.addEventListener('click', ()=>{
+  if (curIndex > 0){
+    curIndex--;
+    manualMode = true;       // включаем ручной режим
+    renderQuestion();
+  }
+});
+
+// Кнопка «Далее»
+btnNext?.addEventListener('click', ()=>{
+  if (curIndex < TOTAL_Q - 1){
+    curIndex++;
+    renderQuestion();
+  } else {
+    showResultScreen();
+  }
+});
 
 function renderQuestion(){
   const q = QUESTIONS[curIndex];
