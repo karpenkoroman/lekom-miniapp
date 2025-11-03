@@ -208,6 +208,16 @@ html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
   #auditProgress {
   display: none !important;
 }
+
+    .card-fade-overlay{
+  position:absolute; inset:0; background:#000; opacity:0; pointer-events:none; border-radius:16px;
+  transition:opacity .16s ease;
+}
+.card-fade-overlay.on{ opacity:.15; } /* лёгкий «чёрный» */
+.q-stage{ position:relative; }        /* чтобы overlay лег корректно */
+
+
+    
   
 </style>
 </head>
