@@ -239,9 +239,11 @@ function swapCardNoAnim(newEl){
   cont.appendChild(fade);
   requestAnimationFrame(()=>{
     fade.classList.add('fout');           // плавно к opacity:0
-    setTimeout(()=> fade.remove(), 200);  // убрать после затухания
+    setTimeout(()=> fade.remove(), 600);  // убрать после затухания
   });
 }
+
+
 
 function renderQuestion(){
   const q = QUESTIONS[curIndex];
