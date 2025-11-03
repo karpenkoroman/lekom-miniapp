@@ -106,6 +106,8 @@ html.theme-light .theme-toggle svg{filter:drop-shadow(0 0 1px rgba(0,0,0,.22));}
 
 /* Контейнер под карточку (фикс высоты на время fade) */
 .q-stage{ position:relative; min-height:320px; } /* чтобы overlay лег поверх содержимого */
+/* выключаем scroll anchoring внутри сцены — убирает «подъём снизу» */
+.q-stage{ overflow-anchor: none; }
 
 .card-fade-overlay{
   position:absolute; inset:0;
@@ -151,7 +153,10 @@ html.theme-light .theme-toggle svg{filter:drop-shadow(0 0 1px rgba(0,0,0,.22));}
 }
 .pill:hover{background:var(--pill-hover);}
 .pill.selected{background:var(--pill-sel);border-color:var(--brand2);}
+/* убираем мобильный подсвет/перенос тапа и делаем клики «чистыми» */
+.pill{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
+    
 /* Навигация карточек — одинаковые кнопки */
 .qnav{display:flex;gap:12px;margin-top:16px;}
 .qnav .btn{flex:1 1 0;}
