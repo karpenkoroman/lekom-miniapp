@@ -191,69 +191,60 @@ a{color:var(--link);text-decoration:none;font-weight:500;transition:color .2s ea
 a:hover{color:var(--link-hover);text-decoration:underline;}
 html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
 
-/* === Карточка вопроса — статично, без анимаций === 
-.q-stage{ position:relative; min-height:320px; } /* можно оставить для устойчивости макета */
+/* === Карточка вопроса — статично, без анимаций === */
+.q-stage { 
+  position: relative; 
+  min-height: 320px;             /* устойчивость макета */
+}
 
+/* убираем вложенную рамку внутри экрана аудита */
 #screen-audit .card{
   background: transparent;
   border: 0;
   box-shadow: none;
-  padding: 0;
+  padding: 0;                     /* отступы задаёт .q-card */
 }
 
-/* одна аккуратная «рамка» */
+/* одна аккуратная «рамка» у самой карточки */
 .q-card{
   background: var(--bg2);
   border: 0;
-  box-shadow: inset 0 0 0 1px var(--stroke), var(--shadow);
+  box-shadow:
+    inset 0 0 0 1px var(--stroke),  /* тонкая рамка */
+    var(--shadow);                   /* внешняя тень */
   border-radius: 16px;
   padding: 20px;
 }
 
-/* убираем все ранее добавленные анимационные классы (на случай если остались в DOM) */
+/* убираем старые классы анимаций, если остались в DOM */
 .card-enter,
 .card-enter-active,
 .card-exit,
 .card-exit-active,
-.q-swap-lock {
-  all: unset;
-}
-  #auditProgress {
-  display: none !important;
-}
+.q-swap-lock { all: unset; }
 
+/* скрываем счётчик под заголовком (теперь он в q-title) */
+#auditProgress { display: none !important; }
+
+/* мягкий fade-overlay поверх НОВОЙ карточки (без движения) */
 .card-fade-overlay {
   position: absolute;
   inset: 0;
   background: #000;
-  opacity: 0.12;                  /* мягкий чёрный старт */
+  opacity: .15;                    /* стартовая плотность накрытия */
   border-radius: 16px;
   pointer-events: none;
   z-index: 2;
-  transition: opacity .55s ease;  /* чуть дольше и плавнее */
+  transition: opacity .55s ease;   /* спокойный fade */
 }
+.card-fade-overlay.fout { opacity: 0; }
 
-.card-fade-overlay.fout {
-  opacity: 0;
-}
-
-.q-stage {
-  position: relative;             /* чтобы overlay лег корректно */
-}
-
-/* убираем перенос фокуса/рамку у плашек */
-.pill:focus { outline: none; }
-
-/* короткая блокировка кликов на время свопа, чтобы не «переносился» тап */
+/* короткая блокировка кликов на время свопа,
+   чтобы тап не «переезжал» на ту же точку новой карточки */
 .q-stage.guard { pointer-events: none; }
 
-/* мягкое затемнение поверх новой карточки (fade-in-from-black) */
-.card-fade-overlay{
-  position:absolute; inset:0;
-  background:#000; opacity:.15;
-  border-radius:16px; pointer-events:none; z-index:2;
-}
-.card-fade-overlay.fout{ opacity:0; transition:opacity .18s ease; }
+/* плашки-ответы — без фокуса/рамок */
+.pill:focus { outline: none; }
     
   
 </style>
