@@ -215,24 +215,31 @@
     if (auditProgressEl) auditProgressEl.textContent = `Вопросы: ${answered} из ${TOTAL_Q}`;
   }
 
-// --- БАЗА + мягкий «через чёрное» ---
+// --- БАЗА: подмена карточки без скролла и без анимации движения ---
 function swapCardNoAnim(newEl){
   const cont = qContainer;
 
-  // чистим контейнер и вставляем новую карточку
+  // Снимаем фокус с любых элементов, чтобы не тянулся :active/:focus
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
+  }
+
+  // Коротко блокируем клики, чтобы тап не «попадал» в ту же точку на новой карточке
+  cont.classList.add('guard');
+  setTimeout(()=> cont.classList.remove('guard'), 140);
+
+  // Чистим контейнер и вставляем свежую карточку
   cont.innerHTML = '';
   newEl.classList.add('q-card');
   cont.appendChild(newEl);
 
-  // накрываем картку тонким «чёрным» и мягко убираем
+  // Мягкий «проявляющий» оверлей
   const fade = document.createElement('div');
-  fade.className = 'card-fade-overlay';     // start: opacity .15
+  fade.className = 'card-fade-overlay';
   cont.appendChild(fade);
-
-  // следующий кадр — начинаем исчезать
   requestAnimationFrame(()=>{
-    fade.classList.add('fout');             // к opacity 0 по CSS
-    setTimeout(()=> fade.remove(), 200);    // убрать из DOM после затухания
+    fade.classList.add('fout');           // плавно к opacity:0
+    setTimeout(()=> fade.remove(), 200);  // убрать после затухания
   });
 }
 
@@ -243,7 +250,7 @@ function renderQuestion(){
   // «Назад» только со 2-го экрана
   if (btnPrev) btnPrev.style.visibility = (curIndex === 0) ? 'hidden' : 'visible';
 
-  // «Далее» показываем только в ручном режиме и только при наличии ответа
+  // Если вопрос НЕотвечен — «Далее» скрыта даже в ручном режиме
   const hasAnswer = !!answers[q.id];
   if (btnNext){
     btnNext.style.display = (manualMode && hasAnswer) ? '' : 'none';
@@ -254,7 +261,7 @@ function renderQuestion(){
   const wrap = document.createElement('div');
   wrap.innerHTML = `
     <div class="q-title">
-      <span class="q-count">Вопрос ${curIndex + 1} из ${TOTAL_Q}<br></span> ${q.text}
+      <span class="q-count">Вопрос ${curIndex + 1} из ${TOTAL_Q}.</span> ${q.text}
     </div>
     <div class="opts"></div>
   `;
@@ -279,46 +286,29 @@ function renderQuestion(){
 
       updateAuditProgress();
 
-      // авто-режим: сразу идём дальше (без таймеров/анимаций)
+      // авто-переход (без скроллов и «съезда» экрана)
       const shouldAuto = (!manualMode) || (manualMode && !wasAnswered);
       if (shouldAuto){
-        if (curIndex < TOTAL_Q - 1){
-          curIndex++;
-          renderQuestion();
-        } else {
-          showResultScreen();
-        }
+        setTimeout(()=>{
+          if (curIndex < TOTAL_Q - 1) {
+            curIndex++;
+            renderQuestion();
+          } else {
+            showResultScreen();
+          }
+        }, 140); // короткая пауза, чтобы успел погаснуть :active
       }
     });
 
     optsBox.appendChild(d);
   });
 
-  // простая подмена без анимаций
+  // подмена карточки — без scrollIntoView
   swapCardNoAnim(wrap);
 
-  // мягкий скролл к карточке со 2-го вопроса (оставляем, чтобы на мобильных всё было в зоне видимости)
-  if (curIndex > 0){
-    qContainer.scrollIntoView({ behavior:'smooth', block:'start' });
-  }
+  // ВАЖНО: никаких прокруток! Это и создавало «подъём снизу».
+  // Ни window.scrollTo({behavior:'smooth'}), ни qContainer.scrollIntoView(...)
 }
-
-// Навигация (без изменений)
-btnPrev?.addEventListener('click', ()=>{
-  if (curIndex > 0){
-    curIndex--;
-    manualMode = true;
-    renderQuestion();
-  }
-});
-btnNext?.addEventListener('click', ()=>{
-  if (curIndex < TOTAL_Q - 1){
-    curIndex++;
-    renderQuestion();
-  } else {
-    showResultScreen();
-  }
-});
   
   function calcScore(){
     return Object.values(answers).reduce((s,a)=> s + (a.score || 0), 0);
