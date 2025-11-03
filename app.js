@@ -215,43 +215,45 @@
     if (auditProgressEl) auditProgressEl.textContent = `Вопросы: ${answered} из ${TOTAL_Q}`;
   }
 
- // ===== Плавная замена карточек с мягким fade и фиксацией высоты =====
+// Плавная замена карточек: fade поверх, без «подъёма снизу»
 function swapCard(newEl){
   const cont = qContainer;
   const old  = cont.firstElementChild;
 
-  // фиксируем высоту контейнера, чтобы не «скакала»
+  // зафиксировали текущую высоту, чтобы не было скачка
   const startH = cont.offsetHeight || 0;
   cont.classList.add('q-swap-lock');
+  cont.style.height = startH + 'px';
 
-  // старая карточка — плавно исчезает
+  // старая карточка — выход
   if (old){
-    old.classList.remove('card-enter', 'card-enter-active');
+    old.classList.remove('card-enter','card-enter-active');
     old.classList.add('card-exit');
-    // форсим reflow
+    // reflow
     // eslint-disable-next-line no-unused-expressions
     old.offsetHeight;
     old.classList.add('card-exit-active');
     setTimeout(()=>{ if (old.parentNode === cont) cont.removeChild(old); }, 160);
   }
 
-  // новая карточка — плавно проявляется
-  newEl.classList.add('q-card', 'card-enter');
+  // новая карточка — вход (как абсолютная поверх старой)
+  newEl.classList.add('q-card','card-enter');
   cont.appendChild(newEl);
-  // форсируем рендер, чтобы transition сработал
+  // reflow
   // eslint-disable-next-line no-unused-expressions
   newEl.offsetHeight;
   newEl.classList.add('card-enter-active');
 
-  // плавное выравнивание высоты
-  const targetH = newEl.offsetHeight || startH;
-  cont.style.height = Math.max(startH, targetH) + 'px';
+  // после проявления возвращаем карту в поток
   setTimeout(()=>{
+    newEl.classList.remove('card-enter','card-enter-active');
+    newEl.style.position = '';   // перестаёт быть absolute
+    newEl.style.inset = '';
+    // отпускаем высоту контейнера
     cont.style.height = '';
     cont.classList.remove('q-swap-lock');
-  }, 220);
+  }, 200);
 }
-
 // ===== Отрисовка вопроса =====
 function renderQuestion(){
   const q = QUESTIONS[curIndex];
