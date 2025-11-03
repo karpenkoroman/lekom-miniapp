@@ -220,6 +220,16 @@ function swapCardNoAnim(newEl){
   const cont = qContainer;
   // очищаем контейнер и просто вставляем новую карточку
   cont.innerHTML = '';
+
+// после cont.innerHTML = '';
+const fade = document.createElement('div');
+fade.className = 'card-fade-overlay';
+cont.appendChild(fade);
+requestAnimationFrame(()=> fade.classList.add('on'));          // плавно до 1
+setTimeout(()=> fade.classList.remove('on'), 80);              // и обратно
+setTimeout(()=> { if (fade.parentNode) fade.parentNode.removeChild(fade); }, 160);
+
+  
   newEl.classList.add('q-card');
   cont.appendChild(newEl);
 }
