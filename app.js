@@ -377,7 +377,7 @@
   // ===== CTA «Обсудить сейчас» / Лиды =====
   btnExpert?.addEventListener('click', async ()=>{
     const msg =
-      `Добрый день! Хочу обсудить результаты самоаудита печати.\n`+
+      `Добрый день! <br>Хочу обсудить результаты самоаудита печати.\n`+
       `Итог: ${lastAuditResult.score} ${pluralBall(lastAuditResult.score)} из ${TOTAL_Q}\n`+
       `Вердикт: ${lastAuditResult.verdict}\n`+
       `Рекомендация: ${lastAuditResult.advice}`;
