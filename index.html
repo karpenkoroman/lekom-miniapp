@@ -21,7 +21,7 @@
     window.LEKOM_HOOK = 'https://script.google.com/macros/s/AKfycbzUnezeA6Pu2-ol6UVUkZpqfBIpEyji09dMGbkk6m4-Iu2-3-KwxZkLTrkoHGHRcIqN/exec';
   </script>
 
- <style>
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
 
 /* === Переменные === */
@@ -45,15 +45,27 @@ html.theme-light{
   --link:#1c8ea3; --link-hover:#0e6f7e;
 }
 
+/* === База === */
 html,body{
   margin:0; padding:0; background:var(--bg); color:var(--text);
   font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;
   -webkit-font-smoothing:antialiased;
 }
-.app{max-width:720px;margin:0 auto;padding:20px 16px calc(var(--footer-h) + 16px);box-sizing:border-box;}
-h1{font-size:26px;margin:0 0 12px;} h2{font-size:22px;margin:0 0 10px;} h3{font-size:18px;margin:0 0 8px;}
-.muted{color:var(--text-dim);} hr{border:0;height:1px;background:var(--stroke);opacity:.6;margin:14px 0;}
-.card{background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
+.app{
+  max-width:720px;
+  margin:0 auto;
+  padding:20px 16px calc(var(--footer-h) + 16px);
+  box-sizing:border-box;
+}
+h1{font-size:26px;margin:0 0 12px;}
+h2{font-size:22px;margin:0 0 10px;}
+h3{font-size:18px;margin:0 0 8px;}
+.muted{color:var(--text-dim);}
+hr{border:0;height:1px;background:var(--stroke);opacity:.6;margin:14px 0;}
+.card{
+  background:var(--bg2);border:1px solid var(--stroke);
+  border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);
+}
 
 /* === Шапка === */
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
@@ -70,16 +82,9 @@ html.theme-light .logo-light{display:inline}
   background:var(--bg2);border:1px solid var(--stroke);
   cursor:pointer;user-select:none;color:var(--text);
 }
-.theme-toggle svg{
-  width:18px;height:18px;color:inherit;opacity:.95;
-}
-html:not(.theme-light) .theme-toggle svg{
-  filter:drop-shadow(0 0 1px rgba(0,0,0,.65));
-}
-/* чтобы иконка НЕ терялась на светлой теме на десктопе */
-html.theme-light .theme-toggle svg{
-  filter:drop-shadow(0 0 1px rgba(0,0,0,.2));
-}
+.theme-toggle svg{width:18px;height:18px;color:inherit;opacity:.95;}
+/* контраст иконки на светлой теме */
+html.theme-light .theme-toggle svg{filter:drop-shadow(0 0 1px rgba(0,0,0,.22));}
 .theme-label{font-weight:600;font-size:14px;color:var(--text-dim);}
 
 /* === Кнопки === */
@@ -91,7 +96,10 @@ html.theme-light .theme-toggle svg{
 }
 .btn:active{transform:translateY(1px);}
 .btn:disabled{opacity:.5;cursor:not-allowed;}
-.btn-primary{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 10px 28px rgba(42,125,225,.18);}
+.btn-primary{
+  color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));
+  box-shadow:0 10px 28px rgba(42,125,225,.18);
+}
 .btn-primary:hover{filter:brightness(1.06);}
 .btn-secondary{color:var(--text);background:var(--bg2);border:1px solid var(--stroke);}
 .btn-secondary:hover{filter:brightness(1.03);}
@@ -105,16 +113,15 @@ html.theme-light .theme-toggle svg{
 .summary-bar{height:8px;background:var(--bar-bg);border:1px solid var(--stroke);border-radius:999px;overflow:hidden;}
 .summary-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
 
-/* === Экраны / Аудит === */
+/* === Экраны === */
 .screen{display:none;flex-direction:column;min-height:60vh;}
 .screen.show{display:flex;}
-
 .q-progress{font-size:14px;color:var(--text-dim);margin:4px 0 12px;}
 
-/* контейнер под карточку — фиксирует высоту и убирает «скачки» при анимации */
+/* Контейнер под карточку — фиксируем высоту на время анимации */
 .q-stage{position:relative;min-height:320px}
 
-/* карточка вопроса + фон-градиент под бренд */
+/* Карточка вопроса */
 .q-card{
   background:linear-gradient(180deg,rgba(16,179,163,.05),rgba(42,125,225,.05)) var(--bg2);
   border:1px solid var(--stroke);border-radius:16px;padding:20px;box-shadow:var(--shadow);
@@ -123,43 +130,30 @@ html.theme-light .theme-toggle svg{
 html.theme-light .q-card{
   background:linear-gradient(180deg,rgba(16,179,163,.08),rgba(42,125,225,.06)) var(--bg2);
 }
-
-/* анимации входа/выхода карточек */
-.q-card.enter{animation:lekomFadeInUp .25s ease-out both;}
-.q-card.leave{animation:lekomFadeOutDown .18s ease-in both;position:absolute;left:0;right:0;}
-@keyframes lekomFadeInUp{
-  from{opacity:0;transform:translateY(12px)}
-  to{opacity:1;transform:translateY(0)}
-}
-@keyframes lekomFadeOutDown{
-  from{opacity:1;transform:translateY(0)}
-  to{opacity:0;transform:translateY(12px)}
-}
-/* уважение к настройке «уменьшить движение» */
-@media (prefers-reduced-motion: reduce){
-  .q-card.enter,.q-card.leave{animation:none!important}
-}
-
 .q-title{font-size:20px;font-weight:900;margin:0 0 12px;}
 .opts{max-width:100%;}
+
+/* Плашки ответов — не вылезают за пределы */
 .pill{
-  display:block;width:100%;box-sizing:border-box;text-align:left;font-size:16px;line-height:1.45;
+  display:block;width:100%;max-width:100%;
+  box-sizing:border-box;text-align:left;
+  font-size:16px;line-height:1.45;
   padding:14px 16px;margin-top:10px;border-radius:12px;
   border:1px solid var(--stroke);background:var(--pill);color:var(--text);
-  cursor:pointer;word-break:break-word;overflow-wrap:anywhere;max-width:100%;
+  cursor:pointer;word-break:break-word;overflow-wrap:anywhere;
 }
 .pill:hover{background:var(--pill-hover);}
 .pill.selected{background:var(--pill-sel);border-color:var(--brand2);}
 
-/* навигация карточек */
+/* Навигация карточек — одинаковые кнопки */
 .qnav{display:flex;gap:12px;margin-top:16px;}
 .qnav .btn{flex:1 1 0;}
-/* кнопка «Назад» идентична «Далее» по размерам/типографике */
-.qnav .btn-secondary{border:1px solid var(--stroke);}
+.qnav .btn-secondary{border:1px solid var(--stroke);} /* одинаковая высота/типографика */
 
 /* === Результаты === */
 #resultBox .result-card{
-  background:var(--res-bg);border:1px solid var(--res-stroke);border-radius:16px;padding:16px;box-shadow:var(--shadow);
+  background:var(--res-bg);border:1px solid var(--res-stroke);
+  border-radius:16px;padding:16px;box-shadow:var(--shadow);
 }
 .result-score{font-size:24px;font-weight:900;text-align:center;margin:0 0 6px;}
 .result-verdict{font-size:18px;font-weight:800;text-align:center;margin-top:6px;}
@@ -167,14 +161,13 @@ html.theme-light .q-card{
 #resultBox .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
 #resultBox .btn{flex:1 1 220px;}
 
-/* === Инпуты === */
+/* Инпуты */
 input[type=text], textarea{
   width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);
   background:var(--bg2);color:var(--text);box-sizing:border-box;font-size:16px;
 }
 input::placeholder, textarea::placeholder{color:var(--text-dim);}
-/* поле «Другая тема» заметнее */
-#pollOther{min-height:112px}
+#pollOther{min-height:112px} /* поле «Другая тема» заметнее */
 
 /* === Тост === */
 .toast-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);
@@ -202,20 +195,32 @@ a{color:var(--link);text-decoration:none;font-weight:500;transition:color .2s ea
 a:hover{color:var(--link-hover);text-decoration:underline;}
 html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
 
-/* Анимации карточек вопроса */
-.q-card{ transform-origin: top; }
-.q-card.enter{ animation: cardIn .24s ease-out both; }
-.q-card.leave{ animation: cardOut .22s ease-in both; }
+/* === Плавная смена карточек: fade+slide, без scale === */
+.q-card { transform: none; }
+.card-enter { opacity:0; transform:translateY(8px); }
+.card-enter.card-enter-active {
+  opacity:1; transform:translateY(0);
+  transition: opacity .18s ease-out, transform .18s ease-out;
+}
+.card-exit { opacity:1; transform:translateY(0); }
+.card-exit.card-exit-active {
+  opacity:0; transform:translateY(-6px);
+  transition: opacity .14s ease-in, transform .14s ease-in;
+}
 
-@keyframes cardIn{
-  from{ opacity:0; transform:translateY(8px) scale(.995); }
-  to  { opacity:1; transform:translateY(0)  scale(1); }
+/* На время анимации можно фиксировать высоту контейнера через класс q-swap-lock (в JS) */
+.q-swap-lock{ overflow:hidden; position:relative; }
+
+/* Уважение prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce){
+  .card-enter,
+  .card-enter.card-enter-active,
+  .card-exit,
+  .card-exit.card-exit-active{
+    transition:none !important;
+    transform:none !important;
+  }
 }
-@keyframes cardOut{
-  from{ opacity:1; transform:translateY(0)  scale(1); }
-  to  { opacity:0; transform:translateY(8px) scale(.995); }
-}
-   
 </style>
 
 
