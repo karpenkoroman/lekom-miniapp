@@ -201,6 +201,21 @@ input::placeholder, textarea::placeholder{color:var(--text-dim);}
 a{color:var(--link);text-decoration:none;font-weight:500;transition:color .2s ease;}
 a:hover{color:var(--link-hover);text-decoration:underline;}
 html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
+
+/* Анимации карточек вопроса */
+.q-card{ transform-origin: top; }
+.q-card.enter{ animation: cardIn .24s ease-out both; }
+.q-card.leave{ animation: cardOut .22s ease-in both; }
+
+@keyframes cardIn{
+  from{ opacity:0; transform:translateY(8px) scale(.995); }
+  to  { opacity:1; transform:translateY(0)  scale(1); }
+}
+@keyframes cardOut{
+  from{ opacity:1; transform:translateY(0)  scale(1); }
+  to  { opacity:0; transform:translateY(8px) scale(.995); }
+}
+   
 </style>
 
 
