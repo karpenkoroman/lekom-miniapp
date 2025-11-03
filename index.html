@@ -104,23 +104,31 @@ html.theme-light .theme-toggle svg{filter:drop-shadow(0 0 1px rgba(0,0,0,.22));}
 .screen.show{display:flex;}
 .q-progress{font-size:14px;color:var(--text-dim);margin:4px 0 12px;}
 
-/* Контейнер под карточку (фикс высоты на время fade) */
-.q-stage{ position:relative; min-height:320px; } /* чтобы overlay лег поверх содержимого */
-/* выключаем scroll anchoring внутри сцены — убирает «подъём снизу» */
-.q-stage{ overflow-anchor: none; }
+/* сцена под карточку */
+.q-stage{ position:relative; min-height:320px; overflow-anchor:none; }
 
+/* лёгкий затемняющий оверлей с двухфазным переходом */
 .card-fade-overlay{
   position:absolute; inset:0;
-  background:#000;           /* «черный» */
-  opacity:.15;               /* начинаем чуть затемнённым */
-  border-radius:16px;        /* как у .q-card */
+  background:#000;
+  opacity:0;                 /* старт = 0, чтобы не «моргануло» при вставке */
+  border-radius:16px;
   pointer-events:none;
   z-index:2;
+  transition:opacity .45s ease;   /* общий тайминг */
 }
-.card-fade-overlay.fout{
-  opacity:0;                 /* мягко исчезает */
-  transition:opacity .18s ease;
-}
+/* шаг 1: плавно до 0.18 (проявление) */
+.card-fade-overlay.show{ opacity:.18; }
+/* шаг 2: плавно к 0 (затухание) */
+.card-fade-overlay.hide{ opacity:0; }
+
+/* короткая блокировка кликов только внутри сцены,
+   чтобы «тап» не переехал на новую плашку */
+.q-stage.guard{ pointer-events:none; }
+
+/* убираем подсветы фокуса/тапа на вариантах */
+.pill{ -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.pill:focus{ outline:none; }
 
 /* Убираем вложенную рамку внутри экрана аудита */
 #screen-audit .card{background:transparent;border:0;box-shadow:none;padding:0;}
