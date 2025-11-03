@@ -215,43 +215,49 @@
     if (auditProgressEl) auditProgressEl.textContent = `Вопросы: ${answered} из ${TOTAL_Q}`;
   }
 
-// --- БАЗА: подмена карточки без скролла и без движения, с мягким fade ---
+// --- БАЗА: подмена карточки без движения + мягкий двухшаговый fade ---
 function swapCardNoAnim(newEl){
-  const cont = qContainer;
+  const cont = qContainer;          // cont имеет класс q-stage в HTML
 
-  // Снимаем фокус, чтобы :active/:focus не «переезжал» на новую плашку
+  // снимаем фокус, чтобы :active/:focus не переносился
   if (document.activeElement && typeof document.activeElement.blur === 'function') {
     document.activeElement.blur();
   }
 
-  // Короткая блокировка кликов, чтобы тап не попал в ту же точку новой карточки
+  // очень коротко блокируем клики внутри сцены
   cont.classList.add('guard');
-  setTimeout(()=> cont.classList.remove('guard'), 140);
+  setTimeout(()=> cont.classList.remove('guard'), 120);
 
-  // Фиксируем текущую высоту контейнера на время свопа (чтобы не было «подъёма»)
-  const startH = cont.offsetHeight;
-  if (startH > 0) cont.style.minHeight = startH + 'px';
+  // фиксируем текущую высоту на время подмены (чтобы ничего не «подъезжало»)
+  const h = cont.offsetHeight;
+  if (h > 0) cont.style.minHeight = h + 'px';
 
-  // Полная замена содержимого
+  // заменяем карточку
   cont.innerHTML = '';
   newEl.classList.add('q-card');
   cont.appendChild(newEl);
 
-  // Мягкий «проявляющий» оверлей
+  // добавляем оверлей и делаем ДВУХШАГОВУЮ анимацию:
+  // 1) 0  -> 0.18  (мягкое затемнение)
+  // 2) 0.18 -> 0    (мягкое затухание)
   const fade = document.createElement('div');
   fade.className = 'card-fade-overlay';
   cont.appendChild(fade);
 
-  // Плавно гасим оверлей, затем снимаем фиксацию высоты
+  // Шаг 1: на следующий кадр -> .show
   requestAnimationFrame(()=>{
-    fade.classList.add('fout');             // opacity → 0 (см. CSS .55s ease)
-    setTimeout(()=>{
-      fade.remove();
-      cont.style.minHeight = '';            // возвращаем естественную высоту
-    }, 560);                                // чуть больше, чем transition в CSS
+    fade.classList.add('show');
+    // Шаг 2: ещё через кадр -> .hide
+    requestAnimationFrame(()=>{
+      fade.classList.add('hide');
+      // убираем оверлей и фиксацию высоты после завершения
+      setTimeout(()=>{
+        if (fade.parentNode) fade.parentNode.removeChild(fade);
+        cont.style.minHeight = '';
+      }, 470); // чуть меньше, чем .45s + запас
+    });
   });
 }
-
 
 
 function renderQuestion(){
