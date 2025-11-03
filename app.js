@@ -22,25 +22,24 @@
   const iconSun  = $('#iconSun');
   const themeLabel = $('#themeLabel');
   function applyTheme(theme){
-  document.documentElement.classList.toggle('theme-light', theme === 'light');
-  document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.classList.toggle('theme-light', theme === 'light');
+    document.documentElement.setAttribute('data-theme', theme);
 
-  if (themeLabel){
-    if (theme === 'light'){
-      // Светлая тема активна → показываем ЛУНУ (предлагаем перейти в тёмную)
-      if (iconMoon) iconMoon.style.display = '';
-      if (iconSun)  iconSun.style.display  = 'none';
-      themeLabel.textContent = 'Тёмная';
-    } else {
-      // Тёмная тема активна → показываем СОЛНЦЕ (предлагаем перейти в светлую)
-      if (iconMoon) iconMoon.style.display = 'none';
-      if (iconSun)  iconSun.style.display  = '';
-      themeLabel.textContent = 'Светлая';
+    if (themeLabel){
+      if (theme === 'light'){
+        // Светлая тема активна → показываем ЛУНУ (предлагаем перейти в тёмную)
+        if (iconMoon) iconMoon.style.display = '';
+        if (iconSun)  iconSun.style.display  = 'none';
+        themeLabel.textContent = 'Тёмная';
+      } else {
+        // Тёмная тема активна → показываем СОЛНЦЕ (предлагаем перейти в светлую)
+        if (iconMoon) iconMoon.style.display = 'none';
+        if (iconSun)  iconSun.style.display  = '';
+        themeLabel.textContent = 'Светлая';
+      }
     }
+    try { localStorage.setItem('theme', theme); } catch(_){}
   }
-
-  try { localStorage.setItem('theme', theme); } catch(_){}
-}
   themeToggle?.addEventListener('click', ()=>{
     const cur = document.documentElement.getAttribute('data-theme') || 'dark';
     applyTheme(cur === 'dark' ? 'light' : 'dark');
@@ -197,12 +196,13 @@
   function updateStartButton(){
     if (!btnGoAudit) return;
     if (auditCompleted){
-      goAuditTitle.textContent = 'Посмотреть результат самоаудита';
-      goAuditSub.style.display = 'none';
+      // (ты уже это менял — оставляю как есть)
+      goAuditTitle && (goAuditTitle.textContent = 'Посмотреть результат самоаудита');
+      goAuditSub && (goAuditSub.style.display = 'none');
       btnGoAudit.onclick = () => showOnly(scrResult);
     } else {
-      goAuditTitle.textContent = 'Пройдите быстрый аудит печати';
-      goAuditSub.style.display = '';
+      goAuditTitle && (goAuditTitle.textContent = 'Пройдите быстрый аудит печати');
+      goAuditSub && (goAuditSub.style.display = '');
       btnGoAudit.onclick = () => {
         curIndex = 0; answers = {}; manualMode = false;
         renderQuestion(); showOnly(scrAudit);
@@ -212,7 +212,7 @@
 
   function updateAuditProgress(){
     const answered = Object.keys(answers).length;
-    auditProgressEl.textContent = `Вопросы: ${answered} из ${TOTAL_Q}`;
+    if (auditProgressEl) auditProgressEl.textContent = `Вопросы: ${answered} из ${TOTAL_Q}`;
   }
 
   function renderQuestion(){
@@ -220,14 +220,17 @@
     updateAuditProgress();
 
     // «Назад» только со 2-го экрана
-    btnPrev.style.visibility = (curIndex === 0) ? 'hidden' : 'visible';
+    if (btnPrev) btnPrev.style.visibility = (curIndex === 0) ? 'hidden' : 'visible';
 
-    // Если вопрос НЕотвечен — даже в ручном режиме прячем «Далее» (включим автопереход)
+    // Если вопрос НЕотвечен — даже в ручном режиме прячем «Далее»
     const hasAnswer = !!answers[q.id];
-    btnNext.style.display = (manualMode && hasAnswer) ? '' : 'none';
-    btnNext.disabled = !hasAnswer;
+    if (btnNext){
+      btnNext.style.display = (manualMode && hasAnswer) ? '' : 'none';
+      btnNext.disabled = !hasAnswer;
+    }
 
     const wrap = document.createElement('div');
+    wrap.className = 'q-card enter';
     wrap.innerHTML = `
       <div class="q-title">${curIndex+1}. ${q.text}</div>
       <div class="opts"></div>
@@ -244,7 +247,7 @@
         answers[q.id] = { text: opt.t, score: opt.s };
         $$('.pill', wrap).forEach(p=>p.classList.remove('selected'));
         d.classList.add('selected');
-        btnNext.disabled = false;
+        if (btnNext) btnNext.disabled = false;
 
         // Если возвращались назад и этот вопрос был НЕотвечен — ведём себя как авто-режим
         const shouldAuto = (!manualMode) || (manualMode && !wasAnswered);
@@ -255,18 +258,28 @@
           }, 220);
         } else {
           // В ручном режиме и уже был ответ — «Далее» видно
-          btnNext.style.display = '';
+          if (btnNext) btnNext.style.display = '';
         }
         updateAuditProgress();
       });
       optsBox.appendChild(d);
     });
 
+    // плавная замена карточки
     qContainer.innerHTML = '';
     qContainer.appendChild(wrap);
+
+    // ⇩ прокрутка к карточке со 2-го вопроса (и далее), чтобы заголовок+карточка были в зоне видимости
+    if (curIndex > 0){
+      // даём DOM дорисоваться
+      setTimeout(()=>{
+        // если есть обёртка qContainer — скроллим к ней
+        qContainer.scrollIntoView({ behavior:'smooth', block:'start' });
+      }, 0);
+    }
   }
 
-  btnPrev.addEventListener('click', ()=>{
+  btnPrev?.addEventListener('click', ()=>{
     if (curIndex > 0) {
       curIndex--;
       manualMode = true;            // включаем ручной режим
@@ -274,7 +287,7 @@
     }
   });
 
-  btnNext.addEventListener('click', ()=>{
+  btnNext?.addEventListener('click', ()=>{
     if (curIndex < TOTAL_Q - 1) { curIndex++; renderQuestion(); }
     else { showResultScreen(); }
   });
@@ -296,16 +309,16 @@
       answers: Object.fromEntries(Object.entries(answers).map(([k,v])=>[k, v.text]))
     };
 
-    resultText.innerHTML = `${score} ${pluralBall(score)} из ${TOTAL_Q}`;
-    resultVerdict.textContent = verdict;  resultVerdict.style.display='';
-    resultAdvice.textContent  = advice;   resultAdvice.style.display='';
+    if (resultText)    resultText.innerHTML = `${score} ${pluralBall(score)} из ${TOTAL_Q}`;
+    if (resultVerdict) { resultVerdict.textContent = verdict;  resultVerdict.style.display=''; }
+    if (resultAdvice)  { resultAdvice.textContent  = advice;   resultAdvice.style.display=''; }
 
     auditCompleted = true;
     updateStartButton();
     showOnly(scrResult);
 
     try{
-      await fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
+      fetch(HOOK + '?q=' + encodeURIComponent(JSON.stringify({
         type:'result', score, verdict, advice, answers: lastAuditResult.answers, initData: getInitData()
       })), { method:'GET', cache:'no-store' });
     }catch(_){}
@@ -314,7 +327,7 @@
   // ===== Poll =====
   function bumpForKeyboard(on){
     // нижний отступ карточки, чтобы textarea не пряталась за фикс-футер
-    pollCard.style.paddingBottom = on ? '140px' : '16px';
+    if (pollCard) pollCard.style.paddingBottom = on ? '140px' : '16px';
   }
 
   pollOptions.forEach(p=>{
@@ -322,7 +335,7 @@
       p.classList.toggle('selected');
       if (p.dataset.topic === 'Другая тема'){
         const on = p.classList.contains('selected');
-        pollOtherBox.style.display = on ? 'block' : 'none';
+        if (pollOtherBox) pollOtherBox.style.display = on ? 'block' : 'none';
         if (on){
           pollOtherText?.focus();
           bumpForKeyboard(true);
@@ -388,7 +401,7 @@
   // ===== CTA «Обсудить сейчас» / Лиды =====
   btnExpert?.addEventListener('click', async ()=>{
     const msg =
-      `Добрый день! <br>Хочу обсудить результаты самоаудита печати.\n`+
+      `Добрый день! Хочу обсудить результаты самоаудита печати.\n`+
       `Итог: ${lastAuditResult.score} ${pluralBall(lastAuditResult.score)} из ${TOTAL_Q}\n`+
       `Вердикт: ${lastAuditResult.verdict}\n`+
       `Рекомендация: ${lastAuditResult.advice}`;
@@ -406,7 +419,7 @@
   // Активность кнопки «Отправить» только при наличии телефона/email
   function validateLead(){
     const hasContact = (leadPhone?.value || '').trim().length > 0;
-    btnSendLead.disabled = !hasContact;
+    if (btnSendLead) btnSendLead.disabled = !hasContact;
   }
   leadPhone?.addEventListener('input', validateLead);
   validateLead();
@@ -427,7 +440,9 @@
 
       toast('Спасибо! Мы свяжемся с вами.<br><br>Подпишитесь на наш Telegram — инсайты про печать, кейсы внедрений и полезные материалы: <a href="https://lekomIT.t.me" target="_blank">@LekomIT</a>');
 
-      leadName.value=''; leadCompany.value=''; leadPhone.value='';
+      if (leadName)    leadName.value='';
+      if (leadCompany) leadCompany.value='';
+      if (leadPhone)   leadPhone.value='';
       validateLead();
     }catch(_){ toast('Не удалось отправить. Попробуйте ещё раз.'); }
   });
