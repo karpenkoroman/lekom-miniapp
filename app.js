@@ -186,7 +186,7 @@
   function updateStartButton(){
     if (!btnGoAudit) return;
     if (auditCompleted){
-      goAuditTitle.textContent = 'Посмотреть результат';
+      goAuditTitle.textContent = 'Посмотреть результат самоаудита';
       goAuditSub.style.display = 'none';
       btnGoAudit.onclick = () => showOnly(scrResult);
     } else {
