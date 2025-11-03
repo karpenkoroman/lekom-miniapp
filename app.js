@@ -215,23 +215,25 @@
     if (auditProgressEl) auditProgressEl.textContent = `Вопросы: ${answered} из ${TOTAL_Q}`;
   }
 
-// --- БАЗА: мгновенная подмена карточки без анимаций ---
+// --- БАЗА + мягкий «через чёрное» ---
 function swapCardNoAnim(newEl){
   const cont = qContainer;
-  // очищаем контейнер и просто вставляем новую карточку
+
+  // чистим контейнер и вставляем новую карточку
   cont.innerHTML = '';
-
-// после cont.innerHTML = '';
-const fade = document.createElement('div');
-fade.className = 'card-fade-overlay';
-cont.appendChild(fade);
-requestAnimationFrame(()=> fade.classList.add('on'));          // плавно до 1
-setTimeout(()=> fade.classList.remove('on'), 80);              // и обратно
-setTimeout(()=> { if (fade.parentNode) fade.parentNode.removeChild(fade); }, 160);
-
-  
   newEl.classList.add('q-card');
   cont.appendChild(newEl);
+
+  // накрываем картку тонким «чёрным» и мягко убираем
+  const fade = document.createElement('div');
+  fade.className = 'card-fade-overlay';     // start: opacity .15
+  cont.appendChild(fade);
+
+  // следующий кадр — начинаем исчезать
+  requestAnimationFrame(()=>{
+    fade.classList.add('fout');             // к opacity 0 по CSS
+    setTimeout(()=> fade.remove(), 200);    // убрать из DOM после затухания
+  });
 }
 
 function renderQuestion(){
