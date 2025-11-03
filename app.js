@@ -267,11 +267,12 @@ function renderQuestion(){
     btnNext.disabled = !hasAnswer;
   }
 
-  // собираем новую карточку
+  // новая карточка
   const wrap = document.createElement('div');
-  // класс q-card не задаём здесь — его добавит swapCard
   wrap.innerHTML = `
-    <div class="q-title">${curIndex+1}. ${q.text}</div>
+    <div class="q-title">
+      Вопрос ${curIndex + 1} из ${TOTAL_Q}. ${q.text}
+    </div>
     <div class="opts"></div>
   `;
   const optsBox = wrap.querySelector('.opts');
@@ -285,23 +286,23 @@ function renderQuestion(){
     d.addEventListener('click', ()=>{
       const wasAnswered = !!answers[q.id];
       answers[q.id] = { text: opt.t, score: opt.s };
-      // одноответный режим
       Array.from(optsBox.querySelectorAll('.pill')).forEach(p=>p.classList.remove('selected'));
       d.classList.add('selected');
+
       if (btnNext){
         btnNext.disabled = false;
-        // если ручной режим и ответ уже был — показать «Далее»
         if (manualMode && wasAnswered) btnNext.style.display = '';
       }
 
       updateAuditProgress();
 
-      // авто-переход (если не ручной режим, или ручной но вопрос был без ответа)
+      // авто-переход
       const shouldAuto = (!manualMode) || (manualMode && !wasAnswered);
       if (shouldAuto){
         setTimeout(()=>{
-          if (curIndex < TOTAL_Q - 1) { curIndex++; renderQuestion(); }
-          else { showResultScreen(); }
+          if (curIndex < TOTAL_Q - 1) curIndex++;
+          else return showResultScreen();
+          renderQuestion();
         }, 200);
       }
     });
@@ -312,7 +313,7 @@ function renderQuestion(){
   // плавная подмена карточки
   swapCard(wrap);
 
-  // скроллим к карточке со 2-го вопроса и далее
+  // скролл к карточке начиная со 2-го вопроса
   if (curIndex > 0){
     setTimeout(()=> qContainer.scrollIntoView({ behavior:'smooth', block:'start' }), 10);
   }
