@@ -215,54 +215,23 @@
     if (auditProgressEl) auditProgressEl.textContent = `Вопросы: ${answered} из ${TOTAL_Q}`;
   }
 
-// Плавная замена карточек: fade поверх, без «подъёма снизу»
-function swapCard(newEl){
+// --- БАЗА: мгновенная подмена карточки без анимаций ---
+function swapCardNoAnim(newEl){
   const cont = qContainer;
-  const old  = cont.firstElementChild;
-
-  // зафиксировали текущую высоту, чтобы не было скачка
-  const startH = cont.offsetHeight || 0;
-  cont.classList.add('q-swap-lock');
-  cont.style.height = startH + 'px';
-
-  // старая карточка — выход
-  if (old){
-    old.classList.remove('card-enter','card-enter-active');
-    old.classList.add('card-exit');
-    // reflow
-    // eslint-disable-next-line no-unused-expressions
-    old.offsetHeight;
-    old.classList.add('card-exit-active');
-    setTimeout(()=>{ if (old.parentNode === cont) cont.removeChild(old); }, 160);
-  }
-
-  // новая карточка — вход (как абсолютная поверх старой)
-  newEl.classList.add('q-card','card-enter');
+  // очищаем контейнер и просто вставляем новую карточку
+  cont.innerHTML = '';
+  newEl.classList.add('q-card');
   cont.appendChild(newEl);
-  // reflow
-  // eslint-disable-next-line no-unused-expressions
-  newEl.offsetHeight;
-  newEl.classList.add('card-enter-active');
-
-  // после проявления возвращаем карту в поток
-  setTimeout(()=>{
-    newEl.classList.remove('card-enter','card-enter-active');
-    newEl.style.position = '';   // перестаёт быть absolute
-    newEl.style.inset = '';
-    // отпускаем высоту контейнера
-    cont.style.height = '';
-    cont.classList.remove('q-swap-lock');
-  }, 200);
 }
-// ===== Отрисовка вопроса =====
+
 function renderQuestion(){
   const q = QUESTIONS[curIndex];
   updateAuditProgress();
 
-  // «Назад» только со 2-го вопроса
+  // «Назад» только со 2-го экрана
   if (btnPrev) btnPrev.style.visibility = (curIndex === 0) ? 'hidden' : 'visible';
 
-  // если вопрос неотвечен — «Далее» скрыта
+  // «Далее» показываем только в ручном режиме и только при наличии ответа
   const hasAnswer = !!answers[q.id];
   if (btnNext){
     btnNext.style.display = (manualMode && hasAnswer) ? '' : 'none';
@@ -279,7 +248,6 @@ function renderQuestion(){
   `;
   const optsBox = wrap.querySelector('.opts');
 
-  // варианты ответов
   q.opts.forEach(opt=>{
     const d = document.createElement('div');
     d.className = 'pill';
@@ -299,30 +267,31 @@ function renderQuestion(){
 
       updateAuditProgress();
 
-      // авто-переход к следующему вопросу
+      // авто-режим: сразу идём дальше (без таймеров/анимаций)
       const shouldAuto = (!manualMode) || (manualMode && !wasAnswered);
       if (shouldAuto){
-        setTimeout(()=>{
-          if (curIndex < TOTAL_Q - 1) curIndex++;
-          else return showResultScreen();
+        if (curIndex < TOTAL_Q - 1){
+          curIndex++;
           renderQuestion();
-        }, 200);
+        } else {
+          showResultScreen();
+        }
       }
     });
 
     optsBox.appendChild(d);
   });
 
-  // плавная замена карточки
-  swapCard(wrap);
+  // простая подмена без анимаций
+  swapCardNoAnim(wrap);
 
-  // лёгкий автоскролл к карточке (со 2-го вопроса)
+  // мягкий скролл к карточке со 2-го вопроса (оставляем, чтобы на мобильных всё было в зоне видимости)
   if (curIndex > 0){
-    setTimeout(()=> qContainer.scrollIntoView({ behavior:'smooth', block:'start' }), 20);
+    qContainer.scrollIntoView({ behavior:'smooth', block:'start' });
   }
 }
 
-// ===== Навигация по вопросам =====
+// Навигация (без изменений)
 btnPrev?.addEventListener('click', ()=>{
   if (curIndex > 0){
     curIndex--;
@@ -330,7 +299,6 @@ btnPrev?.addEventListener('click', ()=>{
     renderQuestion();
   }
 });
-
 btnNext?.addEventListener('click', ()=>{
   if (curIndex < TOTAL_Q - 1){
     curIndex++;
