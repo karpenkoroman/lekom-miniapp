@@ -277,7 +277,7 @@ html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
       </button>
     </div>
 
-    <!-- Старт -->
+    <!-- Старт 
     <div id="screen-start" class="screen show">
       <div class="card">
         <div class="btn-row">
@@ -292,7 +292,28 @@ html:not(.theme-light) a:hover{text-shadow:0 0 6px rgba(29,184,170,.4);}
         <h3>Сводка голосования по темам</h3>
         <div id="summaryContent"><div class="muted">Загрузка…</div></div>
       </div>
+    </div> 
+    -->
+
+    <!-- Старт -->
+<div id="screen-start" class="screen show">
+  <div class="card">
+    <div class="btn-row">
+      <button id="goAudit" class="btn btn-primary">
+        <span id="goAuditTitle">Пройдите быстрый аудит печати</span>
+        <span id="goAuditSub" class="btn-sub">выявите слабые места в&nbsp;управлении печатной инфраструктурой</span>
+      </button>
+      <button id="goPoll" class="btn btn-secondary">Выберите тему вебинара</button>
     </div>
+
+    <!-- НОВОЕ: статистика по аудитам -->
+    <div id="auditStats" class="muted" style="margin-top:10px">Загрузка статистики…</div>
+
+    <hr>
+    <h3>Сводка голосования по темам</h3>
+    <div id="summaryContent"><div class="muted">Загрузка…</div></div>
+  </div>
+</div>
 
     <!-- Аудит (карточки) -->
     <div id="screen-audit" class="screen">
