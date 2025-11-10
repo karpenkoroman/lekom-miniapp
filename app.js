@@ -1,4 +1,4 @@
-// /dashboard/main.js  — компактный пончик + карточка обращений
+// /dashboard/main.js  v16
 
 // === CONFIG ===
 const GAS_URL =
@@ -6,7 +6,7 @@ const GAS_URL =
   'https://script.google.com/macros/s/AKfycbwvlwGiji1VcgwkMHBVmSCJgDbDYRJlS5okIjY6PHdKaXf3RowHb6wlt6eeiIMcgCAB0w/exec?dashboard=public';
 
 // Палитра в стиле мини-аппа
-const COLORS = ['#2a7de1', '#5ec2ff', '#10b3a3']; // Нужен аудит / Частичный контроль / Зрелая практика (порядок ниже)
+const COLORS = ['#2a7de1', '#5ec2ff', '#10b3a3']; // Нужен аудит / Частичный контроль / Зрелая практика
 const BG      = '#171b25';
 const TEXT    = '#eaf0fa';
 const MUTED   = '#96a2c2';
@@ -23,23 +23,17 @@ function fmtIsoToLocal(iso){
   if (!iso) return '—';
   try { return new Date(iso).toLocaleString(); } catch(_){ return '—'; }
 }
+// разбивка длинных подписей на 1–2 строки
 function splitLabelSmart(s){
-  // Разбивка длинных русских подписей по пробелу на 2 строки, если слишком длинно
   const max = 18;
   if (!s || s.length <= max) return [s];
   const words = s.split(' ');
   if (words.length < 2) return [s];
-  // пытаемся поровну
-  let best = [s];
-  let minDiff = 1e9;
+  let best = [s], minDiff = 1e9;
   for (let cut=1; cut<words.length; cut++){
-    const a = words.slice(0,cut).join(' ');
-    const b = words.slice(cut).join(' ');
+    const a = words.slice(0,cut).join(' '), b = words.slice(cut).join(' ');
     const diff = Math.abs(a.length - b.length);
-    if (diff < minDiff){
-      minDiff = diff;
-      best = [a, b];
-    }
+    if (diff < minDiff){ minDiff = diff; best = [a,b]; }
   }
   return best;
 }
@@ -66,12 +60,11 @@ function centerTextPlugin(totalGetter, avgGetter){
       ctx.shadowBlur  = 10;
       ctx.fillText(total, cx, cy - 10);
 
-      // подпись «Средний балл N» — ниже, с приличным зазором
       if (avg !== undefined && avg !== null && avg !== ''){
         ctx.font = '600 14px Work Sans, system-ui, sans-serif';
         ctx.fillStyle = MUTED;
         ctx.shadowBlur = 0;
-        ctx.fillText(`Средний балл ${avg}`, cx, cy + 30);
+        ctx.fillText(`Средний балл ${avg}`, cx, cy + 34); // больше зазор
       }
       ctx.restore();
     }
@@ -96,38 +89,41 @@ function sliceLabelsPlugin(labels, values){
         if (!v) return;
         const prc = Math.round((v / total) * 100);
 
-        // Позиция подписи внутри сектора
         const angle = (arc.startAngle + arc.endAngle) / 2;
-        const ir = arc.innerRadius;
-        const or = arc.outerRadius;
+        const ir = arc.innerRadius, or = arc.outerRadius;
 
-        // Чем меньше доля — тем ближе к центру и тем меньше шрифт
         const isTiny = prc <= 4;
-        const rPct   = isTiny ? 0.55 : 0.62;
+        const rPct   = isTiny ? 0.54 : 0.61; // ближе к центру для маленьких
         const r      = ir + (or - ir) * rPct;
         const x      = arc.x + Math.cos(angle) * r;
         const y      = arc.y + Math.sin(angle) * r;
 
-        // Тень для читаемости
-        ctx.shadowColor = 'rgba(0,0,0,.6)';
-        ctx.shadowBlur  = 8;
-
-        // Название доли — сверху, возможно в 2 строки
+        // подпись (название) — жирнее + обводка для читабельности
         const raw = String(labels[idx] || '');
         const lines = splitLabelSmart(raw);
-        ctx.fillStyle = '#fff';
-        ctx.font = `${isTiny ? '700 10px' : '700 12px'} Work Sans, system-ui, sans-serif`;
 
+        // настройка шрифтов
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = 'rgba(0,0,0,.65)'; // тонкая обводка
+        ctx.lineWidth = 2;
+
+        // название
+        ctx.font = `${isTiny ? '800 11px' : '800 13px'} Work Sans, system-ui, sans-serif`;
         if (lines.length === 1){
-          ctx.fillText(lines[0], x, y - (isTiny ? 10 : 14));
+          // сначала обводка, потом заливка
+          ctx.strokeText(lines[0], x, y - (isTiny ? 14 : 18));
+          ctx.fillText(  lines[0], x, y - (isTiny ? 14 : 18));
         } else {
-          ctx.fillText(lines[0], x, y - (isTiny ? 14 : 18));
-          ctx.fillText(lines[1], x, y - (isTiny ? 2 : 6));
+          ctx.strokeText(lines[0], x, y - (isTiny ? 18 : 22));
+          ctx.fillText(  lines[0], x, y - (isTiny ? 18 : 22));
+          ctx.strokeText(lines[1], x, y - (isTiny ? 4  : 8 ));
+          ctx.fillText(  lines[1], x, y - (isTiny ? 4  : 8 ));
         }
 
-        // Процент — под названием, чтобы не пересекался
-        ctx.font = `${isTiny ? '800 11px' : '800 13px'} Work Sans, system-ui, sans-serif`;
-        ctx.fillText(`${prc}%`, x, y + (isTiny ? 8 : 10));
+        // процент — ниже и с зазором побольше, чтобы не налезал
+        ctx.font = `${isTiny ? '900 12px' : '900 14px'} Work Sans, system-ui, sans-serif`;
+        ctx.strokeText(`${prc}%`, x, y + (isTiny ? 12 : 14));
+        ctx.fillText(  `${prc}%`, x, y + (isTiny ? 12 : 14));
       });
 
       ctx.restore();
@@ -137,16 +133,11 @@ function sliceLabelsPlugin(labels, values){
 
 // === RENDER ===
 function renderDonut(canvas, verdictMap, total, avgScore){
-  // Жёстко упорядочим доли, чтобы цвета совпадали со смыслом:
-  // 1) «Нужен аудит» → COLORS[0]
-  // 2) «Частичный контроль» → COLORS[1]
-  // 3) «Зрелая практика» → COLORS[2]
   const order = ['Нужен аудит', 'Частичный контроль', 'Зрелая практика'];
 
   const items = order
     .filter(k => verdictMap[k] != null)
     .map(k => ({ label: k, value: +verdictMap[k] || 0 }))
-    // добавим остальные, если внезапно появятся новые категории
     .concat(
       Object.entries(verdictMap)
         .filter(([k]) => !order.includes(k))
@@ -177,8 +168,8 @@ function renderDonut(canvas, verdictMap, total, avgScore){
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '58%',                 // чуть меньше, чтобы было место для подписей
-      layout: { padding: 10 },
+      cutout: '58%',
+      layout: { padding: 12 },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -208,9 +199,7 @@ function renderDonut(canvas, verdictMap, total, avgScore){
 }
 
 function renderLeadsBox(box, leads, cta){
-  // независимый блок
   box.innerHTML = '';
-
   const title = document.createElement('h2');
   title.style.margin = '0 0 6px';
   title.style.fontSize = '18px';
@@ -227,7 +216,6 @@ function renderLeadsBox(box, leads, cta){
     d.append(l,r); return d;
   };
 
-  // Только общие количества, без разбивок на периоды и без "уник. компаний"
   box.append(row('Индивидуальные обращения — всего', cta?.total ?? 0));
   box.append(row('Поделились контактами — всего',    leads?.total ?? 0));
 }
@@ -243,14 +231,10 @@ async function boot(){
     const j = await fetchJSON(GAS_URL);
     const data = j?.data || {};
 
-    // «Последняя запись …» одной строкой под заголовком
-    const parts = [];
-    if (data.audit?.lastUpdate) parts.push(`Последняя запись по аудитам: ${fmtIsoToLocal(data.audit.lastUpdate)}`);
-    if (data.leads?.lastUpdate) parts.push(`Лиды: ${fmtIsoToLocal(data.leads.lastUpdate)}`);
-    if (data.cta?.lastUpdate)   parts.push(`Обращения: ${fmtIsoToLocal(data.cta.lastUpdate)}`);
-    lastRow.textContent = parts.join(' • ') || 'Нет данных';
+    // одна метка «Обновлено: …»
+    const ts = data.audit?.lastUpdate || data.leads?.lastUpdate || data.cta?.lastUpdate || null;
+    lastRow.textContent = ts ? `Обновлено: ${fmtIsoToLocal(ts)}` : 'Обновлено: —';
 
-    // диаграмма
     renderDonut(
       canvas,
       data.audit?.verdicts || {},
@@ -258,7 +242,6 @@ async function boot(){
       data.audit?.avgScore ?? 0
     );
 
-    // карточка обращений
     renderLeadsBox(
       leadsEl,
       data.leads || { total:0, lastUpdate:null },
