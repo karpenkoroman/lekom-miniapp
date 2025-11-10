@@ -472,16 +472,37 @@
   }
 
   // CTA «Обсудить сейчас»
-  btnExpert?.addEventListener('click', async ()=>{
-    const msg =
-      `Добрый день! Хочу обсудить результаты самоаудита печати.\n`+
-      `Итог: ${lastAuditResult.score} ${pluralBall(lastAuditResult.score)} из ${TOTAL_Q}\n`+
-      `Вердикт: ${lastAuditResult.verdict}\n`+
-      `Рекомендация: ${lastAuditResult.advice}`;
-    try{ await navigator.clipboard.writeText(msg); }catch(_){}
-    toast('Текст скопирован. Откроется чат с коммерческим директором ЛЕКОМ.', true,
-      ()=> window.open('https://t.me/chelebaev','_blank'));
-  });
+  
+
+btnExpert?.addEventListener('click', async ()=>{
+  const msg =
+    `Добрый день! Хочу обсудить результаты самоаудита печати.\n`+
+    `Итог: ${lastAuditResult.score} ${pluralBall(lastAuditResult.score)} из ${TOTAL_Q}\n`+
+    `Вердикт: ${lastAuditResult.verdict}\n`+
+    `Рекомендация: ${lastAuditResult.advice}`;
+  try{ await navigator.clipboard.writeText(msg); }catch(_){}
+
+  // Новое: логируем клик «Обсудить сейчас»
+  try{
+    fetch(HOOK, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        type: 'cta',
+        action: 'discuss_now',
+        score: lastAuditResult.score,
+        verdict: lastAuditResult.verdict,
+        initData: getInitData()
+      })
+    });
+  }catch(_){}
+
+  // Открываем чат
+  toast('Текст сообщения скопирован.<br>Вставьте в чат с Игорем Челебаевым, коммерческим директором ЛЕКОМ.', true,
+    ()=> window.open('https://t.me/chelebaev','_blank'));
+});
+
+  
 
   // Скролл к форме
   btnScrollLead?.addEventListener('click', ()=>{
@@ -497,6 +518,9 @@
   leadPhone?.addEventListener('input', validateLead);
   validateLead();
 
+
+
+  
   btnSendLead?.addEventListener('click', async ()=>{
     const name    = (leadName?.value || '').trim();
     const company = (leadCompany?.value || '').trim();
